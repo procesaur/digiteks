@@ -195,7 +195,7 @@ border-radius: 20px;
 width: 480px;
 font-family: sans-serif;
 margin: 100px auto;
-padding: 20px;
+padding: 20px 30px;
 background-color: #f8f4e1
 }
 #dropzone.highlight {
@@ -236,4 +236,10 @@ font-weight: bold;
 
 #fileElem {
 display: none;
+}
+
+#preview{
+    width: 100%;
+    height: calc(100vh - 100px);
+    margin-top: 20px;
 }
