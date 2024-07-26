@@ -1,5 +1,4 @@
 from helper import cfg
-from flask import request
 from os import path as px
 
 

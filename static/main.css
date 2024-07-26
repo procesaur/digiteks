@@ -264,6 +264,7 @@ display: none;
     background-color: #f8f4e1;
      width: calc(100vw - 50px) !important;
      height: calc(100vh - 116px) !important;
+     overflow-y: scroll;
 }
 
 .helphead{
