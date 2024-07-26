@@ -22,7 +22,7 @@ def img():
 
 @app.route('/process', methods=['POST', 'GET'])
 def api():
-    return "OK"
+    return render_template('gui_response.html', cover=px.join('static', 'cover.png'))
 
 if __name__ == "__main__":
     port = int(environ.get("PORT", 5001))

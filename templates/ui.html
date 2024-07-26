@@ -6,16 +6,18 @@
 <div class="main">
     <form target="if" method="post" enctype = "multipart/form-data">
         <span id="dropzone" class="dropzone">
-          ПРЕВУЦИ ПДФ датотеку овде или 
+          ПРЕВУЦИ ПДФ овде или 
           <input class="dropzone-input" type="file" name="file" id="fileElem" accept="application/pdf" onchange="handleFiles(this.files)">
           <label class="button" >ОДАБЕРИ</label> са диска
         </span>
-          <input style="float: right;" type = "submit" class="button process" value="ОБРАДИ" formaction="/process"/>
-          <iframe id="preview" src="/img"></iframe>
+          <input type = "submit" class="button process" value="ОБРАДИ" formaction="/process"/>
+          <iframe id="preview" class="preview" src="/img"></iframe>
     </form>
 </div>
+<iframe id="if" name="if" class="rightside" src="/help"></iframe>
 
-<iframe class="main" name="if" src="/help"></iframe>
+
+
 
 <script>
     var dropzone = document.getElementById('dropzone');
@@ -47,7 +49,7 @@
     
     var for_alert = "";
     Array.prototype.forEach.call(files, file => {    
-        for_alert = URL.createObjectURL(file);
+        for_alert = URL.createObjectURL(file) + "#zoom=FitH";
         dataTransfer.items.add(file);
         return false;
     });
@@ -64,7 +66,7 @@
     });
 
     document.getElementById('fileElem').onchange = function() {
-    var url = URL.createObjectURL(this.files[0]);
+    var url = URL.createObjectURL(this.files[0])+"#zoom=FitH";
     document.getElementById('preview').src = url;
     };
     
