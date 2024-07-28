@@ -1,54 +1,32 @@
-from pytesseract import pytesseract, image_to_pdf_or_hocr
 from PIL import Image
 from ocrmypdf import ocr as pdf_ocr
-from helper import cfg, tesseract_path, poppler_path, pngquant_path, unpaper_path
-from helper import should_aggro_ocr, should_deskew, should_clean, should_optimize, should_force_ocr
 from io import BytesIO
-from pdfworks import has_cover, merge_pages
-from pdf2image import convert_from_bytes
 from cv2 import cvtColor, resize, threshold, THRESH_OTSU, THRESH_BINARY, erode
 from cv2 import COLOR_BGR2RGB, COLOR_RGB2BGR, COLOR_BGR2GRAY
 from numpy import array as nparray, ndarray
+from os import environ, pathsep, path as px, listdir
+
+
+for x in listdir("./bin"):
+    environ['PATH'] += pathsep + px.join(px.dirname(px.realpath(__file__)), "bin\\" + x)
+environ['PATH'] += pathsep + px.join(px.dirname(px.realpath(__file__)), "bin")
 
 
 
-def ocr_file(file_bytes, filetype, lang):
-    lang = "srp+srp_latn"
-
-    if agro:
-        return aggro_ocr(file_bytes, lang)
+def ocr_pdf(file_bytes):
     bytesio = BytesIO(file_bytes)
-    return ocr_pdf(bytesio, lang)
-
-
-def ocr_img(image, lang):
-    pytesseract.tesseract_cmd = tesseract_path
-    image = improve_image(image)
-    return image_to_pdf_or_hocr(image, extension='pdf', lang=lang)
-
-
-def aggro_ocr(file_bytes, lang):
-    pdfs = [ocr_img(image, lang) for image in convert_from_bytes(file_bytes, poppler_path=poppler_path)]
-    return merge_pages(pdfs)
-
-
-def ocr_pdf(bytesio, lang):
+    lang = "srp+srp_latn"
     output = BytesIO()
+
     kwargs = {}
+    kwargs["language"] = lang
+    kwargs["clean"] = True
+    # kwargs["oversample"] = 300
+    kwargs["deskew"] = True
+    kwargs["force_ocr"] = True
+    #kwargs["skip_text"] = True
 
-    if lang:
-        kwargs["language"] = lang
-    if should_clean():
-        kwargs["clean"] = True
-        kwargs["oversample"] = 300
-    if should_deskew():
-        kwargs["deskew"] = True
-    if should_force_ocr():
-        kwargs["force_ocr"] = True
-    else:
-        kwargs["skip_text"] = True
-
-    pdf_ocr(input_file=bytesio, output_file=output, optimize=should_optimize(), **kwargs)
+    pdf_ocr(input_file=bytesio, output_file=output, optimize=3, **kwargs)
     return output.getbuffer().tobytes()
 
 

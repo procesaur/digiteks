@@ -2,6 +2,7 @@ from flask import Flask, request, render_template, Response
 from os import environ, path as px
 from rq_handler import process_req
 from base64 import b64encode
+from ocrworks import ocr_pdf
 
 
 app = Flask(__name__)
@@ -23,6 +24,8 @@ def img():
 @app.route('/process', methods=['POST', 'GET'])
 def api():
     file_bytes, filename = process_req(request)
+    return Response(ocr_pdf(file_bytes), mimetype="applictaion/pdf",
+                            headers={'Content-Disposition': 'inline;filename=' + filename + '.pdf'})
     return render_template('gui_response.html', data=[filename, file_bytes])
 
 if __name__ == "__main__":
