@@ -66,7 +66,7 @@ def sharpen_img(img):
 
 def resize_img(img):
     #img = resize(img, (0, 0), fx=2, fy=2)
-    img = resize(img, None, fx=2, fy=2, interpolation=INTER_CUBIC)
+    img = resize(img, None, fx=1.2, fy=1.2, interpolation=INTER_CUBIC)
     return img
 
 
@@ -83,8 +83,8 @@ def blur_img(img):
     # img = threshold(GaussianBlur(img, (5, 5), 0), 0, 255, THRESH_BINARY + THRESH_OTSU)[1]
     # img = threshold(bilateralFilter(img, 5, 75, 75), 0, 255, THRESH_BINARY + THRESH_OTSU)[1]
     # img = adaptiveThreshold(GaussianBlur(img, (5, 5), 0), 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, 31, 2)
-    # img = adaptiveThreshold(bilateralFilter(img, 9, 75, 75), 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, 31, 2)
-    img = adaptiveThreshold(medianBlur(img, 3), 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, 31, 2)
+    img = adaptiveThreshold(bilateralFilter(img, 9, 75, 75), 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, 31, 2)
+    #img = adaptiveThreshold(medianBlur(img, 3), 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, 31, 2)
     # img = threshold(img, 0, 255, THRESH_BINARY + THRESH_OTSU)[1]
 
     return img
