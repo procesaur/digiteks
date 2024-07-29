@@ -2,15 +2,19 @@ from pytesseract import image_to_pdf_or_hocr
 from PIL import Image
 from io import BytesIO
 from pdf2image import convert_from_bytes
-from cv2 import cvtColor, resize, threshold, dilate, erode, warpAffine, getRotationMatrix2D, medianBlur, adaptiveThreshold, GaussianBlur, bilateralFilter
+from cv2 import cvtColor, resize, threshold, dilate, erode, warpAffine, getRotationMatrix2D, medianBlur, adaptiveThreshold, GaussianBlur, bilateralFilter, filter2D
 from cv2 import COLOR_BGR2RGB, COLOR_RGB2BGR, COLOR_BGR2GRAY, THRESH_OTSU, THRESH_BINARY, INTER_CUBIC, ADAPTIVE_THRESH_GAUSSIAN_C
 from numpy import array as nparray, ndarray
 from os import listdir, environ, pathsep, path as px
-from PyPDF2 import PdfMerger, PdfReader, PdfWriter
+from PyPDF2 import PdfMerger
 from math import radians
 from typing import Tuple, Union
 from numpy import ndarray, cos, sin, array as nparray, ones, uint8
 from deskew import determine_skew
+from psutil import cpu_count
+
+
+print(cpu_count())
 
 
 for x in listdir("./bin"):
@@ -20,13 +24,14 @@ environ['PATH'] += pathsep + px.join(px.dirname(px.realpath(__file__)), "bin")
 
 def ocr_img(image, lang):
     image = improve_image(image)
-    return img2bytes(image)
+    # return img2bytes(image)
     return image_to_pdf_or_hocr(image, extension='hocr', lang=lang)
 
 
 def ocr_pdf(file_bytes):
     lang = "srp+srp_latn"
-    pdfs = [ocr_img(image, lang) for image in convert_from_bytes(file_bytes)]
+    pdfs = [ocr_img(image, lang) for image in convert_from_bytes(file_bytes, dpi=300, thread_count=cpu_count())]
+    # pdfs = [ocr_img(image, lang) for image in convert_from_bytes(file_bytes, dpi=300, thread_count=cpu_count())]
     return pdfs[0]
 
 
@@ -48,19 +53,20 @@ def improve_image(image):
     return convert_from_cv2_to_image(img)
 
 
-
-
 def img2bytes(img):
     img_byte_arr = BytesIO()
     img.save(img_byte_arr, format='PNG')
     return img_byte_arr.getvalue()
 
-
+def sharpen_img(img):
+    sharpen_kernel = nparray([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
+    sharpen = filter2D(img, -1, sharpen_kernel)
+    return sharpen
 
 
 def resize_img(img):
     #img = resize(img, (0, 0), fx=2, fy=2)
-    img = resize(img, None, fx=1.2, fy=1.2, interpolation=INTER_CUBIC)
+    img = resize(img, None, fx=2, fy=2, interpolation=INTER_CUBIC)
     return img
 
 
