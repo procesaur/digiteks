@@ -1,4 +1,3 @@
-from helper import cfg
 from os import path as px
 
 
@@ -21,7 +20,7 @@ def process_file_req(req, query_parameters):
         filename = req.files["file"].filename
         if filename != "":
             return file_bytes, filename
-
+        
     filename = query_parameters.get('file')
     file_bytes = filepath2file(filename)
 
