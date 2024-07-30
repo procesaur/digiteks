@@ -24,11 +24,9 @@ def img():
 @app.route('/process', methods=['POST', 'GET'])
 def api():
     file_bytes, filename = process_req(request)
-    #return Response(ocr_pdf(file_bytes), mimetype="image/jpeg", headers={'Content-Disposition': 'inline;filename=' + filename + '.jpg'})
-    return Response(ocr_pdf(file_bytes), mimetype="text/html", headers={'Content-Disposition': 'inline;filename=' + filename + '.html'})
-
-    return Response(ocr_pdf(file_bytes), mimetype="applictaion/pdf", headers={'Content-Disposition': 'inline;filename=' + filename + '.pdf'})
-    #return render_template('gui_response.html', data=[filename, file_bytes])
+    hocr = ocr_pdf(file_bytes)
+    return render_template('gui_response.html', data=hocr, filename=filename)
+  
 
 if __name__ == "__main__":
     port = int(environ.get("PORT", 5001))

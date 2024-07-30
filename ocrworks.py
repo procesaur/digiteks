@@ -1,4 +1,5 @@
 from pytesseract import image_to_pdf_or_hocr
+from tesserocr import PyTessBaseAPI
 from PIL import Image
 from io import BytesIO
 from pdf2image import convert_from_bytes
@@ -12,35 +13,41 @@ from typing import Tuple, Union
 from numpy import ndarray, cos, sin, array as nparray, ones, uint8
 from deskew import determine_skew
 from psutil import cpu_count
+from tqdm import tqdm
+from multiprocessing.dummy import Pool as ThreadPool
 
 
 print(cpu_count())
-
+pool = ThreadPool(cpu_count())
 
 for x in listdir("./bin"):
     environ['PATH'] += pathsep + px.join(px.dirname(px.realpath(__file__)), "bin\\" + x)
 environ['PATH'] += pathsep + px.join(px.dirname(px.realpath(__file__)), "bin")
 
 
-def ocr_img(image, lang):
-    image = improve_image(image)
-    # return img2bytes(image)
-    return image_to_pdf_or_hocr(image, extension='hocr', lang=lang)
+tessenvirons = ["OMP_NUM_THREADS","OMP_THREAD_LIMIT","MKL_NUM_THREADS","NUMEXPR_NUM_THREADS","VECLIB_MAXIMUM_THREADS","OCR_THREADS"]
+for x in tessenvirons:
+    environ[x] = str(1)
 
 
 def ocr_pdf(file_bytes):
+    print ("convert to images")
+    images = convert_from_bytes(file_bytes, dpi=300, thread_count=cpu_count())
+    print ("enhance")
+    results = pool.map(ocr_img, images)
+    return results
+
+
+def ocr_img(img):
     lang = "srp+srp_latn"
-    pdfs = [ocr_img(image, lang) for image in convert_from_bytes(file_bytes, dpi=300, thread_count=cpu_count())]
-    # pdfs = [ocr_img(image, lang) for image in convert_from_bytes(file_bytes, dpi=300, thread_count=cpu_count())]
-    return pdfs[0]
-
-
-def convert_from_cv2_to_image(img: ndarray) -> Image:
-    return Image.fromarray(cvtColor(img, COLOR_BGR2RGB))
-
-
-def convert_from_image_to_cv2(img: Image) -> ndarray:
-    return cvtColor(nparray(img), COLOR_RGB2BGR)
+    tessdata_path = px.join(px.dirname(px.realpath(__file__)), "bin\\Tesseract-OCR\\tessdata")
+    # return img2bytes(image)
+    img = improve_image(img)
+    with PyTessBaseAPI(lang=lang, path=tessdata_path) as api:
+        api.SetImage(img)
+        hocr = api.GetHOCRText(0)
+    return hocr
+    return image_to_pdf_or_hocr(image, extension='hocr', lang=lang)
 
 
 def improve_image(image):
@@ -57,6 +64,7 @@ def img2bytes(img):
     img_byte_arr = BytesIO()
     img.save(img_byte_arr, format='PNG')
     return img_byte_arr.getvalue()
+
 
 def sharpen_img(img):
     sharpen_kernel = nparray([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
@@ -78,15 +86,13 @@ def erode_img(img):
 
 
 def blur_img(img):
-    
-    # img = threshold(medianBlur(img, 3), 0, 255, THRESH_BINARY + THRESH_OTSU)[1]  
+    img = threshold(medianBlur(img, 3), 0, 255, THRESH_BINARY + THRESH_OTSU)[1]  
     # img = threshold(GaussianBlur(img, (5, 5), 0), 0, 255, THRESH_BINARY + THRESH_OTSU)[1]
     # img = threshold(bilateralFilter(img, 5, 75, 75), 0, 255, THRESH_BINARY + THRESH_OTSU)[1]
     # img = adaptiveThreshold(GaussianBlur(img, (5, 5), 0), 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, 31, 2)
-    img = adaptiveThreshold(bilateralFilter(img, 9, 75, 75), 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, 31, 2)
+    # img = adaptiveThreshold(bilateralFilter(img, 9, 75, 75), 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, 31, 2)
     #img = adaptiveThreshold(medianBlur(img, 3), 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, 31, 2)
     # img = threshold(img, 0, 255, THRESH_BINARY + THRESH_OTSU)[1]
-
     return img
 
 
@@ -101,6 +107,14 @@ def rotate_img(image: ndarray, angle: float, background: Union[int, Tuple[int, i
     rot_mat[1, 2] += (width - old_width) / 2
     rot_mat[0, 2] += (height - old_height) / 2
     return warpAffine(image, rot_mat, (int(round(height)), int(round(width))), borderValue=background)
+
+
+def convert_from_cv2_to_image(img: ndarray) -> Image:
+    return Image.fromarray(cvtColor(img, COLOR_BGR2RGB))
+
+
+def convert_from_image_to_cv2(img: Image) -> ndarray:
+    return cvtColor(nparray(img), COLOR_RGB2BGR)
 
 
 def merge_pages(pages):
