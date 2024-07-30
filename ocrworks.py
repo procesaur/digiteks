@@ -1,20 +1,22 @@
-from pytesseract import image_to_pdf_or_hocr
+from io import BytesIO
+from math import radians
+from typing import Tuple, Union
+from os import listdir, environ, pathsep, path as px
+from multiprocessing.dummy import Pool as ThreadPool
+
+import sys
+sys.path.append('appdeps')
+
 from tesserocr import PyTessBaseAPI
 from PIL import Image
-from io import BytesIO
 from pdf2image import convert_from_bytes
 from cv2 import cvtColor, resize, threshold, dilate, erode, warpAffine, getRotationMatrix2D, medianBlur, adaptiveThreshold, GaussianBlur, bilateralFilter, filter2D
 from cv2 import COLOR_BGR2RGB, COLOR_RGB2BGR, COLOR_BGR2GRAY, THRESH_OTSU, THRESH_BINARY, INTER_CUBIC, ADAPTIVE_THRESH_GAUSSIAN_C
-from numpy import array as nparray, ndarray
-from os import listdir, environ, pathsep, path as px
 from PyPDF2 import PdfMerger
-from math import radians
-from typing import Tuple, Union
 from numpy import ndarray, cos, sin, array as nparray, ones, uint8
 from deskew import determine_skew
 from psutil import cpu_count
 from tqdm import tqdm
-from multiprocessing.dummy import Pool as ThreadPool
 
 
 print(cpu_count())
@@ -47,7 +49,6 @@ def ocr_img(img):
         api.SetImage(img)
         hocr = api.GetHOCRText(0)
     return hocr
-    return image_to_pdf_or_hocr(image, extension='hocr', lang=lang)
 
 
 def improve_image(image):
