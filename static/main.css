@@ -271,3 +271,7 @@ display: none;
     height: 71px;
     width: 100%;
 }
+
+body *::selection {
+    background-color: rgb(50 80 90 / 0.5) !important;
+  }
