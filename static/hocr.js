@@ -6,6 +6,5 @@ function editable() {
         words[i].style.background  = "rgba(255,255,0,"+val+")"; 
         words[i].contentEditable = 'true';
     }  
-
 }
 window.onload = editable;

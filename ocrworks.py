@@ -16,7 +16,6 @@ from PyPDF2 import PdfMerger
 from numpy import ndarray, cos, sin, array as nparray, ones, uint8
 from deskew import determine_skew
 from psutil import cpu_count
-from tqdm import tqdm
 from tesserocr import PyTessBaseAPI
 
 
