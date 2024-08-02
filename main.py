@@ -3,6 +3,7 @@ from os import environ, path as px
 from rq_handler import process_req
 from base64 import b64encode
 from ocrworks import ocr_pdf
+from hocrworks import hocr_transform
 
 
 app = Flask(__name__)
@@ -25,6 +26,7 @@ def img():
 def api():
     file_bytes, filename = process_req(request)
     hocr = ocr_pdf(file_bytes)
+    hocr = hocr_transform(hocr)
     return render_template('gui_response.html', data=hocr, filename=filename)
   
 
