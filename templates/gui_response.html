@@ -12,16 +12,14 @@
 </head>
 <body draggable="false">
     <div class="helphead">
-        <button type="button" onclick="getHocr" class="button process">Преузми ХТМЛ</button>
+        <button type="button" onclick="getHocr" class="button process">Преузми ХОЦР</button>
         <button type="button" onclick="getText" class="button process">Преузми Текст</button>
-        <button type="button" class="button process">Преузми ПДФ</button>
+        <button type="button" onclick="getHtml" class="button process">Преузми ХТМЛ</button>
     </div>
     <div class="helpmain main"  draggable="false">
         {% for x in data %}
             {{x|safe}}
         {% endfor %}
-
     </div>
-
 </body>
 </html>
