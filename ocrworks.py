@@ -4,10 +4,6 @@ from typing import Tuple, Union
 from os import listdir, environ, pathsep, path as px
 from multiprocessing.dummy import Pool as ThreadPool
 
-import sys
-sys.path.append('appdeps')
-
-
 from PIL import Image
 from pdf2image import convert_from_bytes
 from cv2 import cvtColor, resize, threshold, dilate, erode, warpAffine, getRotationMatrix2D, medianBlur, adaptiveThreshold, GaussianBlur, bilateralFilter, filter2D

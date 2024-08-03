@@ -4,6 +4,8 @@ from rq_handler import process_req
 from base64 import b64encode
 from ocrworks import ocr_pdf
 from hocrworks import hocr_transform
+from webbrowser import open_new
+from threading import Timer
 
 
 app = Flask(__name__)
@@ -28,8 +30,12 @@ def api():
     hocr = ocr_pdf(file_bytes)
     hocr = hocr_transform(hocr)
     return render_template('gui_response.html', data=hocr, filename=filename)
-  
+
+
+def open_browser():
+    open_new("http://127.0.0.1:5001")
 
 if __name__ == "__main__":
+    Timer(1, open_browser).start()
     port = int(environ.get("PORT", 5001))
     app.run(host='0.0.0.0', port=port)
