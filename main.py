@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, Response
+from flask import Flask, request, render_template, Response, make_response
 from os import environ, path as px
 from rq_handler import process_req
 from base64 import b64encode
@@ -28,6 +28,14 @@ def img():
 def api():
     file_bytes, filename = process_req(request)
     hocr = ocr_pdf(file_bytes)
+
+    if False:
+        response = make_response(hocr)
+        response.headers.set('Content-Type', 'image/jpeg')
+        response.headers.set(
+            'Content-Disposition', 'attachment', filename='%s.jpg')
+        return response
+
     hocr = hocr_transform(hocr)
     return render_template('gui_response.html', data=hocr, filename=filename)
 
