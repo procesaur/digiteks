@@ -8,15 +8,46 @@
         function help(){
             document.getElementById('if').src = "/help";
         }
+
+        function dwn(x){
+            var base64doc = btoa(unescape(encodeURIComponent(x))),
+            a = document.createElement('a'),
+            e = new MouseEvent('click');
+
+            a.download = 'results';
+            a.href = 'data:application/xml;base64,' + base64doc;
+            a.dispatchEvent(e);
+        }
+
+        function getHocr(){
+            alert("sadas");
+            var html = document.getElementById("full_hocr")
+            var x = html.innerHTML;
+            dwn(x);
+        }
+
+        function getHtml(){
+            var html = document.getElementById("full_hocr")
+            var x = html.innerHTML;
+            dwn(x);
+        }
+
+        function getText(){
+            var html = document.getElementById("full_hocr")
+            var x = html.textContent;
+            x = x.replace(/\s\s+/g, ' ');
+            dwn(x);
+        }
+
     </script>
 </head>
 <body draggable="false">
     <div class="helphead">
-        <button type="button" onclick="getHocr" class="button process">Преузми ХОЦР</button>
-        <button type="button" onclick="getText" class="button process">Преузми Текст</button>
-        <button type="button" onclick="getHtml" class="button process">Преузми ХТМЛ</button>
+        <button type="button" onclick="getHocr()" class="button process">Преузми ХОЦР</button>
+        <button type="button" onclick="getText()" class="button process">Преузми Текст</button>
+        <button type="button" onclick="getHtml()" class="button process">Преузми ХТМЛ</button>
     </div>
-    <div class="helpmain main"  draggable="false">
+    <div class="helpmain main" id="full_hocr" draggable="false">
         {% for x in data %}
             {{x|safe}}
         {% endfor %}
