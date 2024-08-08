@@ -24,6 +24,10 @@ def about():
 def img():
     return render_template('img.html', cover=px.join('static', 'cover.png'))
 
+@app.route('/load')
+def load():
+    return render_template('img.html', cover=px.join('static', 'load.gif'))
+
 @app.route('/process', methods=['POST', 'GET'])
 def api():
     file_bytes, filename = process_req(request)

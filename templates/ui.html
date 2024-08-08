@@ -1,23 +1,28 @@
 <html>
 <head>
     <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='main.css') }}">
+    <script>
+        function process(){
+            document.getElementById('if').src = "/load";
+            setTimeout(function() {
+                document.getElementById('fileform').submit();
+            }, 500);      
+        }
+    </script>
 </head>
 <body>
 <div class="main">
-    <form target="if" method="post" enctype = "multipart/form-data">
+    <form target="if" id ="fileform" method="post" enctype = "multipart/form-data" action="/process">
         <span id="dropzone" class="dropzone">
           ПРЕВУЦИ ПДФ овде или 
           <input class="dropzone-input" type="file" name="file" id="fileElem" accept="application/pdf" onchange="handleFiles(this.files)">
           <label class="button" >ОДАБЕРИ</label> са диска
         </span>
-          <input type = "submit" class="button process" value="ОБРАДИ" formaction="/process"/>
+          <button type = "button" class="button process" onclick="process()">ОБРАДИ</button>
           <iframe id="preview" class="preview" src="/img"></iframe>
     </form>
 </div>
 <iframe id="if" name="if" class="rightside" src="/help"></iframe>
-
-
-
 
 <script>
     var dropzone = document.getElementById('dropzone');
