@@ -9,12 +9,12 @@
             document.getElementById('if').src = "/help";
         }
 
-        function dwn(x, mime){
+        function dwn(x, mime, ext){
             var base64doc = btoa(unescape(encodeURIComponent(x))),
             a = document.createElement('a'),
             e = new MouseEvent('click');
 
-            a.download = '{{filename}}';
+            a.download = '{{filename}}' + ext;
             a.href = 'data:' + mime + ';base64,' + base64doc;
             a.dispatchEvent(e);
         }
@@ -23,20 +23,20 @@
             alert("sadas");
             var html = document.getElementById("full_hocr")
             var x = html.innerHTML;
-            dwn(x, "text/xml");
+            dwn(x, "text/xml", ".html");
         }
 
         function getHtml(){
             var html = document.getElementById("full_hocr")
             var x = html.innerHTML;
-            dwn(x, "text/xml");
+            dwn(x, "text/xml", ".html");
         }
 
         function getText(){
             var html = document.getElementById("full_hocr")
             var x = html.textContent;
             x = x.replace(/\s\s+/g, ' ');
-            dwn(x, "text/plain");
+            dwn(x, "text/plain", ".txt");
         }
 
     </script>
