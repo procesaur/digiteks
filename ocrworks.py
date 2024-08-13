@@ -8,19 +8,21 @@ from psutil import cpu_count
 from tesserocr import PyTessBaseAPI
 from imageworks import improve_image, img2bytes
 
+from helper import isWindows
+
 
 print(cpu_count())
 pool = ThreadPool(cpu_count())
 
-binpath = px.join(px.dirname(px.realpath(__file__)), "bin\\")
-for x in listdir(binpath):
-    environ['PATH'] += pathsep + px.join(px.dirname(px.realpath(__file__)), "bin\\" + x)
-environ['PATH'] += pathsep + px.join(px.dirname(px.realpath(__file__)), "bin")
+if isWindows():
+    binpath = px.join(px.dirname(px.realpath(__file__)), "bin\\")
+    for x in listdir(binpath):
+        environ['PATH'] += pathsep + px.join(px.dirname(px.realpath(__file__)), "bin\\" + x)
+    environ['PATH'] += pathsep + px.join(px.dirname(px.realpath(__file__)), "bin")
 
-
-tessenvirons = ["OMP_NUM_THREADS","OMP_THREAD_LIMIT","MKL_NUM_THREADS","NUMEXPR_NUM_THREADS","VECLIB_MAXIMUM_THREADS","OCR_THREADS"]
-for x in tessenvirons:
-    environ[x] = str(1)
+    tessenvirons = ["OMP_NUM_THREADS","OMP_THREAD_LIMIT","MKL_NUM_THREADS","NUMEXPR_NUM_THREADS","VECLIB_MAXIMUM_THREADS","OCR_THREADS"]
+    for x in tessenvirons:
+        environ[x] = str(1)
 
 
 def ocr_pdf(file_bytes):
