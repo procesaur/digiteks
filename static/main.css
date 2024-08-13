@@ -276,3 +276,17 @@ display: none;
 body *::selection {
     background-color: rgb(50 80 90 / 0.5) !important;
   }
+
+.ocr_separator {
+    border: 2px solid black;
+}
+
+.ocr_carea {
+    border: 1px solid gray;
+    margin-top: 2px;
+}
+
+.ocr_line:after {
+    content: '\A';
+    white-space: pre;
+}
