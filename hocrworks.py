@@ -15,7 +15,7 @@ def newline_fix(hocr):
         for i, line in enumerate(lines):
             try:
                 last = lines[i].find_all("span", {"class": "ocrx_word"})[-1]
-                if last.getText()[-1] in ["-", "－", "﹣", "֊", "᠆", "‐", "-", "–", "—", "﹘", "―", "⁓", "⹝", "〜", "𐺭", "⸚", "־", "−", "⁻", "₋", "~"]:
+                if last.getText()[-1] in ["-", "«", "－", "-", "﹣", "֊", "᠆", "‐", "-", "–", "—", "﹘", "―", "⁓", "⹝", "〜", "𐺭", "⸚", "־", "−", "⁻", "₋", "~"]:
                     next = lines[i+1].find_all("span", {"class": "ocrx_word"})[0]
                     last.string = last.getText()[:-1] + next.getText()
                     next.decompose()

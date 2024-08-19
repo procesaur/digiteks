@@ -8,7 +8,7 @@ from psutil import cpu_count
 from tesserocr import PyTessBaseAPI
 from imageworks import improve_image, img2bytes
 
-from helper import isWindows
+from helper import isWindows, img_debug
 
 
 print(cpu_count())
@@ -29,17 +29,21 @@ def ocr_pdf(file_bytes):
     print ("convert to images")
     images = convert_from_bytes(file_bytes, dpi=300, thread_count=cpu_count())
     print ("enhance")
-    results = pool.map(ocr_img, images)
-    print(len(results))
-    return results
+    if img_debug:
+        return ocr_img(images[0])
+    else:
+        results = pool.map(ocr_img, images)
+        print(len(results))
+        return results
+
 
 
 def ocr_img(img):
     lang = "srp+srp_latn"
     tessdata_path = px.join(px.dirname(px.realpath(__file__)), "bin\\Tesseract-OCR\\tessdata")
     img = improve_image(img)
-    #return img2bytes(img)
-
+    if img_debug:
+        return img2bytes(img)
     with PyTessBaseAPI(lang=lang, path=tessdata_path) as api:
         api.SetImage(img)
         hocr = api.GetHOCRText(0)

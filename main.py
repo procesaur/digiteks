@@ -6,6 +6,7 @@ from ocrworks import ocr_pdf
 from hocrworks import hocr_transform
 from webbrowser import open_new
 from threading import Timer
+from helper import img_debug
 
 
 app = Flask(__name__)
@@ -33,11 +34,11 @@ def api():
     file_bytes, filename = process_req(request)
     hocr = ocr_pdf(file_bytes)
 
-    if False:
+    if img_debug:
         response = make_response(hocr)
         response.headers.set('Content-Type', 'image/jpeg')
         response.headers.set(
-            'Content-Disposition', 'attachment', filename='%s.jpg')
+            'Content-Disposition', 'attachment', filename=filename + '.jpg')
         return response
 
     hocr = hocr_transform(hocr)
