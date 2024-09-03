@@ -106,12 +106,12 @@ cd ./direktorijum/digiteks/softvera
 
 4. Инсталиратје неопходне Пајтон пакете
 ```console
-pip install -r requirements.txt
+sudo -H pip3 install -r requirements.txt
 ```
 
 5. Инсталирајте _Tesseract_
 ```console
-sudo apt-get install tesseract-ocr libtesseract-dev libleptonica-dev pkg-config
+sudo apt-get install tesseract-ocr libtesseract-dev libleptonica-dev pkg-config ffmpeg libsm6 libxext6
 ```
 
 6. Инсталирајте _Poppler_
@@ -121,7 +121,7 @@ sudo apt-get install -y poppler-utils
 
 7. Инсталирајте пакет (_tesserocr_) 
 ```console
-pip install tesserocr
+sudo -H pip3 install tesserocr
 ```
 
 8. Инсталација и подешавање _apache_ веб сервера
@@ -138,11 +138,19 @@ sudo nano /etc/apache2/sites-available/digiteks.conf
 У конфигурациону датотеку упишите:
 
 ```apache
-<Directory /var/www/digiteks>
-Options Indexes FollowSymLinks
-AllowOverride All
-Require all granted
-</Directory>
+<VirtualHost *:5001>
+
+WSGIDaemonProcess digiteks user=www-data group=www-data threads=5
+        WSGIScriptAlias / /var/www/digiteks/digiteks.wsgi
+
+        <Directory /var/www/digiteks>
+                WSGIProcessGroup digiteks
+                WSGIApplicationGroup %{GLOBAL}
+                Order deny,allow
+                Allow from 127.0.0.1 ::1/128 <ADRESA SERVERA>
+        </Directory>
+</VirtualHost>
+
 ```
 
 sudo nano /etc/apache2/ports.conf
@@ -150,9 +158,10 @@ sudo nano /etc/apache2/ports.conf
 Listen 5001
 ```
 
-Урадите неопходни рестарт сервиса
+Урадите неопходно ажурирање и рестарт сервиса
 
 ```console
+sudo a2ensite digiteks
 sudo service apache2 restart
 ```
 
