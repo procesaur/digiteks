@@ -76,17 +76,17 @@ pip install -r requirements.txt
 
 5. Инсталирајте _Tesseract_
 ```console
-apt-get install tesseract-ocr libtesseract-dev libleptonica-dev pkg-config
+sudo apt-get install tesseract-ocr libtesseract-dev libleptonica-dev pkg-config
 ```
 
 6. Инсталирајте _Poppler_
 ```console
-apt-get install -y poppler-utils
+sudo apt-get install -y poppler-utils
 ```
 
 7. Инсталирајте пакет (_tesserocr_) 
 ```console
-pip install pip install tesserocr
+pip install tesserocr
 ```
 
 8. Покрените апликацију
@@ -111,17 +111,17 @@ pip install -r requirements.txt
 
 5. Инсталирајте _Tesseract_
 ```console
-apt-get install tesseract-ocr libtesseract-dev libleptonica-dev pkg-config
+sudo apt-get install tesseract-ocr libtesseract-dev libleptonica-dev pkg-config
 ```
 
 6. Инсталирајте _Poppler_
 ```console
-apt-get install -y poppler-utils
+sudo apt-get install -y poppler-utils
 ```
 
 7. Инсталирајте пакет (_tesserocr_) 
 ```console
-pip install pip install tesserocr
+pip install tesserocr
 ```
 
 8. Инсталација и подешавање _apache_ веб сервера
