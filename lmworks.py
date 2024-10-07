@@ -23,7 +23,7 @@ tokenizer = RobertaTokenizerFast.from_pretrained(modelname)
 def fill_mask(text):
     if "<mask>" in text:
         return unmasker(text)
-    return "нема маске у тексту"
+    return []
 
 
 def visualize(text, step=4, change=True):

@@ -55,7 +55,7 @@ def glasnik():
     if input:
         output = [x for x in fill_mask(input) if x["token"]>4]
     else:
-        output = ""
+        output = []
     return render_template('inference.html', input=input, output=output)
 
 
