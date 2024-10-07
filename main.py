@@ -1,12 +1,13 @@
 from flask import Flask, request, render_template, Response, make_response
 from os import environ, path as px
-from rq_handler import process_req
+from rq_handler import process_req, process_req_glasnik
 from base64 import b64encode
 from ocrworks import ocr_pdf
 from hocrworks import hocr_transform
 from webbrowser import open_new
 from threading import Timer
 from helper import img_debug
+from lmworks import fill_mask, visualize
 
 
 app = Flask(__name__)
@@ -43,6 +44,32 @@ def api():
 
     hocr = hocr_transform(hocr)
     return render_template('gui_response.html', data=hocr, filename=filename)
+
+
+@app.route('/glasnik', methods=['POST'])
+def api():
+    try:
+        input = process_req_glasnik(request)
+    except:
+        input = ""
+    if input:
+        output = fill_mask(input)
+    else:
+        output = None
+    return render_template('inference.html', input=input, output=output)
+
+
+@app.route('/glasnik2', methods=['POST'])
+def api():
+    try:
+        input = process_req_glasnik(request)
+    except:
+        input = ""
+    if input:
+        perp, vals, tokens = visualize(input)
+    else:
+        perp, vals, tokens = None, None, None
+    return render_template('visualize.html', input=input, perp=perp, vals=vals, tokens=tokens)
 
 
 def open_browser():
