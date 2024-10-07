@@ -47,7 +47,7 @@ def api():
 
 
 @app.route('/glasnik', methods=['POST'])
-def api():
+def glasnik():
     try:
         input = process_req_glasnik(request)
     except:
@@ -60,7 +60,7 @@ def api():
 
 
 @app.route('/glasnik2', methods=['POST'])
-def api():
+def glasnik2():
     try:
         input = process_req_glasnik(request)
     except:
