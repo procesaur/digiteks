@@ -46,30 +46,30 @@ def api():
     return render_template('gui_response.html', data=hocr, filename=filename)
 
 
-@app.route('/glasnik', methods=['POST'])
+@app.route('/glasnik', methods=['GET','POST'])
 def glasnik():
     try:
         input = process_req_glasnik(request)
     except:
         input = ""
     if input:
-        output = fill_mask(input)
+        output = [x for x in fill_mask(input) if x["token"]>4]
     else:
-        output = None
+        output = ""
     return render_template('inference.html', input=input, output=output)
 
 
-@app.route('/glasnik2', methods=['POST'])
+@app.route('/glasnik2', methods=['GET','POST'])
 def glasnik2():
     try:
         input = process_req_glasnik(request)
     except:
         input = ""
     if input:
-        perp, vals, tokens = visualize(input)
+        vals, tokens = visualize(input)
     else:
-        perp, vals, tokens = None, None, None
-    return render_template('visualize.html', input=input, perp=perp, vals=vals, tokens=tokens)
+        vals, tokens = [], []
+    return render_template('visualize.html', input=input, vals=vals, tokens=tokens)
 
 
 def open_browser():

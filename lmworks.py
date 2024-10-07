@@ -1,9 +1,10 @@
-from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer
+from transformers import pipeline, AutoModelForCausalLM, RobertaTokenizerFast
 from math import exp
-from torch import cuda, device
 
 
-devicex = device("cuda:0" if cuda.is_available() else "cpu")
+
+devicex = "cpu"
+devicex = "cuda:0"
 
 def tensor2device(tensor, print_dev=False):
     tensor = tensor.to(devicex)
@@ -11,9 +12,12 @@ def tensor2device(tensor, print_dev=False):
         print(devicex)
     return tensor
 
-modelname = 'jerteh/jerteh-355'
-unmasker = pipeline('fill-mask', model=modelname) 
-model, tokenizer = tensor2device(AutoModelForCausalLM.from_pretrained(modelname)),AutoTokenizer.from_pretrained(modelname)
+modelname = '/opt/glasnik-355'
+#modelname = 'https://huggingface.co/nemanjaPetrovic/SrBERTa'
+unmasker = pipeline('fill-mask', model=modelname, top_k=11 ) 
+model = tensor2device(AutoModelForCausalLM.from_pretrained(modelname))
+tokenizer = RobertaTokenizerFast.from_pretrained(modelname)
+#tokenizer =  RobertaTokenizerFast(tokenizer_file=modelname+"/tokenizer.json", add_prefix_space=True, max_len=514, pad_token="<pad>", unk_token="<unk>", mask_token="<mask>", pad_to_max_length=True)                              
 
 
 def fill_mask(text):
@@ -23,9 +27,8 @@ def fill_mask(text):
 
 
 def visualize(text, step=4, change=True):
-    perp = round(perplexity(text), 3)
     vals, tokens = inspect(text, step, change)
-    return perp, vals, tokens
+    return vals, tokens
 
 
 def perplexity(text):
@@ -83,7 +86,7 @@ def inspect(text, step, change=True):
 
 
 def text2tokentensors(tokenizer, text):
-    tokens_tensor = tokenizer.encode(text, add_special_tokens=False, return_tensors="pt")
+    tokens_tensor = tokenizer.encode(text, add_special_tokens=True, return_tensors="pt")
     tokens_tensor = tensor2device(tokens_tensor)
     return tokens_tensor
 
