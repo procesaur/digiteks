@@ -1,6 +1,7 @@
 from transformers import pipeline, AutoModelForCausalLM, RobertaTokenizerFast
 from math import exp
-
+from torch import log, tensor, no_grad, softmax
+from torch.nn import functional as F
 
 
 devicex = "cpu"
@@ -13,7 +14,6 @@ def tensor2device(tensor, print_dev=False):
     return tensor
 
 modelname = '/opt/glasnik-355'
-#modelname = 'https://huggingface.co/nemanjaPetrovic/SrBERTa'
 unmasker = pipeline('fill-mask', model=modelname, top_k=11 ) 
 model = tensor2device(AutoModelForCausalLM.from_pretrained(modelname))
 tokenizer = RobertaTokenizerFast.from_pretrained(modelname)
@@ -26,63 +26,30 @@ def fill_mask(text):
     return []
 
 
-def visualize(text, step=4, change=True):
-    vals, tokens = inspect(text, step, change)
+def visualize(text):
+    vals, tokens = inspect(text)
     return vals, tokens
 
 
-def perplexity(text):
-    tokens = text2tokentensors(tokenizer, text)
-    if tokens.size()[1] > 1024:
-        tokens = tokens.narrow(1, 0, 1024)
-    outputs = model(tokens, labels=tokens)
-    loss = outputs[0]
-    perp = exp(loss)
-    return perp
+def inspect(text):
+    tokens = tokenizer.tokenize(text) 
+    token_ids = tokenizer.convert_tokens_to_ids(tokens)
+    vals = []
 
+    for i, token_id in enumerate(token_ids):
+        input_ids =  tensor2device(tensor(token_ids).unsqueeze(0))
+        labels = input_ids.clone()
+        input_ids[0, i] = tokenizer.mask_token_id 
 
-def inspect(text, step, change=True):
-    tokens = text.split(" ")
-    tl = len(tokens)
+        with no_grad():
+            outputs = model(input_ids, labels=labels)
+            logits = outputs.logits
 
-    if tl < step + 2:
-        ini = perplexity(" ".join(tokens))
-        vals = [ini for x in tokens]
-        return vals, tokens
-
-    togo = tokens[0:step]
-    resto = tokens[step:tl]
-    inp = " ".join(togo)
-    ini = perplexity(inp)
-    vals = [ini for x in togo]
-
-    for i, r in enumerate(resto):
-
-        vals.append(0)
-        togo.pop(0)
-        togo.append(r)
-        inp = "".join(togo)
-        ini = perplexity(inp)
-        n = [ini for x in togo]
-
-        for x in range(step):
-            vals[x+i+1] += n[x]
-
-    for i, v in enumerate(vals):
-        if i < step:
-            ddd = step - i
-        elif i == step:
-            ddd = 1
-        else:
-            ddd = step - tl + i + 1
-        if ddd < 1:
-            ddd = 1
-        co = 1+step-ddd
-
-        vals[i] = vals[i]/co
+        probs = softmax(logits[0, i], dim=-1)
+        token_prob = probs[token_id].item()
+        vals.append(1/token_prob)
 
     return vals, tokens
-
 
 
 def text2tokentensors(tokenizer, text):
@@ -90,4 +57,3 @@ def text2tokentensors(tokenizer, text):
     tokens_tensor = tensor2device(tokens_tensor)
     return tokens_tensor
 
-    
