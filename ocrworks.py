@@ -3,7 +3,7 @@ from os import listdir, environ, pathsep, path as px
 from multiprocessing.dummy import Pool as ThreadPool
 
 from pdf2image import convert_from_bytes
-from PyPDF2 import PdfMerger
+from pypdf import PdfMerger
 from psutil import cpu_count
 from tesserocr import PyTessBaseAPI
 from imageworks import improve_image, img2bytes
