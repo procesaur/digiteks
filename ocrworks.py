@@ -37,7 +37,6 @@ def ocr_pdf(file_bytes):
         return results
 
 
-
 def ocr_img(img):
     lang = "srp+srp_latn"
     tessdata_path = px.join(px.dirname(px.realpath(__file__)), "bin\\Tesseract-OCR\\tessdata")

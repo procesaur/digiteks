@@ -1,5 +1,4 @@
 from io import BytesIO
-
 from PIL import Image
 from cv2 import cvtColor, resize, threshold, dilate, erode, warpAffine, getRotationMatrix2D, medianBlur, adaptiveThreshold, GaussianBlur, bilateralFilter, filter2D
 from cv2 import BORDER_REPLICATE, COLOR_BGR2RGB, COLOR_RGB2BGR, COLOR_BGR2GRAY, THRESH_OTSU, THRESH_BINARY, INTER_CUBIC, ADAPTIVE_THRESH_GAUSSIAN_C
