@@ -35,6 +35,7 @@ def visualize(text):
 
 
 def inspect(text, mp=800):
+    text = text.rstrip().replace("\n", " ")
     words = [" " + x if i>0 else x for i, x in enumerate(text.split())]
     tokens = []
     token_word = []
