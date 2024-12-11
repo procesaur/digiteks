@@ -11,7 +11,10 @@ devicex = cfg["device"]
 modelname = cfg["model"]
 
 def tensor2device(tensor, print_dev=False):
-    tensor = tensor.to(devicex)
+    if devicex<0:
+        tensor = tensor.to("cpu")
+    else:
+        tensor = tensor.to(devicex)
     if print_dev:
         print(devicex)
     return tensor
