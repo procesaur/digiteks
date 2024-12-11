@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, Response, make_response
+from flask import Flask, request, render_template, make_response
 from os import environ, path as px
 from rq_handler import process_req, process_req_glasnik
 from base64 import b64encode

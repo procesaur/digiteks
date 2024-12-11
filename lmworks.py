@@ -1,11 +1,9 @@
-
 from torch import tensor, no_grad, softmax
 from helper import cfg
 from os import path as px
 import sys
 
-path_root = px.dirname(__file__)
-sys.path.append(str(path_root))
+sys.path.append(str(px.dirname(__file__)))
 from bin.transformers_o import pipeline, AutoModelForCausalLM, RobertaTokenizerFast
 
 
@@ -36,9 +34,15 @@ def visualize(text):
     return vals, tokens
 
 
-def inspect(text):
-    tokens = tokenizer.tokenize(text)
-    words = [" " + x for x in text.split()]
+def inspect(text, mp=800):
+    words = [" " + x if i>0 else x for i, x in enumerate(text.split())]
+    tokens = []
+    token_word = []
+    for i, word in enumerate(words):
+        toks = tokenizer.tokenize(word)
+        tokens+=toks
+        for t in toks:
+            token_word.append(i)
     token_ids = tokenizer.convert_tokens_to_ids(tokens)
     vals = []
 
@@ -54,12 +58,14 @@ def inspect(text):
         probs = softmax(logits[0, i], dim=-1)
         token_prob = probs[token_id].item()
         vals.append(1/token_prob)
+    
+    if len(words)<len(tokens):
+        word_vals = []
+        for i, word in enumerate(words):
+            wv = [vals[j] for j, x in enumerate(token_word) if x==i]
+            word_vals.append(sum(wv)/len(wv))
 
-    return vals, tokens
+        vals = [100*x/mp if x<mp else 100 for x in word_vals]
 
-
-def text2tokentensors(tokenizer, text):
-    tokens_tensor = tokenizer.encode(text, add_special_tokens=True, return_tensors="pt")
-    tokens_tensor = tensor2device(tokens_tensor)
-    return tokens_tensor
+    return vals, words
 
