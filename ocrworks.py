@@ -39,7 +39,7 @@ def ocr_pdf(file_bytes):
 
 def ocr_img(img):
     lang = "srp+srp_latn"
-    tessdata_path = px.join(px.dirname(px.realpath(__file__)), "bin\\Tesseract-OCR\\tessdata")
+    tessdata_path = px.join(px.dirname(px.realpath(__file__)), "bin/Tesseract-OCR/tessdata")
     img = improve_image(img)
     if img_debug:
         return img2bytes(img)

@@ -3,6 +3,8 @@
     --third: #E5BA73;
     --second: #FAEAB1;
     --forth: #FAF8F1;
+    --topconf: 0.94;
+    --saturation: 0.05;
 }
 
 body{
@@ -290,4 +292,8 @@ body *::selection {
 .ocr_line:after {
     content: '\A';
     white-space: pre;
+}
+
+.ocrx_word {
+    background-color: rgba(255,255,0,calc((1 - (var(--conf) / var(--topconf))) / var(--saturation)));
 }
