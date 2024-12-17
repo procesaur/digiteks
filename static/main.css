@@ -3,8 +3,6 @@
     --third: #E5BA73;
     --second: #FAEAB1;
     --forth: #FAF8F1;
-    --topconf: 0.94;
-    --saturation: 0.5;
 }
 
 body{
@@ -280,20 +278,3 @@ body *::selection {
     background-color: rgb(50 80 90 / 0.5) !important;
   }
 
-.ocr_separator {
-    border: 2px solid black;
-}
-
-.ocr_carea {
-    border: 1px solid gray;
-    margin-top: 2px;
-}
-
-.ocr_line:after {
-    content: '\A';
-    white-space: pre;
-}
-
-.ocrx_word {
-    background-color: rgba(var(--red),255,0,calc((1 - (var(--conf) / var(--topconf))) * 10 / var(--saturation)));
-}

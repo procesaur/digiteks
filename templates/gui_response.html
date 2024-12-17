@@ -20,10 +20,9 @@
         }
 
         function getHocr(){
-            alert("sadas");
-            var html = document.getElementById("full_hocr")
-            var x = html.innerHTML;
-            dwn(x, "text/xml", ".html");
+            var body = document.getElementById("full_hocr")
+            var head = document.getElementById("full_hocr_head")
+            dwn(`<!DOCTYPE html><html><head>${head.innerHTML}</head><body>${body.innerHTML}</body></html>`, "text/html", ".html");
         }
 
         function getHtml(){
@@ -40,6 +39,7 @@
         }
 
     </script>
+
 </head>
 <body draggable="false">
     <div class="helphead">
@@ -47,7 +47,47 @@
         <button type="button" onclick="getText()" class="button process">Преузми Текст</button>
         <button type="button" onclick="getHtml()" class="button process">Преузми ХТМЛ</button>
     </div>
+    <div id="full_hocr_head">
+        <script>
+            function handleTextChange(event) {
+                const oldValue = event.target.dataset.original;
+                const newValue = event.target.innerText;
+                if (oldValue != newValue){
+                    event.target.style  = "--red:0; --conf:0";
+                }
+                else{
+                    event.target.style  = "--red:255; --conf:1";
+                }
+            }
+
+
+        </script>
+        <style>
+            :root {
+                --topconf: 0.94;
+                --saturation: 0.5;
+            }
+            .ocr_separator {
+                border: 2px solid black;
+            }
+
+            .ocr_carea {
+                border: 1px solid gray;
+                margin-top: 2px;
+            }
+
+            .ocr_line:after {
+                content: '\A';
+                white-space: pre;
+            }
+
+            .ocrx_word {
+                background-color: rgba(var(--red),255,0,calc((1 - (var(--conf) / var(--topconf))) * 10 / var(--saturation)));
+            }
+        </style>
+    </div>
     <div class="helpmain main" id="full_hocr" draggable="false">
+
         {% for x in data %}
             {{x|safe}}
         {% endfor %}
