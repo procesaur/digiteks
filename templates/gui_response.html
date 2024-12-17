@@ -59,6 +59,55 @@
                     event.target.style  = "--red:255; --conf:1";
                 }
             }
+            function moveup(event){
+                const target = event.target.parentElement;
+                const prevSibling = target.previousElementSibling;
+                const container = target.parentElement
+                if (prevSibling) {
+                    container.insertBefore(target, prevSibling);
+                }
+            }
+
+            function movedown(event){
+                const target = event.target.parentElement;
+                const container = target.parentElement
+                const nextSibling  = target.nextElementSibling;
+                if (nextSibling ) {
+                    container.insertBefore(nextSibling, target);
+                }
+            }
+
+            function openhocrsettings(event){
+
+                const popup = document.getElementById('popup_settings_hocr');
+                
+                const topconfSlider = document.getElementById('topconfSlider');
+                const saturationSlider = document.getElementById('saturationSlider');
+                const topconfValue = document.getElementById('topconfValue');
+                const saturationValue = document.getElementById('saturationValue');
+                
+
+                topconfSlider.addEventListener('input', function () {
+                    const value = topconfSlider.value;
+                    document.documentElement.style.setProperty('--topconf', value);
+                    topconfValue.textContent = value; // Show the value next to the slider
+                });
+
+                // Update --saturation when the slider is moved
+                saturationSlider.addEventListener('input', function () {
+                    const value = saturationSlider.value;
+                    document.documentElement.style.setProperty('--saturation', value);
+                    saturationValue.textContent = value; // Show the value next to the slider
+                });
+                
+                popup.style.display = 'block';
+
+            }
+
+            function closehocrsettings(event){
+                const popup = document.getElementById('popup_settings_hocr');
+                popup.style.display = 'none';
+            }
 
 
         </script>
@@ -82,12 +131,62 @@
             }
 
             .ocrx_word {
-                background-color: rgba(var(--red),255,0,calc((1 - (var(--conf) / var(--topconf))) * 10 / var(--saturation)));
+                background-color: rgba(var(--red),255,0,calc((1 - (var(--conf) / var(--topconf))) * 5 / var(--saturation)));
+            }
+
+            .popup {
+                display: none; /* Hidden by default */
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+                z-index: 1000;
+            }
+
+            .popup-content {
+                background-color: white;
+                /*margin: 15% auto;*/
+                padding: 20px;
+                /*width: 300px;*/
+                border-radius: 8px;
+                text-align: center;
+            }
+
+            .close-button {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                font-size: 25px;
+                cursor: pointer;
+            }
+
+            input[type="range"] {
+                width: 80%;
             }
         </style>
+        <div id="popup_settings_hocr" class="popup">
+            <div class="popup-content">
+              <span class="close-button" id="closePopupButton"  onclick="closehocrsettings()">&times;</span>
+              
+              <label for="topconfSlider">Граница поузданости: </label>
+              <input type="range" id="topconfSlider" min="0" max="1" step="0.01" value="0.94">
+              <span id="topconfValue">0.94</span>
+          
+              <br><br>
+          
+              <label for="saturationSlider">Сатурација маркера: </label>
+              <input type="range" id="saturationSlider" min="0" max="1" step="0.01" value="0.5">
+              <span id="saturationValue">0.5</span>
+          
+              <br><br>
+            </div>
+          </div>
+          
     </div>
     <div class="helpmain main" id="full_hocr" draggable="false">
-
+        <button id="openPopupButton" onclick="openhocrsettings()">⚙</button>
         {% for x in data %}
             {{x|safe}}
         {% endfor %}
