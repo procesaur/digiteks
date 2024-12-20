@@ -4,48 +4,14 @@
     <meta charset="UTF-8">
     <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='main.css') }}">
     <script src="{{url_for('static', filename='hocr.js')}}"></script>
-    <script>
-        function help(){
-            document.getElementById('if').src = "/help";
-        }
-
-        function dwn(x, mime, ext){
-            var base64doc = btoa(unescape(encodeURIComponent(x))),
-            a = document.createElement('a'),
-            e = new MouseEvent('click');
-
-            a.download = '{{filename}}' + ext;
-            a.href = 'data:' + mime + ';base64,' + base64doc;
-            a.dispatchEvent(e);
-        }
-
-        function getHocr(){
-            var body = document.getElementById("full_hocr")
-            var head = document.getElementById("full_hocr_head")
-            dwn(`<!DOCTYPE html><html><head>${head.innerHTML}</head><body>${body.innerHTML}</body></html>`, "text/html", ".html");
-        }
-
-        function getHtml(){
-            var html = document.getElementById("full_hocr")
-            var x = html.innerHTML;
-            dwn(x, "text/xml", ".html");
-        }
-
-        function getText(){
-            var html = document.getElementById("full_hocr")
-            var x = html.textContent;
-            x = x.replace(/\s\s+/g, ' ');
-            dwn(x, "text/plain", ".txt");
-        }
-
-    </script>
-
 </head>
 <body draggable="false">
     <div class="helphead">
-        <button type="button" onclick="getHocr()" class="button process">Преузми ХОЦР</button>
-        <button type="button" onclick="getText()" class="button process">Преузми Текст</button>
-        <button type="button" onclick="getHtml()" class="button process">Преузми ХТМЛ</button>
+        <input type="file" id="hocrInput" onchange="uploadHocr(event)" style="display:none" accept=".html">
+        <button type="button" onclick="document.getElementById('hocrInput').click()" class="button process">⭱ Учитај</button>
+        <button type="button" onclick="getHocr()" class="button process">⭳ Сачувај</button>
+        <button type="button" onclick="getText()" class="button process">⭳ Текст</button>
+        <button type="button" onclick="getHtml()" class="button process">⭳ ХТМЛ</button>
     </div>
     <div id="full_hocr_head">
         <script>
@@ -59,49 +25,26 @@
                     event.target.style  = "--red:255; --conf:1";
                 }
             }
-            function moveup(event){
-                const target = event.target.parentElement;
-                const prevSibling = target.previousElementSibling;
-                const container = target.parentElement
-                if (prevSibling) {
-                    container.insertBefore(target, prevSibling);
-                }
-            }
-
-            function movedown(event){
-                const target = event.target.parentElement;
-                const container = target.parentElement
-                const nextSibling  = target.nextElementSibling;
-                if (nextSibling ) {
-                    container.insertBefore(nextSibling, target);
-                }
-            }
 
             function openhocrsettings(event){
-
                 const popup = document.getElementById('popup_settings_hocr');
-                
                 const topconfSlider = document.getElementById('topconfSlider');
                 const saturationSlider = document.getElementById('saturationSlider');
                 const topconfValue = document.getElementById('topconfValue');
                 const saturationValue = document.getElementById('saturationValue');
                 
-
                 topconfSlider.addEventListener('input', function () {
                     const value = topconfSlider.value;
                     document.documentElement.style.setProperty('--topconf', value);
                     topconfValue.textContent = value; // Show the value next to the slider
                 });
 
-                // Update --saturation when the slider is moved
                 saturationSlider.addEventListener('input', function () {
                     const value = saturationSlider.value;
                     document.documentElement.style.setProperty('--saturation', value);
                     saturationValue.textContent = value; // Show the value next to the slider
                 });
-                
                 popup.style.display = 'block';
-
             }
 
             function closehocrsettings(event){
@@ -109,6 +52,171 @@
                 popup.style.display = 'none';
             }
 
+            function checkall(event){
+                const childCheckboxes = event.target.parentElement.querySelectorAll('.dynamic-checkbox');
+
+                childCheckboxes.forEach(childCheckbox => { childCheckbox.checked = event.target.checked;});
+            }
+            
+            function MoveUp() {
+
+                const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+                
+                const checkedNames = Array.from(checkboxes)
+                    .filter(checkbox => checkbox.checked)
+                    .map(checkbox => checkbox.name);
+
+                const elements = checkedNames.map(name => document.getElementById(name))
+                                            .filter(element => element !== null); 
+
+                const areas = new Map();
+                elements.forEach(element => {
+                const parentArea = element.closest('.ocr_par');
+                if (parentArea) {
+                    if (!areas.has(parentArea)) {
+                        areas.set(parentArea, []);
+                    }
+                    areas.get(parentArea).push(element);
+                }
+                });
+
+                // Process each '.ocr_par' based on the selection
+                areas.forEach((selectedLines, area) => {
+                    const allLines = Array.from(area.querySelectorAll('.ocr_line'));
+                    if (selectedLines.length === allLines.length) {
+                        // If all lines are selected, move the entire '.ocr_par'
+                        const prevArea = area.previousElementSibling;
+                        if (prevArea && prevArea.classList.contains('ocr_par')) {
+                            area.parentNode.insertBefore(area, prevArea);
+                        }
+                    } else {
+                        // If not all lines are selected, move selected lines within the '.ocr_par'
+                        selectedLines.forEach(line => {
+                        const prevSibling = line.previousElementSibling;
+                        if (prevSibling && prevSibling.classList.contains('ocr_line')) {
+                            area.insertBefore(line, prevSibling); // Switch with previous sibling
+                        } else {
+                            const prevArea = area.previousElementSibling;
+                            if (prevArea && prevArea.classList.contains('ocr_par')) {
+                                prevArea.appendChild(line); // Move to the end of the previous '.ocr_par'
+                            }
+                        }
+                    });
+                    }
+                });
+
+   
+            }
+            function MoveDown() {
+                const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+                const checkedNames = Array.from(checkboxes)
+                    .filter(checkbox => checkbox.checked)
+                    .map(checkbox => checkbox.name);
+
+                const elements = checkedNames.map(name => document.getElementById(name))
+                                            .filter(element => element !== null);
+
+                // Group elements by their parent '.ocr_par'
+                const areas = new Map();
+
+                elements.forEach(element => {
+                    const parentArea = element.closest('.ocr_par');
+                    if (parentArea) {
+                        if (!areas.has(parentArea)) {
+                            areas.set(parentArea, []);
+                        }
+                        areas.get(parentArea).push(element);
+                    }
+                });
+
+                // Process each '.ocr_par' based on the selection
+                areas.forEach((selectedLines, area) => {
+                    const allLines = Array.from(area.querySelectorAll('.ocr_line'));
+                    if (selectedLines.length === allLines.length) {
+                        // If all lines are selected, move the entire '.ocr_par'
+                        const nextArea = area.nextElementSibling;
+                        if (nextArea && nextArea.classList.contains('ocr_par')) {
+                            area.parentNode.insertBefore(nextArea, area);
+                        }
+                    } else {
+                        // If not all lines are selected, move selected lines within the '.ocr_par'
+                        selectedLines.forEach(line => {
+                            const nextSibling = line.nextElementSibling;
+                            if (nextSibling && nextSibling.classList.contains('ocr_line')) {
+                                area.insertBefore(nextSibling, line); // Switch with next sibling
+                            } else {
+                                const nextArea = area.nextElementSibling;
+                                if (nextArea && nextArea.classList.contains('ocr_par')) {
+                                    nextArea.insertBefore(line, nextArea.firstChild); // Move to the beginning of the next '.ocr_par'
+                                }
+                            }
+                        });
+                    }
+                });
+
+            }
+
+            function MaybeDelete(){
+            if (event.key === 'Delete') { 
+                event.preventDefault();
+                event.target.innerHTML = "";
+                }
+            }
+
+            function Uncheck() {
+                const checkboxes = document.querySelectorAll('.dynamic-checkbox');
+                checkboxes.forEach(checkbox => { checkbox.checked = false; }); 
+            }
+
+            function deleteCheckedElements() {
+                const checkboxes = document.querySelectorAll('.dynamic-checkbox');
+                
+                const checkedNames = Array.from(checkboxes)
+                    .filter(checkbox => checkbox.checked)
+                    .map(checkbox => checkbox.name);
+
+                const elements = checkedNames.map(name => document.getElementById(name))
+                                            .filter(element => element !== null);
+
+                const areas = new Map();
+
+                elements.forEach(element => {
+                    const parentArea = element.closest('.ocr_par');
+                    if (parentArea) {
+                        if (!areas.has(parentArea)) {
+                            areas.set(parentArea, []);
+                        }
+                        areas.get(parentArea).push(element);
+                    }
+                });
+
+                areas.forEach((selectedLines, area) => {
+                    const allLines = Array.from(area.querySelectorAll('.ocr_line'));
+                    if (selectedLines.length === allLines.length) {
+                        area.remove();
+                    } else {
+                        selectedLines.forEach(line => {
+                            line.remove();
+                        });
+                    }
+                });
+            }
+            function VerifyBulk() {
+                const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+                const checkedNames = Array.from(checkboxes)
+                    .filter(checkbox => checkbox.checked)
+                    .map(checkbox => checkbox.name);
+
+                const elements = checkedNames.map(name => document.getElementById(name))
+                                            .filter(element => element !== null);
+
+                elements.forEach(line => {
+                    const words = line.querySelectorAll('.ocrx_word');
+                    words.forEach(word => {
+                        word.style  = "--red:255; --conf:1";
+                    });
+                });
+            }
 
         </script>
         <style>
@@ -120,9 +228,10 @@
                 border: 2px solid black;
             }
 
-            .ocr_carea {
+            .ocr_par {
                 border: 1px solid gray;
                 margin-top: 2px;
+
             }
 
             .ocr_line:after {
@@ -165,7 +274,28 @@
             input[type="range"] {
                 width: 80%;
             }
+
+            .dynamic-checkbox{
+                display: inline-block !important;
+                visibility: visible !important;
+            }
+
+            .par-checkbox{
+                width: 12pt;
+                height: 12pt;
+                margin-left: -20px;
+            }
+
+            .menubutton{
+                width: 20pt;
+                height: 20pt;
+            }
+
+            .meni
+                {margin-bottom: 10pt;
+            }
         </style>
+        </head><body>
         <div id="popup_settings_hocr" class="popup">
             <div class="popup-content">
               <span class="close-button" id="closePopupButton"  onclick="closehocrsettings()">&times;</span>
@@ -185,11 +315,21 @@
           </div>
           
     </div>
-    <div class="helpmain main" id="full_hocr" draggable="false">
-        <button id="openPopupButton" onclick="openhocrsettings()">⚙</button>
-        {% for x in data %}
-            {{x|safe}}
-        {% endfor %}
+    <div class="helpmain main" id="full_hocr" draggable="false"  style="padding-left: 20pt;">
+        <div class=meni>
+            <button id="openPopupButton" onclick="openhocrsettings()" class="menubutton" title="Отвори подешавања" style="float: right;">⚙</button>
+            <button class="menubutton" title="Помери горе" onclick="MoveUp()">↑</button>
+            <button class="menubutton" title="Помери доле" onclick="MoveDown()">↓</button>
+            <button class="menubutton" title="Одчекирај" onclick="Uncheck()">☐</button>
+            <button class="menubutton" title="Обриши" onclick="deleteCheckedElements()">␡</button>
+            <button class="menubutton" title="Обележи као добро" onclick="VerifyBulk()">✓</button>
+        </div>
+       <div id="digiteks_hocr_content">
+            {% for x in data %}
+                {{x|safe}}
+            {% endfor %}
+       </div>
+
     </div>
 </body>
 </html>
