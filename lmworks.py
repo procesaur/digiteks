@@ -20,9 +20,9 @@ def tensor2device(tensor, print_dev=False):
     return tensor
 
 
-unmasker = pipeline('fill-mask', model=modelname, top_k=11, device=devicex ) 
-model = tensor2device(AutoModelForCausalLM.from_pretrained(modelname))
-tokenizer = RobertaTokenizerFast.from_pretrained(modelname)
+#unmasker = pipeline('fill-mask', model=modelname, top_k=11, device=devicex ) 
+#model = tensor2device(AutoModelForCausalLM.from_pretrained(modelname))
+#tokenizer = RobertaTokenizerFast.from_pretrained(modelname)
 #tokenizer =  RobertaTokenizerFast(tokenizer_file=modelname+"/tokenizer.json", add_prefix_space=True, max_len=514, pad_token="<pad>", unk_token="<unk>", mask_token="<mask>", pad_to_max_length=True)                              
 
 

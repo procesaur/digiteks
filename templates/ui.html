@@ -2,25 +2,58 @@
 <head>
     <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='main.css') }}">
     <script>
-        function process(){
-            document.getElementById('if').src = "/load";
-            setTimeout(function() {
-                document.getElementById('fileform').submit();
-            }, 500);      
+        function process(process=true){
+            var upbox = document.getElementById("fileElem")
+            if (upbox.value!= ""){
+                if (process){
+                    document.getElementById('if').src = "/load";
+                }
+                setTimeout(function() {
+                    if (process){
+                        var lang = document.getElementById('lang').value;
+                        document.getElementById('fileform').action = '/process/' + lang;
+                    }
+                    else{
+                        if(upbox.value.endsWith('.pdf')){
+                            document.getElementById('fileform').action = '/imgdown';
+                        }
+                        else{
+                            alert("Није одабрана ПДФ датотека!")
+                        }
+                    }
+                    document.getElementById('fileform').submit();
+                }, 500);
+            }
+            else{
+                alert("Није одабрана датотека за обраду!")
+            }
         }
+
     </script>
+
 </head>
 <body>
 <div class="main">
-    <form target="if" id ="fileform" method="post" enctype = "multipart/form-data" action="/process">
+    <form target="if" id ="fileform" method="post" enctype = "multipart/form-data" style="display: inline;">
         <span id="dropzone" class="dropzone">
           ПРЕВУЦИ ПДФ овде или 
-          <input class="dropzone-input" type="file" name="file" id="fileElem" accept="application/pdf" onchange="handleFiles(this.files)">
+          <input class="dropzone-input" type="file" name="file" id="fileElem" accept="application/pdf, .zip">
           <label class="button" >ОДАБЕРИ</label> са диска
         </span>
-          <button type = "button" class="button process" onclick="process()">ОБРАДИ</button>
-          <iframe id="preview" class="preview" src="/img"></iframe>
     </form>
+        <button type = "button" onclick="process(false)" class="button process" title="Преузми као слике">⭳ Слике</button>
+
+        <button type = "button" class="button process" onclick="process()" style="float: right;">ОБРАДИ</button>
+        <select id="lang" style="float: right;" class="button process" title="Одабир ОЦР модела">
+            <option selected value="srp+srp_latn">Ћирилица+</option>
+            <option value="srp_latn+srp">Латиница+</option>
+            <option value="srp">Ћирилица</option>
+            <option value="srp_latn">Латиница</option>
+        </select>
+
+ 
+        <iframe id="preview" class="preview" src="/img"></iframe>
+   
 </div>
 <iframe id="if" name="if" class="rightside" src="/help"></iframe>
 
@@ -30,49 +63,64 @@
     var multiple = dropzone_input.getAttribute('multiple') ? true : false;
 
     ['drag', 'dragstart', 'dragend', 'dragover', 'dragenter', 'dragleave', 'drop'].forEach(function(event) {
-    dropzone.addEventListener(event, function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    });
+        dropzone.addEventListener(event, function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        });
     });
 
     dropzone.addEventListener('dragover', function(e) {
-    this.classList.add('dropzone-dragging');
+        this.classList.add('dropzone-dragging');
     }, false);
 
     dropzone.addEventListener('dragleave', function(e) {
-    this.classList.remove('dropzone-dragging');
+        this.classList.remove('dropzone-dragging');
     }, false);
 
 
-
-
     dropzone.addEventListener('drop', function(e) {
-    this.classList.remove('dropzone-dragging');
-    var files = e.dataTransfer.files;
-    var dataTransfer = new DataTransfer();
-    
-    var for_alert = "";
-    Array.prototype.forEach.call(files, file => {    
-        for_alert = URL.createObjectURL(file) + "#zoom=FitH";
-        dataTransfer.items.add(file);
-        return false;
-    });
+        this.classList.remove('dropzone-dragging');
+        var files = e.dataTransfer.files;
+        var dataTransfer = new DataTransfer();
+        
+        var for_alert = "";
+        Array.prototype.forEach.call(files, file => {    
+            for_alert = URL.createObjectURL(file) + "#zoom=FitH";
+            dataTransfer.items.add(file);
+            return false;
+        });
 
-    var filesToBeAdded = dataTransfer.files;
-    var ifr = document.getElementById("preview");
-    dropzone_input.files = filesToBeAdded;
-    ifr.src = for_alert;
+        var filesToBeAdded = dataTransfer.files;
+        var ifr = document.getElementById("preview");
+        dropzone_input.files = filesToBeAdded;
+        ifr.src = for_alert;
     
     }, false);
 
     dropzone.addEventListener('click', function(e) {
-    dropzone_input.click();
+        dropzone_input.click();
     });
 
     document.getElementById('fileElem').onchange = function() {
-    var url = URL.createObjectURL(this.files[0])+"#zoom=FitH";
-    document.getElementById('preview').src = url;
+        if (this.files[0].name.endsWith('.pdf')){
+            var url = URL.createObjectURL(this.files[0])+"#zoom=FitH";
+            document.getElementById('preview').removeAttribute('srcdoc');
+            document.getElementById('preview').src = url;
+        }
+        else{
+            let formData = new FormData();
+            formData.append('file', this.files[0]);
+            let xhr = new XMLHttpRequest();
+            xhr.open('POST', '/showzip', true);
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    document.getElementById('preview').srcdoc = xhr.responseText;
+                } else {
+                    console.error('Error:', xhr.statusText);
+                }
+            };
+            xhr.send(formData);   
+        }
     };
     
 </script>

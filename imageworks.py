@@ -22,6 +22,8 @@ def img2bytes(img):
     img.save(img_byte_arr, format='PNG')
     return img_byte_arr.getvalue()
 
+def bytes2img(img):
+    return Image.open(BytesIO(img))
 
 def sharpen_img(img):
     sharpen_kernel = nparray([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
@@ -60,7 +62,7 @@ def convert_from_image_to_cv2(img: Image) -> ndarray:
     return cvtColor(nparray(img), COLOR_RGB2BGR)
 
 
-def correct_skew(image, delta=1, limit=5):
+def correct_skew(image, delta=1, limit=8):
     (h, w) = image.shape[:2]
     center = (w // 2, h // 2)
 

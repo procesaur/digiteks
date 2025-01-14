@@ -20,7 +20,7 @@ function prepare(top=0.94, saturation=0.5) {
         word.setAttribute("onkeydown", "MaybeDelete(event)");
     });
 
-    const lines = document.querySelectorAll('.ocr_line');
+    const lines = document.querySelectorAll('.ocr_line, .ocr_caption');
 
     Array.from(lines).forEach(function (line) {
         const checkbox = document.createElement('input');

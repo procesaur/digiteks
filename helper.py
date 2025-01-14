@@ -1,5 +1,9 @@
 from os import name, path as px
 from json import load
+import re
+import zipfile
+from io import BytesIO
+from base64 import b64encode
 
 
 def load_conf(path=None):
@@ -13,4 +17,34 @@ cfg = load_conf()
 def isWindows():
     return name == 'nt'
 
-img_debug = False
+
+def zip_bytes_string(images_in_bytes):
+    zip_stream = BytesIO()
+    with zipfile.ZipFile(zip_stream, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        for filename, image_bytes in images_in_bytes.items():
+            zip_file.writestr(filename, image_bytes)
+
+    zip_stream.seek(0)
+    return zip_stream
+
+def image_zip_to_html(file, encode=False):
+    if isinstance(file, bytes):
+        memory_file = BytesIO(file)
+    else:
+        memory_file = BytesIO()
+        file.save(memory_file)
+    memory_file.seek(0)
+    images = []
+    
+    with zipfile.ZipFile(memory_file, 'r') as zip_ref:
+        for file_info in zip_ref.infolist():
+            if file_info.filename.endswith(('png', 'jpg', 'jpeg')):
+                with zip_ref.open(file_info) as image_file:
+                    image_data = image_file.read()
+                    if encode:
+                        encoded_image = b64encode(image_data).decode('utf-8')
+                        images.append(encoded_image)
+                    else:
+                        images.append(image_data)
+    return images
+

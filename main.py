@@ -1,13 +1,12 @@
-from flask import Flask, request, render_template, make_response
+from flask import Flask, request, render_template, send_file, render_template_string
 from os import environ, path as px
 from rq_handler import process_req, process_req_glasnik
-from base64 import b64encode
-from ocrworks import ocr_pdf
+from ocrworks import ocr_pdf, ocr_zip
 from hocrworks import hocr_transform
 from webbrowser import open_new
 from threading import Timer
-from helper import img_debug
 from lmworks import fill_mask, visualize
+from helper import zip_bytes_string, image_zip_to_html
 
 
 app = Flask(__name__)
@@ -30,20 +29,37 @@ def img():
 def load():
     return render_template('img.html', cover=px.join('static', 'load.gif'))
 
-@app.route('/process', methods=['POST', 'GET'])
-def api():
+@app.route('/process/<lang>', methods=['POST', 'GET'])
+def api(lang):
     file_bytes, filename = process_req(request)
-    hocr = ocr_pdf(file_bytes)
-
-    if img_debug:
-        response = make_response(hocr)
-        response.headers.set('Content-Type', 'image/jpeg')
-        response.headers.set(
-            'Content-Disposition', 'attachment', filename=filename + '.jpg')
-        return response
-
+    if filename.endswith(".pdf"):
+        hocr = ocr_pdf(file_bytes, lang=lang)
+    else:
+        hocr = ocr_zip(file_bytes, lang=lang)  
     hocr = hocr_transform(hocr)
     return render_template('gui_response.html', data=hocr, filename=filename)
+
+@app.route('/imgdown', methods=['POST', 'GET'])
+def imgdown():
+    file_bytes, filename = process_req(request)
+    images_in_bytes = ocr_pdf(file_bytes, img_down=True)
+    improved_images_in_bytes = {f"image{i}_enhanced.png": img[1] for i, img in enumerate(images_in_bytes)}
+    images_in_bytes = {f"image{i}_.png": img[0] for i, img in enumerate(images_in_bytes)}
+    images_in_bytes.update(improved_images_in_bytes)
+    return send_file(
+        zip_bytes_string(images_in_bytes),
+        mimetype='application/zip',
+        as_attachment=True,
+        download_name=filename + '_images.zip'
+    )
+
+@app.route('/showzip', methods=['POST'])
+def showzip():
+    file = request.files['file']
+    if file and file.filename.endswith('.zip'):
+        images = image_zip_to_html(file, encode=True)
+        return render_template("images.html", images=images)
+    return 'Invalid file'
 
 
 @app.route('/glasnik', methods=['GET','POST'])
