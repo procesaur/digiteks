@@ -9,9 +9,9 @@
     <div class="helphead">
         <input type="file" id="hocrInput" onchange="uploadHocr(event)" style="display:none" accept=".html">
         <button type="button" onclick="document.getElementById('hocrInput').click()" class="button process">⭱ Учитај</button>
-        <button type="button" onclick="getHocr()" class="button process">⭳ Сачувај</button>
-        <button type="button" onclick="getText()" class="button process">⭳ Текст</button>
-        <button type="button" onclick="getHtml()" class="button process">⭳ ХТМЛ</button>
+        <button type="button" onclick="getHocr('{{filename}}')" class="button process">⭳ Сачувај</button>
+        <button type="button" onclick="getText('{{filename}}')" class="button process">⭳ Текст</button>
+        <button type="button" onclick="getHtml('{{filename}}')" class="button process">⭳ ХТМЛ</button>
     </div>
     <div id="full_hocr_head">
         <script>
