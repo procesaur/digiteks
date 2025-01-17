@@ -46,9 +46,9 @@ def inspect(text, mp=800):
 
     for i, token_id in enumerate(token_ids):
        
-        input_ids =  tensor(token_ids).unsqueeze(0)
+        input_ids = tensor(token_ids).unsqueeze(0)
         if cuda:
-            input_ids.to(0)
+            input_ids = input_ids.to(0)
         labels = input_ids.clone()
         input_ids[0, i] = tokenizer.mask_token_id 
 
