@@ -2,27 +2,18 @@ from torch import tensor, no_grad, softmax
 from helper import cfg
 from os import path as px
 import sys
+from torch import cuda
 
 sys.path.append(str(px.dirname(__file__)))
 from bin.transformers_o import pipeline, AutoModelForCausalLM, RobertaTokenizerFast
 
 
-devicex = cfg["device"]
 modelname = cfg["model"]
+devicex = 0 if cuda.is_available() else -1
 
-def tensor2device(tensor, print_dev=False):
-    if devicex<0:
-        tensor = tensor.to("cpu")
-    else:
-        tensor = tensor.to(devicex)
-    if print_dev:
-        print(devicex)
-    return tensor
-
-
-#unmasker = pipeline('fill-mask', model=modelname, top_k=11, device=devicex ) 
-#model = tensor2device(AutoModelForCausalLM.from_pretrained(modelname))
-#tokenizer = RobertaTokenizerFast.from_pretrained(modelname)
+model = AutoModelForCausalLM.from_pretrained(modelname).to(devicex)
+unmasker = pipeline('fill-mask', model=modelname, top_k=11, device=devicex) 
+tokenizer = RobertaTokenizerFast.from_pretrained(modelname)
 #tokenizer =  RobertaTokenizerFast(tokenizer_file=modelname+"/tokenizer.json", add_prefix_space=True, max_len=514, pad_token="<pad>", unk_token="<unk>", mask_token="<mask>", pad_to_max_length=True)                              
 
 
@@ -51,7 +42,7 @@ def inspect(text, mp=800):
     vals = []
 
     for i, token_id in enumerate(token_ids):
-        input_ids =  tensor2device(tensor(token_ids).unsqueeze(0))
+        input_ids =  tensor(token_ids).unsqueeze(0).to(devicex)
         labels = input_ids.clone()
         input_ids[0, i] = tokenizer.mask_token_id 
 
