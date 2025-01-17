@@ -9,10 +9,13 @@ from bin.transformers_o import pipeline, AutoModelForCausalLM, RobertaTokenizerF
 
 
 modelname = cfg["model"]
-devicex = 0 if cuda.is_available() else -1
-
-model = AutoModelForCausalLM.from_pretrained(modelname).to(devicex)
-unmasker = pipeline('fill-mask', model=modelname, top_k=11, device=devicex) 
+cuda = cuda.is_available()
+if cuda:
+    model = AutoModelForCausalLM.from_pretrained(modelname).to(0)
+    unmasker = pipeline('fill-mask', model=modelname, top_k=11, device=0)
+else:
+    model = AutoModelForCausalLM.from_pretrained(modelname)
+    unmasker = pipeline('fill-mask', model=modelname, top_k=11)
 tokenizer = RobertaTokenizerFast.from_pretrained(modelname)
 #tokenizer =  RobertaTokenizerFast(tokenizer_file=modelname+"/tokenizer.json", add_prefix_space=True, max_len=514, pad_token="<pad>", unk_token="<unk>", mask_token="<mask>", pad_to_max_length=True)                              
 
@@ -42,7 +45,10 @@ def inspect(text, mp=800):
     vals = []
 
     for i, token_id in enumerate(token_ids):
-        input_ids =  tensor(token_ids).unsqueeze(0).to(devicex)
+       
+        input_ids =  tensor(token_ids).unsqueeze(0)
+        if cuda:
+            input_ids.to(0)
         labels = input_ids.clone()
         input_ids[0, i] = tokenizer.mask_token_id 
 
