@@ -1,6 +1,6 @@
 from os import name, path as px
 from json import load
-import re
+import time
 import zipfile
 from io import BytesIO
 from base64 import b64encode
@@ -48,3 +48,27 @@ def image_zip_to_html(file, encode=False):
                         images.append(image_data)
     return images
 
+def group_into_sentences(words):
+    sentences = []
+    current_sentence = []
+
+    for word in words:
+        current_sentence.append(word)
+        if word.endswith('.'):
+            sentences.append(current_sentence)
+            current_sentence = []
+
+    if current_sentence:
+        sentences.append(current_sentence)
+
+    return sentences
+
+
+def do(f, x):
+    print(f.__name__)
+    start_time = time.time()
+    x = f(x)
+    end_time = time.time()
+    execution_time = end_time - start_time
+    print(f"Time: {execution_time} seconds")
+    return x

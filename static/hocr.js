@@ -13,6 +13,7 @@ function prepare(top=0.94, saturation=0.5) {
 
     Array.from(words).forEach(function (word) {
         var conf = parseInt(word.title.substring(word.title.lastIndexOf(' ')))/100;
+        var conf = parseInt(word["y_wconf"])/100;
         word.style  = "--red:255; --conf:"+conf;
         word.dataset.original = word.innerText;
         word.contentEditable = 'true';

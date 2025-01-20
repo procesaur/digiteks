@@ -5,8 +5,10 @@ from cv2 import BORDER_REPLICATE, COLOR_BGR2RGB, COLOR_RGB2BGR, COLOR_BGR2GRAY, 
 from numpy import ndarray, array as nparray, ones, uint8, max, sum as npsum, arange
 
 
-def improve_image(image):
-    img = convert_from_image_to_cv2(image)
+
+def improve_image(img):
+
+    img = convert_from_image_to_cv2(img)
     img = resize_img(img)
     img = cvtColor(img, COLOR_BGR2GRAY)
 

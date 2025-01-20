@@ -8,7 +8,7 @@ from psutil import cpu_count
 from tesserocr import PyTessBaseAPI
 from imageworks import improve_image, img2bytes, bytes2img
 
-from helper import isWindows, image_zip_to_html
+from helper import isWindows, image_zip_to_html, do
 
 
 print(cpu_count())
@@ -26,17 +26,14 @@ if isWindows():
 
 
 def ocr_pdf(file_bytes, img_down=False, lang="srp+srp_latn"):
-    print ("convert to images")
     images = convert_from_bytes(file_bytes, dpi=300, thread_count=cpu_count())
     images = ((x, lang, img_down) for x in images)
-    print ("enhance")
     results = pool.map(ocr_img, images)
     return results
 
 def ocr_zip(file_bytes, img_down=False, lang="srp+srp_latn"):
     images = image_zip_to_html(file_bytes)
     images = ((bytes2img(x), lang, img_down) for x in images)
-    print ("enhance")
     results = pool.map(ocr_img, images)
     return results
 

@@ -6,7 +6,7 @@ from hocrworks import hocr_transform
 from webbrowser import open_new
 from threading import Timer
 from lmworks import fill_mask, visualize
-from helper import zip_bytes_string, image_zip_to_html
+from helper import zip_bytes_string, image_zip_to_html, do
 
 
 app = Flask(__name__)
@@ -33,7 +33,7 @@ def load():
 def api(lang):
     file_bytes, filename = process_req(request)
     if filename.endswith(".pdf"):
-        hocr = ocr_pdf(file_bytes, lang=lang)
+        hocr = do(ocr_pdf, file_bytes)
     else:
         hocr = ocr_zip(file_bytes, lang=lang)  
     hocr = hocr_transform(hocr)
