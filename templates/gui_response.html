@@ -239,11 +239,13 @@
                 white-space: pre;
             }
 
-            .ocrx_word {
-                background-color: rgba(var(--red),255,0,calc((1 - (var(--conf) / var(--topconf))) * 5 / var(--saturation)));
-            }
-
-
+			.ocrx_word {
+			  background-color: rgba(var(--red), 255, 0, calc((1 - (var(--conf) / var(--topconf))) * 5 / var(--saturation)));
+			  caret-color: black; /* Set caret color */
+			  color: black; /* Ensure text color is black */
+			  position: relative;
+			  display:inline-block
+			}
 
             input[type="range"] {
                 width: 80%;
