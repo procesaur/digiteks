@@ -16,7 +16,7 @@ if cuda:
 else:
     model = AutoModelForCausalLM.from_pretrained(modelname)
     unmasker = pipeline('fill-mask', model=modelname, top_k=11)
-tokenizer = RobertaTokenizerFast.from_pretrained(modelname)
+tokenizer = RobertaTokenizerFast.from_pretrained(modelname, add_prefix_space=True, max_len=256, pad_token="<pad>", unk_token="<unk>", mask_token="<mask>", pad_to_max_length=True)
 #tokenizer =  RobertaTokenizerFast(tokenizer_file=modelname+"/tokenizer.json", add_prefix_space=True, max_len=514, pad_token="<pad>", unk_token="<unk>", mask_token="<mask>", pad_to_max_length=True)                              
 max_length=tokenizer.model_max_length
 
@@ -38,8 +38,9 @@ def prepare_batches(words):
     current_tokens = []
     current_length = 0
 
+    i=0
     for sentence in sentences:
-        for i, word in enumerate(sentence):
+        for word in sentence:
             toks = tokenizer.tokenize(word)
             for t in toks:
                 token_word.append(i)
@@ -50,9 +51,11 @@ def prepare_batches(words):
             else:
                 current_tokens.extend(toks)
                 current_length += len(toks)
+            i+=1
 
     if current_tokens:
         grouped_tokens.append(current_tokens)
+
     bathces = [tokenizer.convert_tokens_to_ids(x) for x in grouped_tokens]
 
     return bathces, token_word
@@ -68,9 +71,8 @@ def inspect(words, prior_probs=None, prior_influence=0.5, mp=800):
     vals = []
 
     for token_ids in bathces:
-
+        print(len(token_ids))
         for i, token_id in enumerate(token_ids):
-        
             input_ids = tensor(token_ids).unsqueeze(0)
             if cuda:
                 input_ids = input_ids.to(0)
@@ -84,17 +86,15 @@ def inspect(words, prior_probs=None, prior_influence=0.5, mp=800):
             probs = softmax(logits[0, i], dim=-1)
             token_prob = probs[token_id].item()
             vals.append(1/token_prob)
-        
-    if len(words)<len(token_ids):
-        word_vals = []
-        for i, word in enumerate(words):
-            wv = [vals[j] for j, x in enumerate(token_word) if x==i]
-            word_vals.append(sum(wv)/len(wv))
+    
+    word_vals = []
+    for i, word in enumerate(words):
+        wv = [vals[j] for j, x in enumerate(token_word) if x==i]
+        word_vals.append(sum(wv)/len(wv))
 
-        vals = [100*x/mp if x<mp else 100 for x in word_vals]
-        if prior_probs:
-            vals = vals
-
+    vals = [100*x/mp if x<mp else 100 for x in word_vals]
+    if prior_probs:
+        vals = vals
     return vals, words
 
 

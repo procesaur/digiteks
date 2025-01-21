@@ -36,13 +36,13 @@ def newline_fix(hocr):
 def word_fix(hocr):
     hocrs = []
     for soup in hocr:
-        words = soup.find_all("span", {"class": "ocrx_word"})
-        ids = [span['id'] for span in words]
+        spans = soup.find_all("span", {"class": "ocrx_word"})
+        ids = [span['id'] for span in spans]
         prior_probs = []
-        words = [span.get_text() for span in words]
+        words = [span.get_text() for span in spans]
         probs, _ = inspect(words, prior_probs=prior_probs)
-        for word, prob in zip(words, probs):
-            word["y_wconf"] = prob
+        for word, prob in zip(spans, probs):
+            word["y_wconf"] = 100-prob
         hocrs.append(soup)
     return hocrs
 
