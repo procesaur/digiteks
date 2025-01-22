@@ -10,14 +10,13 @@ from bin.transformers_o import pipeline, AutoModelForCausalLM, RobertaTokenizerF
 
 modelname = cfg["model"]
 cuda = cuda.is_available()
+tokenizer = RobertaTokenizerFast.from_pretrained(modelname, add_prefix_space=True, max_len=256, pad_token="<pad>", unk_token="<unk>", mask_token="<mask>", pad_to_max_length=True)
 if cuda:
     model = AutoModelForCausalLM.from_pretrained(modelname).to(0)
-    unmasker = pipeline('fill-mask', model=modelname, top_k=11, device=0)
+    unmasker = pipeline('fill-mask', model=model, top_k=11, device=0, tokenizer=tokenizer)
 else:
     model = AutoModelForCausalLM.from_pretrained(modelname)
-    unmasker = pipeline('fill-mask', model=modelname, top_k=11)
-tokenizer = RobertaTokenizerFast.from_pretrained(modelname, add_prefix_space=True, max_len=256, pad_token="<pad>", unk_token="<unk>", mask_token="<mask>", pad_to_max_length=True)
-#tokenizer =  RobertaTokenizerFast(tokenizer_file=modelname+"/tokenizer.json", add_prefix_space=True, max_len=514, pad_token="<pad>", unk_token="<unk>", mask_token="<mask>", pad_to_max_length=True)                              
+    unmasker = pipeline('fill-mask', model=model, top_k=11, tokenizer=tokenizer)
 max_length=tokenizer.model_max_length
 
 def fill_mask(text):

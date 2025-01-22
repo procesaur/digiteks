@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, send_file, render_template_string
+from flask import Flask, request, render_template, send_file, Response
 from os import environ, path as px
 from rq_handler import process_req, process_req_glasnik
 from ocrworks import ocr_pdf, ocr_zip
@@ -62,6 +62,15 @@ def showzip():
     return 'Invalid file'
 
 
+@app.route('/posthere', methods=['POST'])
+def posthtml():
+    file = request.files['file']
+    if file and file.filename.endswith('.html'):
+        content = file.read().decode('utf-8')
+        return Response(content, mimetype='text/html')
+    return 'Invalid file'
+
+    
 @app.route('/glasnik', methods=['GET','POST'])
 def glasnik():
     try:

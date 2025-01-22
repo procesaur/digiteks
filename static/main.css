@@ -281,13 +281,7 @@ body *::selection {
     background-color: rgb(50 80 90 / 0.5) !important;
   }
 
-.meni{
-    position: sticky;
-  top: 0;
-  padding: 5pt;
-  background-color: beige;
-  z-index: 100;
-}
+
 
 
 .popup {

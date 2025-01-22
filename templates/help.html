@@ -2,15 +2,58 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='main.css') }}">
+    <link rel="stylesheet" type="text/css" href="/static/main.css">
+    <script src="/static/hocr.js"></script>
     <script>
         function help(){
             document.getElementById('if').src = "/help";
         }
     </script>
+
+
+<script>
+    function uploadHocrhelp(event){
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(e.target.result, 'text/html');
+                const newContent = doc.querySelector('#digiteks_hocr_content');
+                if (newContent) {
+                    var form = document.createElement('form');
+                    form.method = 'post';
+                    form.action = '/posthere'; // Set this to your desired action URL
+                    form.enctype = 'multipart/form-data'; // Set the encoding type for file upload
+                    form.target = '_self'; // Set target to the current window
+
+                    // Create a file input to hold the file
+                    var input = document.createElement('input');
+                    input.type = 'file';
+                    input.name = 'file';
+                    input.files = event.target.files; // Assign the uploaded file to the input
+
+                    // Append the input to the form and submit the form
+                    form.appendChild(input);
+                    document.body.appendChild(form);
+                    form.submit();
+    
+                } else {
+                    console.error('Element with id #digiteks_hocr_content not found in the uploaded file.');
+                }
+            };
+            reader.readAsText(file);
+        }
+    }
+</script>
 </head>
 <body>
-    <div class="helphead"></div>
+    <div class="helphead">
+        <input type="file" id="hocrInput" onchange="uploadHocrhelp(event)" style="display:none" accept=".html">
+        <button type="button" onclick="document.getElementById('hocrInput').click()" class="button process">⭱ Учитај</button>
+    </div>
+    <div id="temphtml"></div>
     <div class="helpmain main">
         <h4 id="-">ДигиТекс је вишеплатформна апликација за дигитализацију докумената на српском језику, заснована на оптичком препознавању карактера (и језичким моделима*).</h4>
 <h4 id="-https-poppler-freedesktop-org-https-github-com-tesseract-ocr-tesseract-355-https-huggingface-co-jerteh-jerteh-355-">Документ који је предмет дигитализације се најпре трансформише у слику помоћу <a href="https://poppler.freedesktop.org/">Поплера</a>, док је за препознавање текста на слици задужен <a href="https://github.com/tesseract-ocr/tesseract">Гугл Тесеракт</a>. (Коначно, текст се обрађује језичким моделом за српски језик, <a href="https://huggingface.co/jerteh/Jerteh-355">јертех355</a>, што омогућава прецизније одређивање вероватноће сваке речи у контексту, као и аутоматско исправљање лоше рашчитаног текста.*)</h4>
@@ -157,5 +200,7 @@ sudo nano /etc/apache2/sites-available/digiteks.conf
 <h4 id="-e-markdown-">*Функционланости још увек нису имплементиране.e markdown.</h4>
 
     </div>
+
+
 </body>
 </html>

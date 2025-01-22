@@ -1,48 +1,58 @@
+const lineclass = '.ocr_line, .ocr_caption, .ocr_textfloat, .ocr_header';
+
 function prepare(top=0.94, saturation=0.5) {
+    const parscheck = document.querySelectorAll('.par-checkbox');
 
-    const ocrCareas = document.querySelectorAll('.ocr_carea');
-    ocrCareas.forEach(carea => {
-        const ocrPars = carea.querySelectorAll('.ocr_par');
-        ocrPars.forEach(par => {
-            carea.parentNode.appendChild(par);
+    if (parscheck.length > 0){
+        console.log("pre-prepared html!");
+    }
+    else{
+        const ocrCareas = document.querySelectorAll('.ocr_carea');
+        ocrCareas.forEach(carea => {
+            const ocrPars = carea.querySelectorAll('.ocr_par');
+            ocrPars.forEach(par => {
+                carea.parentNode.appendChild(par);
+            });
+            carea.remove();
         });
-        carea.remove();
-    });
+    
+        const words = document.querySelectorAll('.ocrx_word');
+    
+        Array.from(words).forEach(function (word) {
+            var conf = parseInt(word.title.substring(word.title.lastIndexOf(' ')))/100;
+            //var conf = word.getAttribute("y_wconf");
+            word.style  = "--red:255; --conf:"+conf;
+            word.dataset.original = word.innerText;
+            word.contentEditable = 'true';
+            word.setAttribute("onblur", "handleTextChange(event)");
+            word.setAttribute("onkeydown", "MaybeDelete(event)");
+        });
+    
+        const lines = document.querySelectorAll(lineclass);
+    
+        Array.from(lines).forEach(function (line) {
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.name = line.id;
+            checkbox.className = 'dynamic-checkbox';
+            line.style.position = 'relative'; 
+            line.insertBefore(checkbox, line.firstChild);
+        }); 
+    
+        const pars = document.querySelectorAll('.ocr_par');
+    
+        Array.from(pars).forEach(function (par) {
+    
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'dynamic-checkbox par-checkbox';
+            par.style.position = 'relative'; 
+            par.insertBefore(checkbox, par.firstChild);
+            par.setAttribute("onclick", "checkall(event)");
+        }); 
+    }
 
-    const words = document.querySelectorAll('.ocrx_word');
-
-    Array.from(words).forEach(function (word) {
-        var conf = parseInt(word.title.substring(word.title.lastIndexOf(' ')))/100;
-        //var conf = word.getAttribute("y_wconf");
-        word.style  = "--red:255; --conf:"+conf;
-        word.dataset.original = word.innerText;
-        word.contentEditable = 'true';
-        word.setAttribute("onblur", "handleTextChange(event)");
-        word.setAttribute("onkeydown", "MaybeDelete(event)");
-    });
-
-    const lines = document.querySelectorAll('.ocr_line, .ocr_caption, .ocr_textfloat');
-
-    Array.from(lines).forEach(function (line) {
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.name = line.id;
-        checkbox.className = 'dynamic-checkbox';
-        line.style.position = 'relative'; 
-        line.insertBefore(checkbox, line.firstChild);
-    }); 
-
-    const pars = document.querySelectorAll('.ocr_par');
-
-    Array.from(pars).forEach(function (par) {
-
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.className = 'dynamic-checkbox par-checkbox';
-        par.style.position = 'relative'; 
-        par.insertBefore(checkbox, par.firstChild);
-        par.setAttribute("onclick", "checkall(event)");
-    }); 
+  
 
 }
 
@@ -63,8 +73,8 @@ function dwn(x, mime, filename, ext){
 }
 
 function getHocr(filename){
-    var body = document.getElementById("full_hocr");
-    var head = document.getElementById("full_hocr_head");
+    var body = document.querySelector('body');
+    var head = document.querySelector('head');
     dwn(`<!DOCTYPE html><html><head>${head.innerHTML}</head><body>${body.innerHTML}</body></html>`, "text/html", filename, ".html");
 }
 
@@ -254,8 +264,6 @@ function uploadHocr(event){
             const parser = new DOMParser();
             const doc = parser.parseFromString(e.target.result, 'text/html');
             const newContent = doc.querySelector('#digiteks_hocr_content');
-            console.error('Element with id dasdasdasddigiteks_hocr_content not found in the uploaded file.');
-            // Replace the existing element with the new content
             if (newContent) {
                 const existingContent = document.getElementById('digiteks_hocr_content');
                 if (existingContent) {
