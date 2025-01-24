@@ -27,7 +27,8 @@ def zip_bytes_string(images_in_bytes):
     zip_stream.seek(0)
     return zip_stream
 
-def image_zip_to_html(file, encode=False):
+
+def image_zip_to_images(file):
     if isinstance(file, bytes):
         memory_file = BytesIO(file)
     else:
@@ -40,13 +41,12 @@ def image_zip_to_html(file, encode=False):
         for file_info in zip_ref.infolist():
             if file_info.filename.endswith(('png', 'jpg', 'jpeg')):
                 with zip_ref.open(file_info) as image_file:
-                    image_data = image_file.read()
-                    if encode:
-                        encoded_image = b64encode(image_data).decode('utf-8')
-                        images.append(encoded_image)
-                    else:
-                        images.append(image_data)
+                    images.append(image_file.read())
     return images
+
+
+def encode_images(images):
+    return [b64encode(image_data).decode('utf-8') for image_data in images]
 
 def group_into_sentences(words):
     sentences = []

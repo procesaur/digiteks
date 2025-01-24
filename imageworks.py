@@ -16,7 +16,8 @@ def improve_image(img):
     img = erode_img(img)
     img = correct_skew(img)
 
-    return convert_from_cv2_to_image(img)
+    img = convert_from_cv2_to_image(img)
+    return img2bytes(img)
 
 
 def img2bytes(img):
@@ -87,3 +88,5 @@ def correct_skew(image, delta=1, limit=8):
     rotated = warpAffine(image, M, (w, h), flags=INTER_CUBIC, borderMode=BORDER_REPLICATE)
 
     return rotated
+
+

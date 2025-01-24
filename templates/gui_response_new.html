@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='main.css') }}">
+    <script src="{{url_for('static', filename='hocr.js')}}"></script>
+
+    <script>
+        const lc = '.ocr_line, .ocr_caption, .ocr_textfloat, .ocr_header';
+        function handleTextChange(event) {
+            const oldValue = event.target.dataset.original;
+            const newValue = event.target.innerText;
+            if (oldValue != newValue){
+                event.target.style  = "--red:0; --conf:0";
+            }
+            else{
+                event.target.style  = "--red:255; --conf:1";
+            }
+        }
+
+        function openhocrsettings(event){
+            const popup = document.getElementById('popup_settings_hocr');
+            const topconfSlider = document.getElementById('topconfSlider');
+            const saturationSlider = document.getElementById('saturationSlider');
+            const topconfValue = document.getElementById('topconfValue');
+            const saturationValue = document.getElementById('saturationValue');
+            
+            topconfSlider.addEventListener('input', function () {
+                const value = topconfSlider.value;
+                document.documentElement.style.setProperty('--topconf', value);
+                topconfValue.textContent = value; // Show the value next to the slider
+            });
+
+            saturationSlider.addEventListener('input', function () {
+                const value = saturationSlider.value;
+                document.documentElement.style.setProperty('--saturation', value);
+                saturationValue.textContent = value; // Show the value next to the slider
+            });
+            popup.style.display = 'block';
+        }
+
+        function closehocrsettings(event){
+            const popup = document.getElementById('popup_settings_hocr');
+            popup.style.display = 'none';
+        }
+
+        function checkall(event){
+            const childCheckboxes = event.target.parentElement.querySelectorAll('.dynamic-checkbox');
+
+            childCheckboxes.forEach(childCheckbox => { childCheckbox.checked = event.target.checked;});
+        }
+        
+        function MoveUp() {
+
+        var lines = document.querySelectorAll(lc);
+            var elements = [];
+            lines.forEach(function(line) {
+                var checkbox = line.querySelector('input[type="checkbox"]');
+                if (checkbox && checkbox.checked) {
+                    elements.push(line);
+                }
+            });
+
+            const areas = new Map();
+            elements.forEach(element => {
+            const parentArea = element.closest('.ocr_par');
+            if (parentArea) {
+                if (!areas.has(parentArea)) {
+                    areas.set(parentArea, []);
+                }
+                areas.get(parentArea).push(element);
+            }
+            });
+
+            // Process each '.ocr_par' based on the selection
+            areas.forEach((selectedLines, area) => {
+                const allLines = Array.from(area.querySelectorAll(lc));
+                var parcheckbox = area.querySelector('.par-checkbox');
+                if (selectedLines.length === allLines.length && parcheckbox && parcheckbox.checked) {
+                    // If all lines are selected, move the entire '.ocr_par'
+                    const prevArea = area.previousElementSibling;
+                    if (prevArea && prevArea.classList.contains('ocr_par')) {
+                        area.parentNode.insertBefore(area, prevArea);
+                    }
+                } else {
+                    // If not all lines are selected, move selected lines within the '.ocr_par'
+                    selectedLines.forEach(line => {
+                    const prevSibling = line.previousElementSibling;
+                    if (prevSibling && prevSibling.tagName.toLowerCase()=="span") {
+                        area.insertBefore(line, prevSibling); // Switch with previous sibling
+                    } else {
+                        const prevArea = area.previousElementSibling;
+                        if (prevArea && prevArea.classList.contains('ocr_par')) {
+                            prevArea.appendChild(line); // Move to the end of the previous '.ocr_par'
+                        }
+                    }
+                });
+                }
+            });
+
+
+        }
+        function MoveDown() {
+            var lines = document.querySelectorAll(lc);
+            var elements = [];
+            lines.forEach(function(line) {
+                var checkbox = line.querySelector('input[type="checkbox"]');
+                if (checkbox && checkbox.checked) {
+                    elements.push(line);
+                }
+            });
+
+            // Group elements by their parent '.ocr_par'
+            const areas = new Map();
+
+            elements.forEach(element => {
+                const parentArea = element.closest('.ocr_par');
+                if (parentArea) {
+                    if (!areas.has(parentArea)) {
+                        areas.set(parentArea, []);
+                    }
+                    areas.get(parentArea).push(element);
+                }
+            });
+
+            // Process each '.ocr_par' based on the selection
+            areas.forEach((selectedLines, area) => {
+                const allLines = Array.from(area.querySelectorAll(lc));
+                var parcheckbox = area.querySelector('.par-checkbox');
+                if (selectedLines.length === allLines.length && parcheckbox && parcheckbox.checked) {
+                    // If all lines are selected, move the entire '.ocr_par'
+                    const nextArea = area.nextElementSibling;
+                    if (nextArea && nextArea.classList.contains('ocr_par')) {
+                        area.parentNode.insertBefore(nextArea, area);
+                    }
+                } else {
+                    // If not all lines are selected, move selected lines within the '.ocr_par'
+                    selectedLines.forEach(line => {
+                        const nextSibling = line.nextElementSibling;
+    
+                        if (nextSibling && nextSibling.tagName.toLowerCase()=="span") {
+                            area.insertBefore(nextSibling, line); // Switch with next sibling
+                        } else {
+                            const nextArea = area.nextElementSibling;
+                            if (nextArea && nextArea.classList.contains('ocr_par')) {
+                                nextArea.insertBefore(line, nextArea.firstChild); // Move to the beginning of the next '.ocr_par'
+                            }
+                        }
+                    });
+                }
+            });
+
+        }
+
+        function MaybeDelete(){
+        if (event.key === 'Delete') { 
+            event.preventDefault();
+            event.target.innerHTML = "";
+            }
+        }
+
+        function Uncheck() {
+            const checkboxes = document.querySelectorAll('.dynamic-checkbox');
+            checkboxes.forEach(checkbox => { checkbox.checked = false; }); 
+        }
+
+        function deleteCheckedElements() {
+            var lines = document.querySelectorAll(lc);
+            var elements = [];
+            lines.forEach(function(line) {
+                var checkbox = line.querySelector('input[type="checkbox"]');
+                if (checkbox && checkbox.checked) {
+                    elements.push(line);
+                }
+            });
+
+            const areas = new Map();
+
+            elements.forEach(element => {
+                const parentArea = element.closest('.ocr_par');
+                if (parentArea) {
+                    if (!areas.has(parentArea)) {
+                        areas.set(parentArea, []);
+                    }
+                    areas.get(parentArea).push(element);
+                }
+            });
+
+            areas.forEach((selectedLines, area) => {
+                const allLines = Array.from(area.querySelectorAll(lc));
+                if (selectedLines.length === allLines.length) {
+                    area.remove();
+                } else {
+                    selectedLines.forEach(line => {
+                        line.remove();
+                    });
+                }
+            });
+        }
+        function VerifyBulk() {
+            var lines = document.querySelectorAll(lc);
+            var elements = [];
+            lines.forEach(function(line) {
+                var checkbox = line.querySelector('input[type="checkbox"]');
+                if (checkbox && checkbox.checked) {
+                    elements.push(line);
+                }
+            });
+
+            elements.forEach(line => {
+                const words = line.querySelectorAll('.ocrx_word');
+                words.forEach(word => {
+                    word.style  = "--red:255; --conf:1";
+                });
+            });
+        }
+
+    </script>
+        <style>
+            :root {
+                --topconf: 0.94;
+                --saturation: 0.5;
+            }
+            .ocr_separator {
+                border: 2px solid black;
+            }
+
+            .ocr_par {
+                border: 1px solid gray;
+                margin-top: 2px;
+            }
+
+            .ocr_line:after, .ocr_caption:after, .ocr_textfloat:after, .ocr_header:after {
+                content: '\A';
+                white-space: pre;
+            }
+
+			.ocrx_word {
+			  background-color: rgba(var(--red), 255, 0, calc((1 - (var(--conf) / var(--topconf))) * 5 / var(--saturation)));
+			  caret-color: black; /* Set caret color */
+			  color: black; /* Ensure text color is black */
+			  position: relative;
+			  display:inline-block
+			}
+
+            input[type="range"] {
+                width: 80%;
+            }
+
+            .dynamic-checkbox{
+                display: inline-block !important;
+                visibility: visible !important;
+            }
+
+            .par-checkbox{
+                width: 12pt;
+                height: 12pt;
+                margin-left: -23px;
+            }
+
+            .menubutton{
+                width: 20pt;
+                height: 20pt;
+            }
+
+            .meni
+                {margin-bottom: 10pt;
+                position: sticky;
+                top: 0;
+                padding: 5pt;
+                background-color: beige;
+                z-index: 100;
+            }
+            .ocrx_word::focus {
+				background-color:white
+			}
+        </style>
+</head>
+<body draggable="false">
+    <div class="helphead">
+        <input type="file" id="hocrInput" onchange="uploadHocr(event)" style="display:none" accept=".html">
+        <button type="button" onclick="document.getElementById('hocrInput').click()" class="button process">⭱ Учитај</button>
+        <button type="button" onclick="getHocr('{{filename}}')" class="button process">⭳ Сачувај</button>
+        <button type="button" onclick="getText('{{filename}}')" class="button process">⭳ Текст</button>
+        <button type="button" onclick="getHtml('{{filename}}')" class="button process">⭳ ХТМЛ</button>
+    </div>
+
+        <div id="popup_settings_hocr" class="popup">
+            <div class="popup-content">
+              <span class="close-button" id="closePopupButton"  onclick="closehocrsettings()">&times;</span>
+              
+              <label for="topconfSlider">Граница поузданости: </label>
+              <input type="range" id="topconfSlider" min="0" max="1" step="0.01" value="0.94">
+              <span id="topconfValue">0.94</span>
+          
+              <br><br>
+          
+              <label for="saturationSlider">Сатурација маркера: </label>
+              <input type="range" id="saturationSlider" min="0" max="1" step="0.01" value="0.5">
+              <span id="saturationValue">0.5</span>
+          
+              <br><br>
+            </div>
+          </div>
+          
+    <div class="helpmain main" id="full_hocr" draggable="false"  style="padding-left: 20pt;">
+        <div class=meni>
+            <button id="openPopupButton" onclick="openhocrsettings()" class="menubutton" title="Отвори подешавања" style="float: right;">⚙</button>
+            <button class="menubutton" title="Помери горе" onclick="MoveUp()">↑</button>
+            <button class="menubutton" title="Помери доле" onclick="MoveDown()">↓</button>
+            <button class="menubutton" title="Одчекирај" onclick="Uncheck()">☐</button>
+            <button class="menubutton" title="Обриши" onclick="deleteCheckedElements()">␡</button>
+            <button class="menubutton" title="Обележи као добро" onclick="VerifyBulk()">✓</button>
+        </div>
+
+        <!-- Hidden div to store the images data -->
+        <div id="imagesData" style="display:none;" data-images='{{ images | tojson | safe }}'></div>
+        <div id="digiteks_hocr_content">
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    // Read the images data from the hidden div
+                    const imagesDataElement = document.getElementById('imagesData').dataset.images;
+                    const images = JSON.parse(imagesDataElement);
+        
+                    // Show the loading GIF
+                    const loadingGif = document.getElementById('loading');
+                    loadingGif.style.display = 'block';
+        
+                    // Send the images data to the /start_ocr endpoint
+                    fetch('/start_ocr', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ images: images })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'OCR started') {
+                            // Set up an EventSource to receive streaming results
+                            const eventSource = new EventSource('/ocr_stream');
+        
+                            eventSource.onmessage = function(event) {
+                                const data = JSON.parse(event.data);
+                                const resultElement = document.createElement('p');
+                                resultElement.textContent = data.result;
+        
+                                // Append the result to the digiteks_hocr_content element
+                                const resultsDiv = document.getElementById('digiteks_hocr_content');
+                                resultsDiv.appendChild(resultElement);
+                            };
+        
+                            eventSource.onerror = function() {
+                                // Hide the loading GIF when done or on error
+                                loadingGif.style.display = 'none';
+                                eventSource.close();
+        
+                                // Remove the hidden div containing images data
+                                const imagesDataDiv = document.getElementById('imagesData');
+                                imagesDataDiv.remove();
+                            };
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        loadingGif.style.display = 'none';
+                    });
+                });
+            </script>
+        </div>
+        <img id="loading" src="{{ url_for('static', filename='load.gif') }}" alt="Loading...">
+    </div>
+</body>
+</html>

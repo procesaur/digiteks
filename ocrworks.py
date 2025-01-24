@@ -8,7 +8,7 @@ from psutil import cpu_count
 from tesserocr import PyTessBaseAPI
 from imageworks import improve_image, img2bytes, bytes2img
 
-from helper import isWindows, image_zip_to_html, do
+from helper import isWindows, image_zip_to_images, do
 
 
 print(cpu_count())
@@ -25,27 +25,23 @@ if isWindows():
         environ[x] = str(1)
 
 
-def ocr_pdf(file_bytes, img_down=False, lang="srp+srp_latn"):
+def pdf_to_images(file_bytes, img_down=False):
     images = convert_from_bytes(file_bytes, dpi=300, thread_count=cpu_count())
-    images = ((x, lang, img_down) for x in images)
+    images_improved = pool.map(improve_image, images)
+    if img_down:
+        return [(img2bytes(a), b) for a, b in zip(images, images_improved)]
+    return images_improved
+
+def ocr_images(images,  lang="srp+srp_latn"):
+    images = ((x, lang) for x in images)
     results = pool.map(ocr_img, images)
     return results
-
-def ocr_zip(file_bytes, img_down=False, lang="srp+srp_latn"):
-    images = image_zip_to_html(file_bytes)
-    images = ((bytes2img(x), lang, img_down) for x in images)
-    results = pool.map(ocr_img, images)
-    return results
-
 
 def ocr_img(profile):
-    img, lang, img_down = profile
+    img, lang = profile
     tessdata_path = px.join(px.dirname(px.realpath(__file__)), "bin/Tesseract-OCR/tessdata")
-    improved = improve_image(img)
-    if img_down:
-        return img2bytes(img), img2bytes(improved)
     with PyTessBaseAPI(lang=lang, path=tessdata_path) as api:
-        api.SetImage(improved)
+        api.SetImage(img)
         hocr = api.GetHOCRText(0)
     return hocr
 

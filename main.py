@@ -1,12 +1,15 @@
-from flask import Flask, request, render_template, send_file, Response
+from flask import Flask, request, render_template, send_file, Response, jsonify
 from os import environ, path as px
 from rq_handler import process_req, process_req_glasnik
-from ocrworks import ocr_pdf, ocr_zip
+from ocrworks import pdf_to_images
 from hocrworks import hocr_transform
 from webbrowser import open_new
 from threading import Timer
 from lmworks import fill_mask, visualize
-from helper import zip_bytes_string, image_zip_to_html, do
+from helper import zip_bytes_string, image_zip_to_images, do, encode_images
+import time
+import json
+import base64
 
 
 app = Flask(__name__)
@@ -33,16 +36,16 @@ def load():
 def api(lang):
     file_bytes, filename = process_req(request)
     if filename.endswith(".pdf"):
-        hocr = do(ocr_pdf, file_bytes)
+        images = pdf_to_images(file_bytes)
     else:
-        hocr = ocr_zip(file_bytes, lang=lang)  
-    hocr = hocr_transform(hocr)
-    return render_template('gui_response.html', data=hocr, filename=filename)
+        images = image_zip_to_images(file_bytes)
+    images = encode_images(images)
+    return render_template('gui_response_new.html', images=images, filename=filename)
 
 @app.route('/imgdown', methods=['POST', 'GET'])
 def imgdown():
     file_bytes, filename = process_req(request)
-    images_in_bytes = ocr_pdf(file_bytes, img_down=True)
+    images_in_bytes = pdf_to_images(file_bytes, img_down=True)
     improved_images_in_bytes = {f"image{i}_enhanced.png": img[1] for i, img in enumerate(images_in_bytes)}
     images_in_bytes = {f"image{i}_.png": img[0] for i, img in enumerate(images_in_bytes)}
     images_in_bytes.update(improved_images_in_bytes)
@@ -57,10 +60,29 @@ def imgdown():
 def showzip():
     file = request.files['file']
     if file and file.filename.endswith('.zip'):
-        images = image_zip_to_html(file, encode=True)
+        images = image_zip_to_images(file)
+        images = encode_images(images)
         return render_template("images.html", images=images)
     return 'Invalid file'
 
+@app.route('/start_ocr', methods=['POST'])
+def start_ocr():
+    global uploaded_images
+    image_data = request.json.get('images')
+    uploaded_images = [base64.b64decode(image) for image in image_data]
+    return jsonify({'status': 'OCR started'})
+
+def generate_ocr_results():
+    global uploaded_images
+    for i, image in enumerate(uploaded_images):
+        # Simulate OCR processing
+        time.sleep(1)
+        result = f"OCR result for image {i+1}"
+        yield f"data: {json.dumps({'result': result})}\n\n"
+
+@app.route('/ocr_stream')
+def ocr_stream():
+    return Response(generate_ocr_results(), content_type='text/event-stream')
 
 @app.route('/posthere', methods=['POST'])
 def posthtml():
@@ -70,7 +92,6 @@ def posthtml():
         return Response(content, mimetype='text/html')
     return 'Invalid file'
 
-    
 @app.route('/glasnik', methods=['GET','POST'])
 def glasnik():
     try:
@@ -83,7 +104,6 @@ def glasnik():
         output = []
     return render_template('inference.html', input=input, output=output)
 
-
 @app.route('/glasnik2', methods=['GET','POST'])
 def glasnik2():
     try:
@@ -95,7 +115,6 @@ def glasnik2():
     else:
         vals, tokens = [], []
     return render_template('visualize.html', input=input, vals=vals, tokens=tokens)
-
 
 def open_browser():
     open_new("http://127.0.0.1:5001")
