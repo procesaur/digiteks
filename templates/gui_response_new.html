@@ -274,6 +274,11 @@
             .ocrx_word::focus {
 				background-color:white
 			}
+
+            #loading {
+                
+                filter: invert(100%); /* Invert colors for the loading GIF */
+            }
         </style>
 </head>
 <body draggable="false">
@@ -320,14 +325,53 @@
                 document.addEventListener('DOMContentLoaded', function() {
                     // Read the images data from the hidden div
                     const imagesDataElement = document.getElementById('imagesData').dataset.images;
-                    const images = JSON.parse(imagesDataElement);
+                    let images = JSON.parse(imagesDataElement);
+        
+                    const sessionId = document.getElementById('imagesData').dataset.sessionId;
         
                     // Show the loading GIF
                     const loadingGif = document.getElementById('loading');
                     loadingGif.style.display = 'block';
         
+                    // Function to handle streaming results
+                    function handleStreaming() {
+                        const eventSource = new EventSource(`/ocr_stream?session_id=${sessionId}`);
+        
+                        eventSource.onmessage = function(event) {
+                            const data = JSON.parse(event.data);
+                            const resultElement = document.createElement('p');
+                            resultElement.textContent = data.result;
+        
+                            // Append the result to the digiteks_hocr_content element
+                            const resultsDiv = document.getElementById('digiteks_hocr_content');
+                            resultsDiv.appendChild(resultElement);
+        
+                            // Remove the processed image from the images data
+                            images.shift();
+        
+                            // Remove the hidden div containing images data when all images are processed
+                            if (images.length === 0) {
+                                loadingGif.style.display = 'none';
+                                eventSource.close();
+                                const imagesDataDiv = document.getElementById('imagesData');
+                                imagesDataDiv.remove();
+                            }
+                        };
+        
+                        eventSource.onerror = function() {
+                            console.error('EventSource error:', event); // Debugging: Print error event
+                            // Hide the loading GIF when done or on error
+                            loadingGif.style.display = 'none';
+                            eventSource.close();
+        
+                            // Remove the hidden div containing images data
+                            const imagesDataDiv = document.getElementById('imagesData');
+                            imagesDataDiv.remove();
+                        };
+                    }
+        
                     // Send the images data to the /start_ocr endpoint
-                    fetch('/start_ocr', {
+                    fetch(`/start_ocr?session_id=${sessionId}`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -336,33 +380,13 @@
                     })
                     .then(response => response.json())
                     .then(data => {
+                        console.log('Start OCR response:', data); // Debugging: Print start OCR response
                         if (data.status === 'OCR started') {
-                            // Set up an EventSource to receive streaming results
-                            const eventSource = new EventSource('/ocr_stream');
-        
-                            eventSource.onmessage = function(event) {
-                                const data = JSON.parse(event.data);
-                                const resultElement = document.createElement('p');
-                                resultElement.textContent = data.result;
-        
-                                // Append the result to the digiteks_hocr_content element
-                                const resultsDiv = document.getElementById('digiteks_hocr_content');
-                                resultsDiv.appendChild(resultElement);
-                            };
-        
-                            eventSource.onerror = function() {
-                                // Hide the loading GIF when done or on error
-                                loadingGif.style.display = 'none';
-                                eventSource.close();
-        
-                                // Remove the hidden div containing images data
-                                const imagesDataDiv = document.getElementById('imagesData');
-                                imagesDataDiv.remove();
-                            };
+                            handleStreaming();
                         }
                     })
                     .catch(error => {
-                        console.error('Error:', error);
+                        console.error('Fetch error:', error); // Debugging: Print fetch error
                         loadingGif.style.display = 'none';
                     });
                 });

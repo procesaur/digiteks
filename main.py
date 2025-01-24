@@ -10,10 +10,12 @@ from helper import zip_bytes_string, image_zip_to_images, do, encode_images
 import time
 import json
 import base64
+import uuid
 
 
 app = Flask(__name__)
 app.config["DEBUG"] = False
+session_images = {}
 
 
 @app.route('/')
@@ -40,7 +42,8 @@ def api(lang):
     else:
         images = image_zip_to_images(file_bytes)
     images = encode_images(images)
-    return render_template('gui_response_new.html', images=images, filename=filename)
+    session_id = str(uuid.uuid4())  # Generate a unique session ID
+    return render_template('gui_response_new.html', images=images, filename=filename, session_id=session_id)
 
 @app.route('/imgdown', methods=['POST', 'GET'])
 def imgdown():
@@ -65,24 +68,29 @@ def showzip():
         return render_template("images.html", images=images)
     return 'Invalid file'
 
+
 @app.route('/start_ocr', methods=['POST'])
 def start_ocr():
-    global uploaded_images
+    session_id = request.args.get('session_id')
     image_data = request.json.get('images')
-    uploaded_images = [base64.b64decode(image) for image in image_data]
-    return jsonify({'status': 'OCR started'})
+    decoded_images = [base64.b64decode(image) for image in image_data]
+    session_images[session_id] = decoded_images
+    return jsonify({'status': 'OCR started', 'session_id': session_id})
 
-def generate_ocr_results():
-    global uploaded_images
-    for i, image in enumerate(uploaded_images):
+
+def generate_ocr_results(session_id):
+    images = session_images.get(session_id, [])
+    for i, image in enumerate(images):
         # Simulate OCR processing
         time.sleep(1)
         result = f"OCR result for image {i+1}"
         yield f"data: {json.dumps({'result': result})}\n\n"
 
+
 @app.route('/ocr_stream')
 def ocr_stream():
-    return Response(generate_ocr_results(), content_type='text/event-stream')
+    session_id = request.args.get('session_id')
+    return Response(generate_ocr_results(session_id), content_type='text/event-stream')
 
 @app.route('/posthere', methods=['POST'])
 def posthtml():
