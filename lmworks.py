@@ -7,17 +7,17 @@ from torch import cuda
 sys.path.append(str(px.dirname(__file__)))
 from bin.transformers_o import pipeline, AutoModelForCausalLM, RobertaTokenizerFast
 
-if False:
-    modelname = cfg["model"]
-    cuda = cuda.is_available()
-    tokenizer = RobertaTokenizerFast.from_pretrained(modelname, add_prefix_space=True, max_len=256, pad_token="<pad>", unk_token="<unk>", mask_token="<mask>", pad_to_max_length=True)
-    if cuda:
-        model = AutoModelForCausalLM.from_pretrained(modelname).to(0)
-        unmasker = pipeline('fill-mask', model=model, top_k=11, device=0, tokenizer=tokenizer)
-    else:
-        model = AutoModelForCausalLM.from_pretrained(modelname)
-        unmasker = pipeline('fill-mask', model=model, top_k=11, tokenizer=tokenizer)
-    max_length=tokenizer.model_max_length
+
+modelname = cfg["model"]
+cuda = cuda.is_available()
+tokenizer = RobertaTokenizerFast.from_pretrained(modelname, add_prefix_space=True, max_len=256, pad_token="<pad>", unk_token="<unk>", mask_token="<mask>", pad_to_max_length=True)
+if cuda:
+    model = AutoModelForCausalLM.from_pretrained(modelname).to(0)
+    unmasker = pipeline('fill-mask', model=model, top_k=11, device=0, tokenizer=tokenizer)
+else:
+    model = AutoModelForCausalLM.from_pretrained(modelname)
+    unmasker = pipeline('fill-mask', model=model, top_k=11, tokenizer=tokenizer)
+max_length=tokenizer.model_max_length
 
 def fill_mask(text):
     if "<mask>" in text:

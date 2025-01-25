@@ -1,9 +1,16 @@
+from multiprocessing import cpu_count
 from os import name, path as px
 from json import load
 import time
 import zipfile
 from io import BytesIO
 from base64 import b64encode, b64decode
+from psutil import cpu_count
+from multiprocessing.dummy import Pool as ThreadPool
+
+
+cpus = cpu_count()
+pool = ThreadPool(cpus)
 
 
 def load_conf(path=None):
@@ -76,3 +83,8 @@ def do(f, x):
     execution_time = end_time - start_time
     print(f"Time: {execution_time} seconds")
     return x
+
+
+def chunkify(lst, n=cpus):
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
