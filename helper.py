@@ -3,7 +3,7 @@ from json import load
 import time
 import zipfile
 from io import BytesIO
-from base64 import b64encode
+from base64 import b64encode, b64decode
 
 
 def load_conf(path=None):
@@ -47,6 +47,10 @@ def image_zip_to_images(file):
 
 def encode_images(images):
     return [b64encode(image_data).decode('utf-8') for image_data in images]
+
+
+def decode_images(images):
+    return [b64decode(image) for image in images]
 
 def group_into_sentences(words):
     sentences = []

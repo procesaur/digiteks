@@ -216,70 +216,70 @@
         }
 
     </script>
-        <style>
-            :root {
-                --topconf: 0.94;
-                --saturation: 0.5;
-            }
-            .ocr_separator {
-                border: 2px solid black;
-            }
+    <style>
+        :root {
+            --topconf: 0.94;
+            --saturation: 0.5;
+        }
+        .ocr_separator {
+            border: 2px solid black;
+        }
 
-            .ocr_par {
-                border: 1px solid gray;
-                margin-top: 2px;
-            }
+        .ocr_par {
+            border: 1px solid gray;
+            margin-top: 2px;
+        }
 
-            .ocr_line:after, .ocr_caption:after, .ocr_textfloat:after, .ocr_header:after {
-                content: '\A';
-                white-space: pre;
-            }
+        .ocr_line:after, .ocr_caption:after, .ocr_textfloat:after, .ocr_header:after {
+            content: '\A';
+            white-space: pre;
+        }
 
-			.ocrx_word {
-			  background-color: rgba(var(--red), 255, 0, calc((1 - (var(--conf) / var(--topconf))) * 5 / var(--saturation)));
-			  caret-color: black; /* Set caret color */
-			  color: black; /* Ensure text color is black */
-			  position: relative;
-			  display:inline-block
-			}
+        .ocrx_word {
+            background-color: rgba(var(--red), 255, 0, calc((1 - (var(--conf) / var(--topconf))) * 5 / var(--saturation)));
+            caret-color: black; /* Set caret color */
+            color: black; /* Ensure text color is black */
+            position: relative;
+            display:inline-block
+        }
 
-            input[type="range"] {
-                width: 80%;
-            }
+        input[type="range"] {
+            width: 80%;
+        }
 
-            .dynamic-checkbox{
-                display: inline-block !important;
-                visibility: visible !important;
-            }
+        .dynamic-checkbox{
+            display: inline-block !important;
+            visibility: visible !important;
+        }
 
-            .par-checkbox{
-                width: 12pt;
-                height: 12pt;
-                margin-left: -23px;
-            }
+        .par-checkbox{
+            width: 12pt;
+            height: 12pt;
+            margin-left: -23px;
+        }
 
-            .menubutton{
-                width: 20pt;
-                height: 20pt;
-            }
+        .menubutton{
+            width: 20pt;
+            height: 20pt;
+        }
 
-            .meni
-                {margin-bottom: 10pt;
-                position: sticky;
-                top: 0;
-                padding: 5pt;
-                background-color: beige;
-                z-index: 100;
-            }
-            .ocrx_word::focus {
-				background-color:white
-			}
+        .meni
+            {margin-bottom: 10pt;
+            position: sticky;
+            top: 0;
+            padding: 5pt;
+            background-color: beige;
+            z-index: 100;
+        }
+        .ocrx_word::focus {
+            background-color:white
+        }
 
-            #loading {
-                
-                filter: invert(100%); /* Invert colors for the loading GIF */
-            }
-        </style>
+        #loading {
+            
+            filter: invert(100%); /* Invert colors for the loading GIF */
+        }
+    </style>
 </head>
 <body draggable="false">
     <div class="helphead">
@@ -321,78 +321,15 @@
         <!-- Hidden div to store the images data -->
         <div id="imagesData" style="display:none;" data-images='{{ images | tojson | safe }}'></div>
         <div id="digiteks_hocr_content">
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    // Read the images data from the hidden div
-                    const imagesDataElement = document.getElementById('imagesData').dataset.images;
-                    let images = JSON.parse(imagesDataElement);
-        
-                    const sessionId = document.getElementById('imagesData').dataset.sessionId;
-        
-                    // Show the loading GIF
-                    const loadingGif = document.getElementById('loading');
-                    loadingGif.style.display = 'block';
-        
-                    // Function to handle streaming results
-                    function handleStreaming() {
-                        const eventSource = new EventSource(`/ocr_stream?session_id=${sessionId}`);
-        
-                        eventSource.onmessage = function(event) {
-                            const data = JSON.parse(event.data);
-                            const resultElement = document.createElement('p');
-                            resultElement.textContent = data.result;
-        
-                            // Append the result to the digiteks_hocr_content element
-                            const resultsDiv = document.getElementById('digiteks_hocr_content');
-                            resultsDiv.appendChild(resultElement);
-        
-                            // Remove the processed image from the images data
-                            images.shift();
-        
-                            // Remove the hidden div containing images data when all images are processed
-                            if (images.length === 0) {
-                                loadingGif.style.display = 'none';
-                                eventSource.close();
-                                const imagesDataDiv = document.getElementById('imagesData');
-                                imagesDataDiv.remove();
-                            }
-                        };
-        
-                        eventSource.onerror = function() {
-                            console.error('EventSource error:', event); // Debugging: Print error event
-                            // Hide the loading GIF when done or on error
-                            loadingGif.style.display = 'none';
-                            eventSource.close();
-        
-                            // Remove the hidden div containing images data
-                            const imagesDataDiv = document.getElementById('imagesData');
-                            imagesDataDiv.remove();
-                        };
-                    }
-        
-                    // Send the images data to the /start_ocr endpoint
-                    fetch(`/start_ocr?session_id=${sessionId}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ images: images })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log('Start OCR response:', data); // Debugging: Print start OCR response
-                        if (data.status === 'OCR started') {
-                            handleStreaming();
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Fetch error:', error); // Debugging: Print fetch error
-                        loadingGif.style.display = 'none';
-                    });
-                });
-            </script>
         </div>
-        <img id="loading" src="{{ url_for('static', filename='load.gif') }}" alt="Loading...">
+        <img id="loading" src="{{ url_for('static', filename='load.gif') }}" style="display: none;" alt="Loading...">
+        <script>
+            window.onload = function() {
+                const imagesDataElement = document.getElementById('imagesData');
+                const loadingGif = document.getElementById('loading');
+                stream_ocr('{{lang}}', loadingGif, imagesDataElement);
+            }
+        </script>
     </div>
 </body>
 </html>

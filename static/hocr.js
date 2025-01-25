@@ -1,62 +1,51 @@
 const lineclass = '.ocr_line, .ocr_caption, .ocr_textfloat, .ocr_header';
 
-function prepare(top=0.94, saturation=0.5) {
-    const parscheck = document.querySelectorAll('.par-checkbox');
+function prepare(element, top=0.94, saturation=0.5) {
 
-    if (parscheck.length > 0){
-        console.log("pre-prepared html!");
-    }
-    else{
-        const ocrCareas = document.querySelectorAll('.ocr_carea');
-        ocrCareas.forEach(carea => {
-            const ocrPars = carea.querySelectorAll('.ocr_par');
-            ocrPars.forEach(par => {
-                carea.parentNode.appendChild(par);
-            });
-            carea.remove();
+    const ocrCareas = element.querySelectorAll('.ocr_carea');
+    ocrCareas.forEach(carea => {
+        const ocrPars = carea.querySelectorAll('.ocr_par');
+        ocrPars.forEach(par => {
+            carea.parentNode.appendChild(par);
         });
-    
-        const words = document.querySelectorAll('.ocrx_word');
-    
-        Array.from(words).forEach(function (word) {
-            var conf = parseInt(word.title.substring(word.title.lastIndexOf(' ')))/100;
-            //var conf = word.getAttribute("y_wconf");
-            word.style  = "--red:255; --conf:"+conf;
-            word.dataset.original = word.innerText;
-            word.contentEditable = 'true';
-            word.setAttribute("onblur", "handleTextChange(event)");
-            word.setAttribute("onkeydown", "MaybeDelete(event)");
-        });
-    
-        const lines = document.querySelectorAll(lineclass);
-    
-        Array.from(lines).forEach(function (line) {
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.name = line.id;
-            checkbox.className = 'dynamic-checkbox';
-            line.style.position = 'relative'; 
-            line.insertBefore(checkbox, line.firstChild);
-        }); 
-    
-        const pars = document.querySelectorAll('.ocr_par');
-    
-        Array.from(pars).forEach(function (par) {
-    
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.className = 'dynamic-checkbox par-checkbox';
-            par.style.position = 'relative'; 
-            par.insertBefore(checkbox, par.firstChild);
-            par.setAttribute("onclick", "checkall(event)");
-        }); 
-    }
+        carea.remove();
+    });
 
-  
+    const words = element.querySelectorAll('.ocrx_word');
 
+    Array.from(words).forEach(function (word) {
+        var conf = parseInt(word.title.substring(word.title.lastIndexOf(' ')))/100;
+        //var conf = word.getAttribute("y_wconf");
+        word.style  = "--red:255; --conf:"+conf;
+        word.dataset.original = word.innerText;
+        word.contentEditable = 'true';
+        word.setAttribute("onblur", "handleTextChange(event)");
+        word.setAttribute("onkeydown", "MaybeDelete(event)");
+    });
+
+    const lines = element.querySelectorAll(lineclass);
+
+    Array.from(lines).forEach(function (line) {
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.name = line.id;
+        checkbox.className = 'dynamic-checkbox';
+        line.style.position = 'relative'; 
+        line.insertBefore(checkbox, line.firstChild);
+    }); 
+
+    const pars = element.querySelectorAll('.ocr_par');
+
+    Array.from(pars).forEach(function (par) {
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'dynamic-checkbox par-checkbox';
+        par.style.position = 'relative'; 
+        par.insertBefore(checkbox, par.firstChild);
+        par.setAttribute("onclick", "checkall(event)");
+    }); 
 }
-
-window.onload = prepare;
 
 function help(){
     document.getElementById('if').src = "/help";
@@ -83,9 +72,6 @@ function getHtml(filename){
 
     dwn(`<!DOCTYPE html><html><body>${hocrToPlainHtml(body)}</body></html>`, "text/html", filename, ".html");
 }
-
-
-
 
 function getAlignmentClass(paragraph, globalBounds, columnN=2) {
     const bbox = paragraph.getAttribute('title').match(/bbox (\d+) (\d+) (\d+) (\d+)/);
@@ -165,8 +151,6 @@ function hocrToPlainHtml(hocrElementx) {
 
     return plainHtml;
 }
-
-
 
 function groupParagraphsByY(hocrElement) {
     const yGroups = [];
@@ -275,4 +259,67 @@ function uploadHocr(event){
         };
         reader.readAsText(file);
     }
+}
+
+function handleStreaming(sessionId, loadingGif, images, imagesDataElement) {
+    const eventSource = new EventSource(`/stream/${sessionId}`);
+
+    eventSource.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        const resultElement = document.createElement('div');
+        resultElement.innerHTML =  data.html;
+
+        // Append the result to the digiteks_hocr_content element
+        const resultsDiv = document.getElementById('digiteks_hocr_content');
+        prepare(resultElement)
+        resultsDiv.appendChild(resultElement);
+  
+        // Remove the processed image from the images data
+        images.shift();
+        imagesDataElement.dataset.images = JSON.stringify(images);
+
+        // Remove the hidden div containing images data when all images are processed
+        if (images.length === 0) {
+            loadingGif.style.display = 'none';
+            eventSource.close();
+            const imagesDataDiv = document.getElementById('imagesData');
+            imagesDataDiv.remove();
+        }
+    };
+
+    eventSource.onerror = function(event) {
+        console.error('EventSource error:', event); // Debugging: Print error event
+        // Hide the loading GIF when done or on error
+        loadingGif.style.display = 'none';
+        eventSource.close();
+
+        // Remove the hidden div containing images data
+        const imagesDataDiv = document.getElementById('imagesData');
+        imagesDataDiv.remove();
+    };
+}
+
+function stream_ocr(lang, loadingGif, imagesDataElement ) {
+
+    loadingGif.style.display = 'block';
+    let images = JSON.parse(imagesDataElement.dataset.images);
+    // Send the images data to the /start_ocr endpoint
+    fetch(`/ocr/${lang}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ images: images })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Start OCR response:', data); // Debugging: Print start OCR response
+        if (data.status === 'OCR started') {
+            handleStreaming(data.session_id, loadingGif, images, imagesDataElement);
+        }
+    })
+    .catch(error => {
+        console.error('Fetch error:', error); // Debugging: Print fetch error
+        loadingGif.style.display = 'none';
+    });
 }
