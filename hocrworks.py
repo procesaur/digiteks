@@ -5,9 +5,10 @@ from helper import do
 
 def hocr_transform(hocr):
     processes = (make_soup, arrange_fix, newline_fix, word_fix)
-    processes = (make_soup, arrange_fix, newline_fix, word_fix)
+    processes = (make_soup, arrange_fix, newline_fix)
     for p in processes:
-        hocr = do(p, hocr)
+        hocr = p(hocr)
+    hocr = do(word_fix, hocr)
     return str(hocr)
 
 def make_soup(hocr):
@@ -32,8 +33,8 @@ def word_fix(soup):
     prior_probs = []
     words = [span.get_text() for span in spans]
     probs, _ = inspect(words, prior_probs=prior_probs)
-    for word, prob in zip(spans, probs):
-        word["y_wconf"] = 100-prob
+    for span, prob in zip(spans, probs):
+        span["y_wconf"] = 1-prob
     return soup
 
 def arrange_fix(soup):

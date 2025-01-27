@@ -15,7 +15,7 @@ function prepare(element, top=0.94, saturation=0.5) {
 
     Array.from(words).forEach(function (word) {
         var conf = parseInt(word.title.substring(word.title.lastIndexOf(' ')))/100;
-        //var conf = word.getAttribute("y_wconf");
+        var conf = word.getAttribute("y_wconf");
         word.style  = "--red:255; --conf:"+conf;
         word.dataset.original = word.innerText;
         word.contentEditable = 'true';
