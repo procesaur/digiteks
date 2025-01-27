@@ -5,9 +5,9 @@ from helper import do
 
 def hocr_transform(hocr):
     processes = (make_soup, arrange_fix, newline_fix, word_fix)
-    processes = (make_soup, arrange_fix, newline_fix)
+    processes = (make_soup, arrange_fix, newline_fix, word_fix)
     for p in processes:
-        hocr = p(hocr)
+        hocr = do(p, hocr)
     return str(hocr)
 
 def make_soup(hocr):

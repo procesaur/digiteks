@@ -9,15 +9,19 @@ from bin.transformers_o import pipeline, AutoModelForCausalLM, RobertaTokenizerF
 
 
 modelname = cfg["model"]
-cuda = cuda.is_available()
-tokenizer = RobertaTokenizerFast.from_pretrained(modelname, add_prefix_space=True, max_len=256, pad_token="<pad>", unk_token="<unk>", mask_token="<mask>", pad_to_max_length=True)
+cuda = cuda.is_available() and cfg["cuda"]
+
+tokenizer = RobertaTokenizerFast.from_pretrained(modelname, add_prefix_space=True, max_len=512, pad_token="<pad>", unk_token="<unk>", mask_token="<mask>", pad_to_max_length=True)
 if cuda:
     model = AutoModelForCausalLM.from_pretrained(modelname).to(0)
     unmasker = pipeline('fill-mask', model=model, top_k=11, device=0, tokenizer=tokenizer)
 else:
     model = AutoModelForCausalLM.from_pretrained(modelname)
     unmasker = pipeline('fill-mask', model=model, top_k=11, tokenizer=tokenizer)
+    
 max_length=tokenizer.model_max_length
+if max_length > cfg["context"]:
+    max_length = cfg["context"]
 
 def fill_mask(text):
     if "<mask>" in text:
@@ -70,7 +74,6 @@ def inspect(words, prior_probs=None, prior_influence=0.5, mp=800):
     vals = []
 
     for token_ids in bathces:
-        print(len(token_ids))
         for i, token_id in enumerate(token_ids):
             input_ids = tensor(token_ids).unsqueeze(0)
             if cuda:
