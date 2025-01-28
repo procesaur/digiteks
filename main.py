@@ -4,7 +4,7 @@ from rq_handler import process_req, process_req_glasnik
 from ocrworks import pdf_to_images, ocr_images
 from webbrowser import open_new
 from threading import Timer
-from lmworks import fill_mask, visualize
+from lmworks import fill_mask, lm_inspect
 from helper import zip_bytes_string, image_zip_to_images, do, encode_images, decode_images
 import uuid
 
@@ -98,14 +98,13 @@ def glasnik():
 @app.route('/glasnik2', methods=['GET','POST'])
 def glasnik2():
     try:
-        input = process_req_glasnik(request)
+        input, mp = process_req_glasnik(request, fields=["text", "mp"])
+        vals, tokens = lm_inspect(input, max_perplexity=int(mp))
     except:
-        input = ""
-    if input:
-        vals, tokens = visualize(input)
-    else:
-        vals, tokens = [], []
-    return render_template('visualize.html', input=input, vals=vals, tokens=tokens)
+        input, mp = process_req_glasnik(request, fields=["text", "mp"])
+        vals, tokens = lm_inspect(input, max_perplexity=int(mp))
+        input, vals, tokens = "", [], []
+    return render_template('visualize.html', input=input, vals=[1-x for x in vals], tokens=tokens, mp=mp)
 
 def open_browser():
     open_new("http://127.0.0.1:5001")

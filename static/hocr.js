@@ -15,9 +15,9 @@ function prepare(element, top=0.94, saturation=0.5) {
 
     Array.from(words).forEach(function (word) {
         var conf = parseInt(word.title.substring(word.title.lastIndexOf(' ')))/100;
-        var conf = word.getAttribute("y_wconf");
+        var conf = word.getAttribute("new_conf");
         word.style  = "--red:255; --conf:"+conf;
-        word.dataset.original = word.innerText;
+        //word.dataset.original = word.innerText;
         word.contentEditable = 'true';
         word.setAttribute("onblur", "handleTextChange(event)");
         word.setAttribute("onkeydown", "MaybeDelete(event)");
@@ -73,69 +73,16 @@ function getHtml(filename){
     dwn(`<!DOCTYPE html><html><body>${hocrToPlainHtml(body)}</body></html>`, "text/html", filename, ".html");
 }
 
-function getAlignmentClass(paragraph, globalBounds, columnN=2) {
-    const bbox = paragraph.getAttribute('title').match(/bbox (\d+) (\d+) (\d+) (\d+)/);
-    tolerance = 150;
-    if (bbox) {
-        if (columnN!=2){
-            return '';
-        }
-        const x1 = parseInt(bbox[1], 10);
-        const x2 = parseInt(bbox[3], 10);
-
-        const leftPadding = x1 - globalBounds.minX;
-        const rightPadding = globalBounds.maxX - x2;
-
-        // Adjust the threshold values more aggressively for right alignment
-        if (leftPadding + tolerance < rightPadding) { // Lower threshold for right alignment
-            return 'Basic-Paragraph';
-        } else if (rightPadding + tolerance < leftPadding) { // Increased threshold for left alignment
-            return 'potpis';
-        } else if (leftPadding > tolerance && rightPadding > tolerance) { // Lower threshold for center alignment
-            return 'odluka-zakon';
-        } else {
-            return 'Basic-Paragraph';
-        }
-    }
-    return 'Basic-Paragraph'; // Default to justify if bbox is not found
-}
-
 function hocrToPlainHtml(hocrElementx) {
     let plainHtml = "";
 
     const pages = hocrElementx.getElementsByClassName('ocr_page');
     Array.from(pages).forEach(hocrElement => {
-        const globalBounds = getGlobalBounds(hocrElement);
-        const midX = (globalBounds.minX + globalBounds.maxX) / 2;
-        const lBounds = {minX : globalBounds.minX, maxX : midX};
-        const rBounds = {minX : midX, maxX : globalBounds.maxX};
-
-        const yGroups = groupParagraphsByY(hocrElement);
-
-        for (const y in yGroups) {
-            const group = yGroups[y];
-            const layoutType = determineLayoutTypeForGroup(group, midX);
-
-            group.forEach(paragraph => {
-                const columnType = determineColumnType(paragraph, midX);               
-                paragraph.setAttribute("xxx", columnType);
-                paragraph.setAttribute("yyy", layoutType);
-                });
-            }
-
+    
         const paragraphs = hocrElement.getElementsByClassName('ocr_par');
         Array.from(paragraphs).forEach(paragraph => {
-            const columnClass = paragraph.getAttribute("xxx")
-            const columnN = paragraph.getAttribute("yyy")
-            var alignmentClass = '';
-            if (columnClass == 'left column' ){
-                alignmentClass = getAlignmentClass(paragraph, lBounds, columnN);
-            }
-            else if (columnClass == 'right column'){
-                alignmentClass = getAlignmentClass(paragraph, rBounds, columnN);
-            }
- 
-            //plainHtml += `<p class="${alignmentClass} ${columnClass}_${columnN}">`;
+            const align = paragraph.getAttribute("xalign");
+            const alignmentClass = getAlignmentClass(align);
             plainHtml += `<p class="${alignmentClass}">`;
             
             const words = paragraph.getElementsByClassName('ocrx_word');
@@ -152,85 +99,6 @@ function hocrToPlainHtml(hocrElementx) {
     return plainHtml;
 }
 
-function groupParagraphsByY(hocrElement) {
-    const yGroups = [];
-    const tolerance = 20; // Adjust tolerance value as needed
-    const paragraphs = hocrElement.getElementsByClassName('ocr_par');
-    
-    Array.from(paragraphs).forEach(paragraph => {
-        const bbox = paragraph.getAttribute('title').match(/bbox (\d+) (\d+) (\d+) (\d+)/);
-        if (bbox) {
-            const y1 = parseInt(bbox[2], 10);
-            const y2 = parseInt(bbox[4], 10);
-            let addedToGroup = false;
-
-            for (const group of yGroups) {
-                const groupY1 = parseInt(group[0].getAttribute('title').match(/bbox (\d+) (\d+) (\d+) (\d+)/)[2], 10);
-                const groupY2 = parseInt(group[0].getAttribute('title').match(/bbox (\d+) (\d+) (\d+) (\d+)/)[4], 10);
-
-                if ((y1 >= groupY1 - tolerance && y1 <= groupY2 + tolerance) || 
-                    (y2 >= groupY1 - tolerance && y2 <= groupY2 + tolerance) || 
-                    (groupY1 >= y1 - tolerance && groupY1 <= y2 + tolerance) || 
-                    (groupY2 >= y1 - tolerance && groupY2 <= y2 + tolerance)) {
-                    group.push(paragraph);
-                    addedToGroup = true;
-                    break;
-                }
-            }
-            if (!addedToGroup) {
-                yGroups.push([paragraph]);
-            }
-        }
-    });
-    
-    return yGroups;
-}
-
-function determineColumnType(paragraph, midX, tolerance=1) {
-    const bbox = paragraph.getAttribute('title').match(/bbox (\d+) (\d+) (\d+) (\d+)/);
-    if (bbox) {
-        const x1 = parseInt(bbox[1], 10);
-        const x2 = parseInt(bbox[3], 10);
-        
-        if (x1 < midX + tolerance && x2 <= midX + tolerance) {
-            return 'left column';
-        } else if (x1 >= midX - tolerance && x2 > midX - tolerance) {
-            return 'right column';
-        } else if ((x1 < midX + tolerance && x2 > midX - tolerance) || (x1 < midX && x2 > midX)) {
-            return 'middle column';
-        }
-    }
-    return 'unknown column';
-}
-
-function determineLayoutTypeForGroup(group, midX) {
-    let threeColumn = false;
-
-    group.forEach(paragraph => {
-        const columnType = determineColumnType(paragraph, midX);
-        if (columnType === 'middle column') {
-            threeColumn = true;
-        }
-    });
-
-    return threeColumn ? 3 : 2;
-}
-
-function getGlobalBounds(hocrElement) {
-    let minX = Infinity;
-    let maxX = -Infinity;
-    const paragraphs = hocrElement.getElementsByClassName('ocr_par');
-    Array.from(paragraphs).forEach(paragraph => {
-        const bbox = paragraph.getAttribute('title').match(/bbox (\d+) (\d+) (\d+) (\d+)/);
-        if (bbox) {
-            const x1 = parseInt(bbox[1], 10);
-            const x2 = parseInt(bbox[3], 10);
-            if (x1 < minX) minX = x1;
-            if (x2 > maxX) maxX = x2;
-        }
-    });
-    return { minX, maxX };
-}
 
 function getText(filename){
     var html = document.getElementById("full_hocr")
@@ -322,4 +190,18 @@ function stream_ocr(lang, loadingGif, imagesDataElement ) {
         console.error('Fetch error:', error); // Debugging: Print fetch error
         loadingGif.style.display = 'none';
     });
+}
+
+function getAlignmentClass(align) {
+    switch (align) {
+        case 'center':
+            return "odluka-zakon";
+        case 'left':
+            return "Basic-Paragraph";
+        case 'right':
+            return "potpis";
+        case 'justify':
+            return "Basic-Paragraph";
+      }
+    return "Basic-Paragraph";
 }

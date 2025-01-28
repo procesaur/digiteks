@@ -7,9 +7,9 @@ def process_req(req):
     return file_bytes, filename
 
 
-def process_req_glasnik(req):
+def process_req_glasnik(req, fields=["text"]):
     query_parameters = params_from_req(req)
-    return query_parameters["text"]
+    return [query_parameters[x] for x in fields]
 
 
 def params_from_req(req):

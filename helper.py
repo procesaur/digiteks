@@ -88,3 +88,10 @@ def do(f, x):
 def chunkify(lst, n=cpus):
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
+
+
+def strip_non_alphanumeric(s):
+    i = len(s) - 1
+    while i >= 0 and not s[i].isalnum():
+        i -= 1
+    return s[:i + 1]
