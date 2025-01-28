@@ -4,7 +4,7 @@ from rq_handler import process_req, process_req_glasnik
 from ocrworks import pdf_to_images, ocr_images
 from webbrowser import open_new
 from threading import Timer
-from lmworks import fill_mask, lm_inspect
+from lmworks import lm_inspect
 from helper import zip_bytes_string, image_zip_to_images, do, encode_images, decode_images
 import uuid
 
@@ -83,17 +83,17 @@ def posthtml():
     return 'Invalid file'
 
 
-@app.route('/glasnik', methods=['GET','POST'])
-def glasnik():
-    try:
-        input = process_req_glasnik(request)
-    except:
-        input = ""
-    if input:
-        output = [x for x in fill_mask(input) if x["token"]>4]
-    else:
-        output = []
-    return render_template('inference.html', input=input, output=output)
+#@app.route('/glasnik', methods=['GET','POST'])
+#def glasnik():
+   # try:
+    #    input = process_req_glasnik(request)
+    #except:
+    #    input = ""
+    #if input:
+    #    output = [x for x in fill_mask(input) if x["token"]>4]
+    #else:
+    #    output = []
+    #return render_template('inference.html', input=input, output=output)
 
 @app.route('/glasnik2', methods=['GET','POST'])
 def glasnik2():

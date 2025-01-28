@@ -6,10 +6,10 @@ from helper import do, strip_non_alphanumeric
 lineclass = ["ocr_line", "ocr_caption", "ocr_textfloat", "ocr_header"]
 
 def hocr_transform(hocr):
-    processes = ()
+    processes = (make_soup, enrich_soup, arrange_fix, newline_fix)
     for p in processes:
         hocr = p(hocr)
-    processes = (make_soup, enrich_soup, arrange_fix, newline_fix, confidence_fix, words_fix)
+    processes = (confidence_fix, words_fix)
     for p in processes:
         hocr = do(p, hocr)
     return str(hocr)
@@ -95,9 +95,11 @@ def words_fix(soup):
     spans = soup.find_all("span", {"class": "ocrx_word"})
     words = [span.get_text() for span in spans]
     confs = [span['new_conf'] for span in spans]
-    words = lm_fix_words(words, confs)
-    for span, word in zip(spans, words):
-        span.string = word
+    new_words = lm_fix_words(words, confs)
+    for span, word, new_word in zip(spans, words, new_words):
+        if word != new_word:
+            span.string = word + " > " + new_word
+            span['style'] = "--red:255; --conf:1"
     return soup
 
 def arrange_fix(soup):

@@ -7,6 +7,7 @@ from io import BytesIO
 from base64 import b64encode, b64decode
 from psutil import cpu_count
 from multiprocessing.dummy import Pool as ThreadPool
+from Levenshtein import distance as levenshtein_distance
 
 
 cpus = cpu_count()
@@ -95,3 +96,99 @@ def strip_non_alphanumeric(s):
     while i >= 0 and not s[i].isalnum():
         i -= 1
     return s[:i + 1]
+
+
+cyr2lat_map = {
+    'Љ': 'Lj',
+    'Њ': 'Nj',
+    'Џ': 'Dž',
+    'А': 'A',
+    'Б': 'B',
+    'В': 'V',
+    'Г': 'G',
+    'Д': 'D',
+    'Ђ': 'Đ',
+    'Е': 'E',
+    'Ж': 'Ž',
+    'З': 'Z',
+    'И': 'I',
+    'Ј': 'J',
+    'К': 'K',
+    'Л': 'L',
+    'М': 'M',
+    'Н': 'N',
+    'О': 'O',
+    'П': 'P',
+    'Р': 'R',
+    'С': 'S',
+    'Т': 'T',
+    'Ћ': 'Ć',
+    'У': 'U',
+    'Ф': 'F',
+    'Х': 'H',
+    'Ц': 'C',
+    'Ч': 'Č',
+    'Ш': 'Š',
+    'љ': 'lj',
+    'њ': 'nj',
+    'џ': 'dž',
+    'а': 'a',
+    'б': 'b',
+    'в': 'v',
+    'г': 'g',
+    'д': 'd',
+    'ђ': 'đ',
+    'е': 'e',
+    'ж': 'ž',
+    'з': 'z',
+    'и': 'i',
+    'ј': 'j',
+    'к': 'k',
+    'л': 'l',
+    'м': 'm',
+    'н': 'n',
+    'о': 'o',
+    'п': 'p',
+    'р': 'r',
+    'с': 's',
+    'т': 't',
+    'ћ': 'ć',
+    'у': 'u',
+    'ф': 'f',
+    'х': 'h',
+    'ц': 'c',
+    'ч': 'č',
+    'ш': 'š'
+}
+
+lat2cyr_map = {v: k for k, v in cyr2lat_map.items()}
+
+def cyr2lat(x):
+    for key in cyr2lat_map.keys():
+        x = (x.replace(key, cyr2lat_map[key]))
+    return x
+    
+def lat2cyr(x):
+    for key in lat2cyr_map.keys():
+        x = (x.replace(key, lat2cyr_map[key]))
+    return x
+
+
+
+def find_most_similar_word(x, a):
+    min_distance = float('inf')
+    most_similar_word = None
+    
+    for word in a:
+        dist = levenshtein_distance(x, word)
+        if dist < min_distance:
+            min_distance = dist
+            most_similar_word = word
+    
+    return most_similar_word
+
+# Example usage
+x = "apple"
+a = ["ape", "apply", "maple", "peach"]
+most_similar_word = find_most_similar_word(x, a)
+print(most_similar_word)  # Output: apply

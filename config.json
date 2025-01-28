@@ -2,8 +2,9 @@
     "model" : "f:/glasnik-355",
     "cuda" : true,
     "context_size" : 512,
-    "batch_size" : 16,
-    "min_conf" : 90,
+    "batch_size" : 1,
+    "top_k" : 1000,
+    "min_conf" : 0.92,
     "reasonable_doubt_index" : 0,
     "max_perplexity" : 250
 }
