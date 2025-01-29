@@ -67,11 +67,11 @@ def lm_inspect(words, pre_confs=None, conf_threshold=min_conf_ocr, max_perplexit
     bathces, token_word = prepare_batches(words)
 
     if pre_confs:
-        candidates = [i for i, x in enumerate(pre_confs) if x < min_conf_combined]
+        candidates = [i for i, x in enumerate(pre_confs) if x < conf_threshold]
     else:
         candidates = [i for i, x in enumerate(words)]
 
-    for_masking = [[i for i, y in enumerate(token_word) if y==x] for x in candidates]
+    for_masking = [i for i, y in enumerate(token_word) if y in candidates]
     input_ids_list = create_batches_to_fix(bathces, for_masking)
 
     for i in range(0, len(input_ids_list), batch_size):
@@ -85,7 +85,7 @@ def lm_inspect(words, pre_confs=None, conf_threshold=min_conf_ocr, max_perplexit
         for j in range(batch_input_ids.size(0)):
             masked_index = (batch_input_ids[j] == tokenizer.mask_token_id).nonzero(as_tuple=True)[0].item()
             masked_logits = outputs.logits[j, masked_index, :]
-            original_token_prob = softmax(masked_logits, dim=0)[batch_input_ids[i + j]].item()
+            original_token_prob = softmax(masked_logits, dim=0)[bathces[0][i+j]].item()
             perplexities.append(1/original_token_prob)
 
     inspection_perplexities = {x : y for x, y in zip(candidates, perplexities)}
@@ -93,8 +93,8 @@ def lm_inspect(words, pre_confs=None, conf_threshold=min_conf_ocr, max_perplexit
         if i not in inspection_perplexities.keys():
             words_conf.append(pre_confs[i])
         else:
-            # wv = [perplexities[j] for j, x in enumerate(token_word) if x==i]
-            wv =inspection_perplexities[i]
+            wv = [perplexities[j] for j, x in enumerate(token_word) if x==i]
+            #wv =inspection_perplexities[i]
             words_conf.append(sum(wv)/len(wv))
 
     words_conf = [1-x/max_perplexity if x<max_perplexity else 0 for x in words_conf]
@@ -158,7 +158,7 @@ def create_batches_to_fix(token_batches, for_masking):
 
         for to_mask in for_masking:
             mask_avg = sum(to_mask)/len(to_mask)
-            if batch_max > mask_avg and mask_avg > batch_min:
+            if batch_max >= mask_avg and mask_avg >= batch_min:
                 to_mask = [x-batch_min for x in to_mask]
                 masked_context = batch.copy()
                 masked_context[to_mask[0]:to_mask[-1]+1] = [tokenizer.mask_token_id]

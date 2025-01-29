@@ -2,7 +2,7 @@
     "model" : "f:/glasnik-355",
     "cuda" : true,
     "context_size" : 256,
-    "batch_size" : 1,
+    "batch_size" : 16,
     "top_k" : 50,
     "min_conf_combined" : 0.92,
     "min_conf_ocr" : 0.94,
