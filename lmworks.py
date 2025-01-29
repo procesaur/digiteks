@@ -71,8 +71,8 @@ def lm_inspect(words, pre_confs=None, conf_threshold=min_conf_ocr, max_perplexit
     else:
         candidates = [i for i, x in enumerate(words)]
 
-    for_masking = [i for i, y in enumerate(token_word) if y in candidates]
-    input_ids_list = create_batches_to_fix(bathces, for_masking)
+    for_masking = [[i] for i, y in enumerate(token_word) if y in candidates]
+    input_ids_list, batch_i = create_batches_to_fix(bathces, for_masking)
 
     for i in range(0, len(input_ids_list), batch_size):
         if cuda:
@@ -85,7 +85,8 @@ def lm_inspect(words, pre_confs=None, conf_threshold=min_conf_ocr, max_perplexit
         for j in range(batch_input_ids.size(0)):
             masked_index = (batch_input_ids[j] == tokenizer.mask_token_id).nonzero(as_tuple=True)[0].item()
             masked_logits = outputs.logits[j, masked_index, :]
-            original_token_prob = softmax(masked_logits, dim=0)[bathces[0][i+j]].item()
+            batch_idx = batch_i[i+j]
+            original_token_prob = softmax(masked_logits, dim=0)[bathces[batch_idx][i+j]].item()
             perplexities.append(1/original_token_prob)
 
     inspection_perplexities = {x : y for x, y in zip(candidates, perplexities)}
@@ -109,7 +110,7 @@ def lm_fix_words(words, confs):
     token_batches, token_word = prepare_batches(words)
     to_fix = [i for i, x in enumerate(confs) if x < min_conf_combined]
     for_masking = [[i for i, y in enumerate(token_word) if y==x] for x in to_fix]
-    input_ids_list = create_batches_to_fix(token_batches, for_masking)
+    input_ids_list, _ = create_batches_to_fix(token_batches, for_masking)
     all_predictions= []
     results = []
 
@@ -150,10 +151,11 @@ def pad_and_stack_batches(input_ids_list):
 
 def create_batches_to_fix(token_batches, for_masking):
     masked_contexts = []
+    batch_i = []
     batch_min = 0
     batch_max = 0
 
-    for batch in token_batches:
+    for i, batch in enumerate(token_batches):
         batch_max += len(batch)
 
         for to_mask in for_masking:
@@ -164,6 +166,8 @@ def create_batches_to_fix(token_batches, for_masking):
                 masked_context[to_mask[0]:to_mask[-1]+1] = [tokenizer.mask_token_id]
                 masked_context = tokenizer.convert_tokens_to_ids(prefix) + masked_context
                 masked_contexts.append(tensor(masked_context, dtype=tlong))
+                batch_i.append(i)
+
         batch_min = batch_max
 
-    return masked_contexts
+    return masked_contexts, batch_i
