@@ -13,6 +13,8 @@ batch_size = cfg["batch_size"]
 reasonable_doubt = cfg["reasonable_doubt_index"]
 max_perplexity = cfg["max_perplexity"]
 top_k = cfg["top_k"]
+min_conf_ocr = cfg["min_conf_ocr"]
+min_conf_combined = cfg["min_conf_combined"]
 prefix = [".", "-"]
 cuda = cuda.is_available() and cfg["cuda"]
 print("cuda:", cuda)
@@ -54,7 +56,7 @@ def prepare_batches(words):
     return bathces, token_word
 
 
-def lm_inspect(words, max_perplexity=max_perplexity):
+def lm_inspect(words, pre_confs=None, conf_threshold=min_conf_ocr, max_perplexity=max_perplexity):
     if isinstance(words, str):
         words = words.rstrip().replace("\n", " ")
         words = words.split()
@@ -63,44 +65,49 @@ def lm_inspect(words, max_perplexity=max_perplexity):
     perplexities = []
     words_conf = []
     bathces, token_word = prepare_batches(words)
-    for input_ids in bathces:
-        input_ids_list = []
-        input_ids = tokenizer.convert_tokens_to_ids(prefix) + input_ids
-        for i in range(len(input_ids)):
-            pl = len(prefix)
-            if i >= pl:
-                masked_input_ids = input_ids[:]
-                masked_input_ids[i-pl] = tokenizer.mask_token_id
-                input_ids_list.append(tensor(masked_input_ids))
 
-        for i in range(0, len(input_ids_list), batch_size):
-            if cuda:
-                batch_input_ids = stack(input_ids_list[i:i + batch_size]).to(0)
-            else:
-                batch_input_ids = stack(input_ids_list[i:i + batch_size])
-            with no_grad():
-                outputs = model(batch_input_ids)
-            for j in range(batch_input_ids.size(0)):
-                masked_index = (batch_input_ids[j] == tokenizer.mask_token_id).nonzero(as_tuple=True)[0].item()
-                masked_logits = outputs.logits[j, masked_index, :]
-                original_token_prob = softmax(masked_logits, dim=0)[input_ids[i + j]].item()
-                perplexities.append(1/original_token_prob)
+    if pre_confs:
+        candidates = [i for i, x in enumerate(pre_confs) if x < min_conf_combined]
+    else:
+        candidates = [i for i, x in enumerate(words)]
 
-    for i in range(len(words)):
-        wv = [perplexities[j] for j, x in enumerate(token_word) if x==i]
-        words_conf.append(sum(wv)/len(wv))
+    for_masking = [[i for i, y in enumerate(token_word) if y==x] for x in candidates]
+    input_ids_list = create_batches_to_fix(bathces, for_masking)
+
+    for i in range(0, len(input_ids_list), batch_size):
+        if cuda:
+            batch_input_ids = pad_and_stack_batches(input_ids_list[i:i + batch_size]).to(0)
+        else:
+            batch_input_ids = pad_and_stack_batches(input_ids_list[i:i + batch_size])
+        with no_grad():
+            outputs = model(batch_input_ids)
+
+        for j in range(batch_input_ids.size(0)):
+            masked_index = (batch_input_ids[j] == tokenizer.mask_token_id).nonzero(as_tuple=True)[0].item()
+            masked_logits = outputs.logits[j, masked_index, :]
+            original_token_prob = softmax(masked_logits, dim=0)[batch_input_ids[i + j]].item()
+            perplexities.append(1/original_token_prob)
+
+    inspection_perplexities = {x : y for x, y in zip(candidates, perplexities)}
+    for i, word in enumerate(words):
+        if i not in inspection_perplexities.keys():
+            words_conf.append(pre_confs[i])
+        else:
+            # wv = [perplexities[j] for j, x in enumerate(token_word) if x==i]
+            wv =inspection_perplexities[i]
+            words_conf.append(sum(wv)/len(wv))
 
     words_conf = [1-x/max_perplexity if x<max_perplexity else 0 for x in words_conf]
     return words_conf, words
 
 
 def confidence_rework(ocr_confs, lm_confs, rdi=1-reasonable_doubt):
-    return [(y*rdi)**(1-x) if x<cfg["min_conf_ocr"] else x for x, y in zip(ocr_confs, lm_confs)]
+    return [(y*rdi)**(1-x) if x<min_conf_ocr else x for x, y in zip(ocr_confs, lm_confs)]
 
 
 def lm_fix_words(words, confs):
     token_batches, token_word = prepare_batches(words)
-    to_fix = [i for i, x in enumerate(confs) if x < cfg["min_conf"]]
+    to_fix = [i for i, x in enumerate(confs) if x < min_conf_combined]
     for_masking = [[i for i, y in enumerate(token_word) if y==x] for x in to_fix]
     input_ids_list = create_batches_to_fix(token_batches, for_masking)
     all_predictions= []

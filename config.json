@@ -4,7 +4,7 @@
     "context_size" : 256,
     "batch_size" : 1,
     "top_k" : 50,
-    "min_conf" : 0.92,
+    "min_conf_combined" : 0.92,
     "min_conf_ocr" : 0.94,
     "reasonable_doubt_index" : 0.05,
     "max_perplexity" : 2000

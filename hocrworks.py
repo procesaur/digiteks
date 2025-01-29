@@ -74,9 +74,8 @@ def lm_processing(soup):
     spans = soup.find_all("span", {"class": "ocrx_word"})
     words = [span.get_text() for span in spans]
     ocr_confs = [int(span['title'].split('x_wconf ')[1])/100 for span in spans]
-    # lm_confs, _ = lm_inspect(words)
-    # new_confs = confidence_rework(ocr_confs, lm_confs)
-    new_confs, lm_confs = ocr_confs, ocr_confs
+    lm_confs, _ = lm_inspect(words, pre_confs=ocr_confs)
+    new_confs = confidence_rework(ocr_confs, lm_confs)
     for span, ocr_conf, lm_conf, new_conf in zip(spans, ocr_confs, lm_confs, new_confs):
         span["ocr_conf"] = ocr_conf
         span["lm_conf"] = lm_conf
