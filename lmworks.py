@@ -86,7 +86,10 @@ def lm_inspect(words, pre_confs=None, conf_threshold=min_conf_ocr, max_perplexit
             masked_index = (batch_input_ids[j] == tokenizer.mask_token_id).nonzero(as_tuple=True)[0].item()
             masked_logits = outputs.logits[j, masked_index, :]
             batch_idx = batch_i[i+j]
-            original_token_prob = softmax(masked_logits, dim=0)[bathces[batch_idx][i+j]].item()
+            try:
+                original_token_prob = softmax(masked_logits, dim=0)[bathces[batch_idx][i+j]].item() #TODO PONAVALJA SE I+J, ali to nije id originalnog tokena
+            except:
+                print(i, j)
             perplexities.append(1/original_token_prob)
 
     inspection_perplexities = {x : y for x, y in zip(candidates, perplexities)}
@@ -160,7 +163,7 @@ def create_batches_to_fix(token_batches, for_masking):
 
         for to_mask in for_masking:
             mask_avg = sum(to_mask)/len(to_mask)
-            if batch_max >= mask_avg and mask_avg >= batch_min:
+            if batch_max > mask_avg and mask_avg >= batch_min:
                 to_mask = [x-batch_min for x in to_mask]
                 masked_context = batch.copy()
                 masked_context[to_mask[0]:to_mask[-1]+1] = [tokenizer.mask_token_id]
