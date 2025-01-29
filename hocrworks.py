@@ -37,22 +37,15 @@ def enrich_soup(soup):
         for paragraph in paragraphs:
             column_class = paragraph.get('column-type')
             column_n = paragraph.get('layout-type')
-
-            if column_class == 'left column':
-                left_padding, right_padding, align, x1, y1, x2, y2 = process_paragraph(paragraph, l_bounds, column_n)
-                get_and_set_word_paddings(paragraph, l_bounds)
-            elif column_class == 'right column':
-                left_padding, right_padding, align, x1, y1, x2, y2 = process_paragraph(paragraph, r_bounds, column_n)
-                get_and_set_word_paddings(paragraph, r_bounds)
-
-            paragraph["right_padding"] = right_padding
-            paragraph["left_padding"] = left_padding
-            paragraph["xalign"] = align
-            paragraph["x1"] = x1
-            paragraph["x2"] = x2
-            paragraph["y1"] = y1
-            paragraph["y2"] = y2
-
+            if column_n != 2:
+                paragraph.decompose()
+            else:
+                if column_class == 'left column':
+                    process_paragraph(paragraph, l_bounds, column_n)
+                    get_and_set_word_paddings(paragraph, l_bounds)
+                elif column_class == 'right column':
+                    process_paragraph(paragraph, r_bounds, column_n)
+                    get_and_set_word_paddings(paragraph, r_bounds)
     return soup
 
 
@@ -79,7 +72,6 @@ def newline_fix(soup):
 
 def confidence_fix(soup):
     spans = soup.find_all("span", {"class": "ocrx_word"})
-    ids = [span['id'] for span in spans]
     words = [span.get_text() for span in spans]
     ocr_confs = [int(span['title'].split('x_wconf ')[1])/100 for span in spans]
     lm_confs, _ = lm_inspect(words)
@@ -101,6 +93,7 @@ def words_fix(soup):
             span.string = word + " > " + new_word
             span['style'] = "--red:255; --conf:1"
     return soup
+
 
 def arrange_fix(soup):
     return soup
@@ -221,8 +214,14 @@ def process_paragraph(paragraph, global_bounds, column_n=2, tolerance=150):
 
         if column_n != 2:
                 return '', '', '', x1, y1, x2, y2
-        return left_padding, right_padding, align, x1, y1, x2, y2
-    return '', '', '', '', '', '', ''
+
+        paragraph["right_padding"] = right_padding
+        paragraph["left_padding"] = left_padding
+        paragraph["xalign"] = align
+        paragraph["x1"] = x1
+        paragraph["x2"] = x2
+        paragraph["y1"] = y1
+        paragraph["y2"] = y2
 
 
 def get_and_set_word_paddings(paragraph, global_bounds, tolerance=50):

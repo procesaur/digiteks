@@ -2,10 +2,10 @@ from torch import tensor, no_grad, softmax
 from helper import cfg, group_into_sentences, lat2cyr, find_most_similar_word
 from os import path as px
 import sys
-from torch import cuda, topk, stack
+from torch import cuda, topk, stack, cat, long as tlong
 
 sys.path.append(str(px.dirname(__file__)))
-from bin.transformers_o import pipeline, AutoModelForCausalLM, RobertaTokenizerFast
+from bin.transformers_o import AutoModelForCausalLM, RobertaTokenizerFast
 
 
 modelname = cfg["model"]
@@ -14,12 +14,14 @@ reasonable_doubt = cfg["reasonable_doubt_index"]
 max_perplexity = cfg["max_perplexity"]
 top_k = cfg["top_k"]
 cuda = cuda.is_available() and cfg["cuda"]
+print("cuda:", cuda)
 
 tokenizer = RobertaTokenizerFast.from_pretrained(modelname, add_prefix_space=True, max_len=512, pad_token="<pad>", unk_token="<unk>", mask_token="<mask>", pad_to_max_length=True)
 if cuda:
     model = AutoModelForCausalLM.from_pretrained(modelname).to(0)
 else:
     model = AutoModelForCausalLM.from_pretrained(modelname)
+
 model.eval()
 
 prefix = [".", "-"]
@@ -108,18 +110,20 @@ def confidence_rework(ocr_confs, lm_confs, rdi=1-reasonable_doubt):
     return [(y*rdi)**(1-x) for x, y in zip(ocr_confs, lm_confs)]
 
 
+
 def lm_fix_words(words, confs):
     token_batches, token_word = prepare_batches(words)
-    for_inspection = [i for i, x in enumerate(confs) if x < cfg["min_conf"]]
-    input_ids_list = create_batches_to_fix(token_batches, token_word, for_inspection)
+    to_fix = [i for i, x in enumerate(confs) if x < cfg["min_conf"]]
+    for_masking = [[i for i, y in enumerate(token_word) if y==x] for x in to_fix]
+    input_ids_list = create_batches_to_fix(token_batches, for_masking)
     all_predictions= []
     results = []
 
     for i in range(0, len(input_ids_list), batch_size):
         if cuda:
-            batch_input_ids = stack(input_ids_list[i:i + batch_size]).to(0)
+            batch_input_ids = pad_and_stack_batches(input_ids_list[i:i + batch_size]).to(0)
         else:
-            batch_input_ids = stack(input_ids_list[i:i + batch_size])
+            batch_input_ids = pad_and_stack_batches(input_ids_list[i:i + batch_size])
         with no_grad():
             outputs = model(batch_input_ids)
 
@@ -130,33 +134,42 @@ def lm_fix_words(words, confs):
             top_k_tokens = [tokenizer.decode([token_id]) for token_id in top_k_indices]
             all_predictions.append(top_k_tokens)
 
-    inspection_prediction = {x : y for x, y in zip(for_inspection, all_predictions)}
+    print(len(to_fix), len(all_predictions)) 
+ 
+    inspection_prediction = {x : y for x, y in zip(to_fix, all_predictions)}
     for i, word in enumerate(words):
         if i not in inspection_prediction.keys():
             results.append(word)
         elif word in inspection_prediction[i]:
             results.append(word)
         else:
-            predictions = [lat2cyr(x) for x in inspection_prediction[i]]
+            predictions = [lat2cyr(x.strip()) for x in inspection_prediction[i]]
             results.append(find_most_similar_word(word, predictions))
     return results
 
 
-def create_batches_to_fix(token_batches, token_word, for_inspection):
+def pad_and_stack_batches(input_ids_list):
+    max_length = max(len(batch) for batch in input_ids_list)
+    padded_batches = [cat([batch, tensor([tokenizer.pad_token_id] * (max_length - len(batch)), dtype=tlong)]) for batch in input_ids_list]
+    return stack(padded_batches)
+
+
+def create_batches_to_fix(token_batches, for_masking):
     masked_contexts = []
-    tokenized_inputs = [token for batch in token_batches for token in batch]
+    batch_min = 0
+    batch_max = 0
 
-    for index in for_inspection:
-        word_tokens = [idx for idx, word_idx in enumerate(token_word) if word_idx == index]
-        
-        masked_context = tokenized_inputs[:]
-        mask_start = word_tokens[0]
-        mask_end = word_tokens[-1] + 1
-        masked_context[mask_start:mask_end] = [tokenizer.mask_token_id]
+    for batch in token_batches:
+        batch_max += len(batch)
 
-        context_start = max(0, mask_start - (max_length-5) // 2)
-        context_end = min(len(masked_context), mask_end + (max_length-5) // 2)
-        masked_context = masked_context[context_start:context_end]
-        masked_contexts.append(tensor(masked_context))
+        for to_mask in for_masking:
+            mask_avg = sum(to_mask)/len(to_mask)
+            if batch_max > mask_avg and mask_avg > batch_min:
+                to_mask = [x-batch_min for x in to_mask]
+
+                masked_context = batch.copy()
+                masked_context[to_mask[0]:to_mask[-1]] = [tokenizer.mask_token_id]
+                masked_contexts.append(tensor(masked_context, dtype=tlong))
+        batch_min = batch_max
 
     return masked_contexts

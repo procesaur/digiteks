@@ -97,12 +97,11 @@ def posthtml():
 
 @app.route('/glasnik2', methods=['GET','POST'])
 def glasnik2():
+    mp = 800
     try:
         input, mp = process_req_glasnik(request, fields=["text", "mp"])
         vals, tokens = lm_inspect(input, max_perplexity=int(mp))
     except:
-        input, mp = process_req_glasnik(request, fields=["text", "mp"])
-        vals, tokens = lm_inspect(input, max_perplexity=int(mp))
         input, vals, tokens = "", [], []
     return render_template('visualize.html', input=input, vals=[1-x for x in vals], tokens=tokens, mp=mp)
 
