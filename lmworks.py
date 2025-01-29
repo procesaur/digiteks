@@ -13,6 +13,7 @@ batch_size = cfg["batch_size"]
 reasonable_doubt = cfg["reasonable_doubt_index"]
 max_perplexity = cfg["max_perplexity"]
 top_k = cfg["top_k"]
+prefix = [".", "-"]
 cuda = cuda.is_available() and cfg["cuda"]
 print("cuda:", cuda)
 
@@ -21,10 +22,8 @@ if cuda:
     model = AutoModelForCausalLM.from_pretrained(modelname).to(0)
 else:
     model = AutoModelForCausalLM.from_pretrained(modelname)
-
 model.eval()
 
-prefix = [".", "-"]
 max_length=tokenizer.model_max_length - len(prefix) - 2
 if max_length > cfg["context_size"]:
     max_length = cfg["context_size"]
@@ -36,7 +35,6 @@ def prepare_batches(words):
     grouped_tokens = []
     current_tokens = []
     current_length = 0
-
     i=0
     for sentence in sentences:
         for word in sentence:
@@ -50,13 +48,9 @@ def prepare_batches(words):
                 current_tokens.extend(toks)
                 current_length += len(toks)
             i+=1
-
     if current_tokens:
         grouped_tokens.append(current_tokens)
-
-    grouped_tokens = [prefix + x for x in grouped_tokens]
     bathces = [tokenizer.convert_tokens_to_ids(x) for x in grouped_tokens]
-
     return bathces, token_word
 
 
@@ -64,18 +58,14 @@ def lm_inspect(words, max_perplexity=max_perplexity):
     if isinstance(words, str):
         words = words.rstrip().replace("\n", " ")
         words = words.split()
-    
     if not words:
         return [], []
-
     perplexities = []
     words_conf = []
-
     bathces, token_word = prepare_batches(words)
-
     for input_ids in bathces:
         input_ids_list = []
-        
+        input_ids = tokenizer.convert_tokens_to_ids(prefix) + input_ids
         for i in range(len(input_ids)):
             pl = len(prefix)
             if i >= pl:
@@ -88,10 +78,8 @@ def lm_inspect(words, max_perplexity=max_perplexity):
                 batch_input_ids = stack(input_ids_list[i:i + batch_size]).to(0)
             else:
                 batch_input_ids = stack(input_ids_list[i:i + batch_size])
-
             with no_grad():
                 outputs = model(batch_input_ids)
-
             for j in range(batch_input_ids.size(0)):
                 masked_index = (batch_input_ids[j] == tokenizer.mask_token_id).nonzero(as_tuple=True)[0].item()
                 masked_logits = outputs.logits[j, masked_index, :]
@@ -107,8 +95,7 @@ def lm_inspect(words, max_perplexity=max_perplexity):
 
 
 def confidence_rework(ocr_confs, lm_confs, rdi=1-reasonable_doubt):
-    return [(y*rdi)**(1-x) for x, y in zip(ocr_confs, lm_confs)]
-
+    return [(y*rdi)**(1-x) if x<cfg["min_conf_ocr"] else x for x, y in zip(ocr_confs, lm_confs)]
 
 
 def lm_fix_words(words, confs):
@@ -166,9 +153,9 @@ def create_batches_to_fix(token_batches, for_masking):
             mask_avg = sum(to_mask)/len(to_mask)
             if batch_max > mask_avg and mask_avg > batch_min:
                 to_mask = [x-batch_min for x in to_mask]
-
                 masked_context = batch.copy()
-                masked_context[to_mask[0]:to_mask[-1]] = [tokenizer.mask_token_id]
+                masked_context[to_mask[0]:to_mask[-1]+1] = [tokenizer.mask_token_id]
+                masked_context = tokenizer.convert_tokens_to_ids(prefix) + masked_context
                 masked_contexts.append(tensor(masked_context, dtype=tlong))
         batch_min = batch_max
 

@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, send_file, Response, jsonify
+from flask import Flask, request, render_template, send_file, Response, jsonify, send_from_directory
 from os import environ, path as px
 from rq_handler import process_req, process_req_glasnik
 from ocrworks import pdf_to_images, ocr_images
@@ -25,6 +25,11 @@ def about():
 @app.route('/img')
 def img():
     return render_template('img.html', cover=px.join('static', 'cover.png'))
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(px.join(app.root_path, 'static'),
+                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 @app.route('/load')
 def load():

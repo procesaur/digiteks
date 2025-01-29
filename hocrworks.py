@@ -9,7 +9,7 @@ def hocr_transform(hocr):
     processes = (make_soup, enrich_soup, arrange_fix, newline_fix)
     for p in processes:
         hocr = p(hocr)
-    processes = (confidence_fix, words_fix)
+    processes = (lm_processing,)
     for p in processes:
         hocr = do(p, hocr)
     return str(hocr)
@@ -70,24 +70,19 @@ def newline_fix(soup):
             pass
     return soup
 
-def confidence_fix(soup):
+def lm_processing(soup):
     spans = soup.find_all("span", {"class": "ocrx_word"})
     words = [span.get_text() for span in spans]
     ocr_confs = [int(span['title'].split('x_wconf ')[1])/100 for span in spans]
-    lm_confs, _ = lm_inspect(words)
-    new_confs = confidence_rework(ocr_confs, lm_confs)
+    # lm_confs, _ = lm_inspect(words)
+    # new_confs = confidence_rework(ocr_confs, lm_confs)
+    new_confs, lm_confs = ocr_confs, ocr_confs
     for span, ocr_conf, lm_conf, new_conf in zip(spans, ocr_confs, lm_confs, new_confs):
         span["ocr_conf"] = ocr_conf
         span["lm_conf"] = lm_conf
         span["new_conf"] = new_conf
-    return soup
 
-
-def words_fix(soup):
-    spans = soup.find_all("span", {"class": "ocrx_word"})
-    words = [span.get_text() for span in spans]
-    confs = [span['new_conf'] for span in spans]
-    new_words = lm_fix_words(words, confs)
+    new_words = lm_fix_words(words, new_confs)
     for span, word, new_word in zip(spans, words, new_words):
         if word != new_word:
             span.string = word + " > " + new_word

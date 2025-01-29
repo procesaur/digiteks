@@ -7,7 +7,7 @@ from io import BytesIO
 from base64 import b64encode, b64decode
 from psutil import cpu_count
 from multiprocessing.dummy import Pool as ThreadPool
-from Levenshtein import distance as levenshtein_distance
+from fuzzywuzzy import fuzz, process
 
 
 cpus = cpu_count()
@@ -173,22 +173,54 @@ def lat2cyr(x):
         x = (x.replace(key, lat2cyr_map[key]))
     return x
 
+visual_similarity = {
+    'а': ['г'],
+    'б': ['6'],
+    'в': ['з', '3'],
+    'ђ': ['ћ', '5'],
+    'ж': ['х'],
+	'ј': ['1'],
+    'и': ['п', 'н', 'њ', 'л', 'љ'],
+    'о': ['с','е','р', '0'],
+    'ц': ['ч', 'џ', 'д']
+}
 
+def map_visual_similarity(word):
+    word = word.lower()
+    for x in visual_similarity:
+        for y in visual_similarity[x]:
+            word = word.replace(y,x)
+    return word
 
-def find_most_similar_word(x, a):
-    min_distance = float('inf')
+def visual_similarity_score(x, y):
+    mapped_x = map_visual_similarity(x)
+    mapped_y = map_visual_similarity(y)
+    return fuzz.ratio(mapped_x, mapped_y)
+
+def length_similarity(x, y):
+    len_x = len(x)
+    len_y = len(y)
+    return 100 - abs(len_x - len_y) / max(len_x, len_y) * 100
+
+def combined_similarity(x, y, weight_fuzzy=0.25, weight_length=0.25, weight_visual=0.5):
+    fuzzy_score = fuzz.ratio(x, y)
+    length_score = length_similarity(x, y)
+    visual_score = visual_similarity_score(x, y)
+    return weight_fuzzy * fuzzy_score + weight_length * length_score + weight_visual * visual_score
+
+def find_most_similar_word(x, a, threshold=60):
     most_similar_word = None
-    
-    for word in a:
-        dist = levenshtein_distance(x, word)
-        if dist < min_distance:
-            min_distance = dist
-            most_similar_word = word
-    
-    return most_similar_word
+    highest_combined_score = float('-inf')
+    similarity_scores = []
 
-# Example usage
-x = "apple"
-a = ["ape", "apply", "maple", "peach"]
-most_similar_word = find_most_similar_word(x, a)
-print(most_similar_word)  # Output: apply
+    for word in a:
+        combined_score = combined_similarity(x, word)
+        similarity_scores.append((word, combined_score))
+        if combined_score > highest_combined_score:
+            highest_combined_score = combined_score
+            most_similar_word = word
+
+    if highest_combined_score < threshold:
+        return x
+
+    return most_similar_word
