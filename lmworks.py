@@ -88,15 +88,12 @@ def lm_inspect(words, pre_confs=None, conf_threshold=min_conf_ocr, max_perplexit
             original_token_prob = softmax(masked_logits, dim=0)[masked_tokens[i+j]].item()
             perplexities.append(1/original_token_prob)
 
-    print(len(perplexities), len(for_masking), len(token_word)) ######################################
-    inspection_perplexities = {x : y for x, y in zip(candidates, perplexities)}
+    inspection_perplexities = {x[0] : y for x, y in zip(for_masking, perplexities)}
+
     for i, word in enumerate(words):
-        if i not in inspection_perplexities.keys():
-            words_conf.append(pre_confs[i])
-        else:
-            wv = [perplexities[j] for j, x in enumerate(token_word) if x==i]
-            #wv =inspection_perplexities[i]
-            words_conf.append(sum(wv)/len(wv))
+        token_idxs = [j for j, x in enumerate(token_word) if x==i]
+        wv = [inspection_perplexities[x] if x in inspection_perplexities else pre_confs[i] for x in token_idxs]
+        words_conf.append(sum(wv)/len(wv))
 
     words_conf = [1-x/max_perplexity if x<max_perplexity else 0 for x in words_conf]
     return words_conf, words
