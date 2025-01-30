@@ -125,8 +125,6 @@ def lm_fix_words(words, confs):
             top_k_indices = topk(masked_logits, top_k, dim=0).indices.tolist()
             top_k_tokens = [tokenizer.decode([token_id]) for token_id in top_k_indices]
             all_predictions.append(top_k_tokens)
-
-    print(len(to_fix), len(all_predictions)) 
  
     inspection_prediction = {x : y for x, y in zip(to_fix, all_predictions)}
     for i, word in enumerate(words):
@@ -164,7 +162,6 @@ def create_batches_to_fix(token_batches, for_masking):
                 masked_context[to_mask[0]:to_mask[-1]+1] = [tokenizer.mask_token_id]
                 masked_context = tokenizer.convert_tokens_to_ids(prefix) + masked_context
                 masked_contexts.append(tensor(masked_context, dtype=tlong))
-
 
         batch_min = batch_max
 
