@@ -1,10 +1,10 @@
 from flask import Flask, request, render_template, send_file, Response, jsonify, send_from_directory
 from os import environ, path as px
-from rq_handler import process_req, process_req_glasnik
+from rq_handler import process_req, process_req_test
 from ocrworks import pdf_to_images, ocr_images
 from webbrowser import open_new
 from threading import Timer
-from lmworks import lm_inspect
+from lmworks import lm_inspect, fix_text
 from helper import zip_bytes_string, image_zip_to_images, do, encode_images, decode_images
 from uuid import uuid4
 
@@ -43,6 +43,7 @@ def ini(lang):
     else:
         images = image_zip_to_images(file_bytes)
     return render_template('gui_response.html', lang=lang, images=encode_images(images), filename=filename)
+
 
 @app.route('/imgdown', methods=['POST', 'GET'])
 def imgdown():
@@ -88,23 +89,24 @@ def posthtml():
     return 'Invalid file'
 
 
-#@app.route('/glasnik', methods=['GET','POST'])
-#def glasnik():
-   # try:
-    #    input = process_req_glasnik(request)
-    #except:
-    #    input = ""
-    #if input:
-    #    output = [x for x in fill_mask(input) if x["token"]>4]
-    #else:
-    #    output = []
-    #return render_template('inference.html', input=input, output=output)
+@app.route('/test', methods=['GET','POST'])
+def test():
+    try:
+        input = process_req_test(request)
+    except:
+        input = ""
+    if input:
+        output = fix_text(input[0])
+    else:
+        output = ""
+    return render_template('inference.html', input=input, output=output)
+
 
 @app.route('/visual', methods=['GET','POST'])
-def glasnik2():
+def visaul():
     mp = 800
     try:
-        input, mp = process_req_glasnik(request, fields=["text", "mp"])
+        input, mp = process_req_test(request, fields=["text", "mp"])
     except:
         input, vals, tokens = "", [], []
     vals, tokens = lm_inspect(input, max_perplexity=int(mp))

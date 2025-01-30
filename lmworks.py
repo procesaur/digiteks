@@ -162,3 +162,9 @@ def create_batches_to_fix(token_batches, for_masking):
         batch_min = batch_max
 
     return masked_contexts, masked_tokens
+
+def fix_text(text):
+    words = text.rstrip().replace("\n", " ").split()
+    results = lm_fix_words(words, [min_conf_ocr-0.1 for x in words])
+    return " ".join(f"<b>{x}</b>" if x and x!=y else y for x, y in zip(results, words))
+     

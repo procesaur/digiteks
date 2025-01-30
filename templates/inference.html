@@ -13,12 +13,9 @@
             <br/>
             <button type="submit">Процесирај</button>
         </form>
-        <br/><br/>
-        <ul>
-        {% for x in output %}
-            <li>{{x["token_str"]}} >> {{"{0:0.2f}".format(x["score"])}}% </li>    
-        {% endfor %}
-        </ul>
+        <div>
+            {{output|safe}}
+        </div>
     </div>
 </body>
 </html>
