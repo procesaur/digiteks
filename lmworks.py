@@ -1,11 +1,7 @@
 from torch import tensor, no_grad, softmax
 from helper import cfg, group_into_sentences, lat2cyr, find_most_similar_word
-from os import path as px
 from torch import cuda, topk, stack, cat, long as tlong
-
-import sys
-sys.path.append(str(px.dirname(__file__)))
-from bin.transformers_o import AutoModelForCausalLM, RobertaTokenizerFast
+from transformers import RobertaTokenizerFast, RobertaForMaskedLM
 
 
 modelname = cfg["model"]
@@ -21,9 +17,9 @@ print("cuda:", cuda)
 
 tokenizer = RobertaTokenizerFast.from_pretrained(modelname, add_prefix_space=True, max_len=512, pad_token="<pad>", unk_token="<unk>", mask_token="<mask>", pad_to_max_length=True)
 if cuda:
-    model = AutoModelForCausalLM.from_pretrained(modelname).to(0)
+    model = RobertaForMaskedLM.from_pretrained(modelname).to(0)
 else:
-    model = AutoModelForCausalLM.from_pretrained(modelname)
+    model = RobertaForMaskedLM.from_pretrained(modelname)
 model.eval()
 
 max_length=tokenizer.model_max_length - len(prefix) - 2

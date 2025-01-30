@@ -226,5 +226,5 @@ def find_most_similar_word(x, a, threshold=60):
     return most_similar_word
 
 
-# python -m pipreqs.pipreqs --use-local .
+# python -m pipreqs.pipreqs --use-local --force .
 # pyinstaller main.spec

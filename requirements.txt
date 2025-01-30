@@ -10,4 +10,4 @@ regex==2024.9.11
 tesserocr==2.7.1
 torch==2.4.1+cu118
 tqdm==4.66.3
-transformers==4.16.2
+transformers==4.38.0
