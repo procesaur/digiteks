@@ -216,65 +216,70 @@
         }
 
     </script>
-        <style>
-            :root {
-                --topconf: 0.94;
-                --saturation: 0.5;
-            }
-            .ocr_separator {
-                border: 2px solid black;
-            }
+    <style>
+        :root {
+            --topconf: 0.94;
+            --saturation: 0.5;
+        }
+        .ocr_separator {
+            border: 2px solid black;
+        }
 
-            .ocr_par {
-                border: 1px solid gray;
-                margin-top: 2px;
-            }
+        .ocr_par {
+            border: 1px solid gray;
+            margin-top: 2px;
+        }
 
-            .ocr_line:after, .ocr_caption:after, .ocr_textfloat:after, .ocr_header:after {
-                content: '\A';
-                white-space: pre;
-            }
+        .ocr_line:after, .ocr_caption:after, .ocr_textfloat:after, .ocr_header:after {
+            content: '\A';
+            white-space: pre;
+        }
 
-			.ocrx_word {
-			  background-color: rgba(var(--red), 255, 0, calc((1 - (var(--conf) / var(--topconf))) * 5 / var(--saturation)));
-			  caret-color: black; /* Set caret color */
-			  color: black; /* Ensure text color is black */
-			  position: relative;
-			  display:inline-block
-			}
+        .ocrx_word {
+            background-color: rgba(var(--red), 255, 0, calc((1 - (var(--conf) / var(--topconf))) * 5 / var(--saturation)));
+            caret-color: black; /* Set caret color */
+            color: black; /* Ensure text color is black */
+            position: relative;
+            display:inline-block
+        }
 
-            input[type="range"] {
-                width: 80%;
-            }
+        input[type="range"] {
+            width: 80%;
+        }
 
-            .dynamic-checkbox{
-                display: inline-block !important;
-                visibility: visible !important;
-            }
+        .dynamic-checkbox{
+            display: inline-block !important;
+            visibility: visible !important;
+        }
 
-            .par-checkbox{
-                width: 12pt;
-                height: 12pt;
-                margin-left: -23px;
-            }
+        .par-checkbox{
+            width: 12pt;
+            height: 12pt;
+            margin-left: -23px;
+        }
 
-            .menubutton{
-                width: 20pt;
-                height: 20pt;
-            }
+        .menubutton{
+            width: 20pt;
+            height: 20pt;
+        }
 
-            .meni
-                {margin-bottom: 10pt;
-                position: sticky;
-                top: 0;
-                padding: 5pt;
-                background-color: beige;
-                z-index: 100;
-            }
-            .ocrx_word::focus {
-				background-color:white
-			}
-        </style>
+        .meni
+            {margin-bottom: 10pt;
+            position: sticky;
+            top: 0;
+            padding: 5pt;
+            background-color: beige;
+            z-index: 100;
+        }
+        .ocrx_word::focus {
+            background-color:white
+        }
+
+        #loading {
+            
+            filter: invert(100%); /* Invert colors for the loading GIF */
+        }
+    </style>
 </head>
 <body draggable="false">
     <div class="helphead">
@@ -312,12 +317,19 @@
             <button class="menubutton" title="Обриши" onclick="deleteCheckedElements()">␡</button>
             <button class="menubutton" title="Обележи као добро" onclick="VerifyBulk()">✓</button>
         </div>
-       <div id="digiteks_hocr_content">
-            {% for x in data %}
-                {{x|safe}}
-            {% endfor %}
-       </div>
 
+        <!-- Hidden div to store the images data -->
+        <div id="imagesData" style="display:none;" data-images='{{ images | tojson | safe }}'></div>
+        <div id="digiteks_hocr_content">
+        </div>
+        <img id="loading" src="{{ url_for('static', filename='load.gif') }}" style="display: none;" alt="Loading...">
+        <script>
+            window.onload = function() {
+                const imagesDataElement = document.getElementById('imagesData');
+                const loadingGif = document.getElementById('loading');
+                stream_ocr('{{lang}}', loadingGif, imagesDataElement);
+            }
+        </script>
     </div>
 </body>
 </html>

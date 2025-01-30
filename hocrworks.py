@@ -221,7 +221,7 @@ def process_paragraph(paragraph, global_bounds, column_n=2, tolerance=150):
 def get_and_set_word_paddings(paragraph, global_bounds, tolerance=50):
     words = paragraph.find_all(class_='ocrx_word')
     for word in words:
-        word["data-origianl"] = word.get_text()
+        word["data-original"] = word.get_text()
         title = word.get('title', '')
         parts = title.split(';')
         bbox = next((part for part in parts if 'bbox' in part), None)

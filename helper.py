@@ -79,7 +79,10 @@ def group_into_sentences(words):
 def do(f, x):
     print(f.__name__)
     start_time = time()
-    x = f(x)
+    if isinstance(x, tuple):
+        x = f(*x)
+    else:
+        x = f(x)
     end_time = time()
     execution_time = end_time - start_time
     print(f"Time: {execution_time} seconds")

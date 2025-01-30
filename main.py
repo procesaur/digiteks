@@ -42,7 +42,7 @@ def ini(lang):
         images = do(pdf_to_images, file_bytes)
     else:
         images = image_zip_to_images(file_bytes)
-    return render_template('gui_response_new.html', lang=lang, images=encode_images(images), filename=filename)
+    return render_template('gui_response.html', lang=lang, images=encode_images(images), filename=filename)
 
 @app.route('/imgdown', methods=['POST', 'GET'])
 def imgdown():
@@ -100,7 +100,7 @@ def posthtml():
     #    output = []
     #return render_template('inference.html', input=input, output=output)
 
-@app.route('/glasnik2', methods=['GET','POST'])
+@app.route('/visual', methods=['GET','POST'])
 def glasnik2():
     mp = 800
     try:
