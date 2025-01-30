@@ -1,9 +1,9 @@
 from torch import tensor, no_grad, softmax
 from helper import cfg, group_into_sentences, lat2cyr, find_most_similar_word
 from os import path as px
-import sys
 from torch import cuda, topk, stack, cat, long as tlong
 
+import sys
 sys.path.append(str(px.dirname(__file__)))
 from bin.transformers_o import AutoModelForCausalLM, RobertaTokenizerFast
 

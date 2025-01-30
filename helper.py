@@ -1,8 +1,8 @@
 from multiprocessing import cpu_count
 from os import name, path as px
 from json import load
-import time
-import zipfile
+from time import time
+from zipfile import ZIP_DEFLATED, ZipFile
 from io import BytesIO
 from base64 import b64encode, b64decode
 from psutil import cpu_count
@@ -28,7 +28,7 @@ def isWindows():
 
 def zip_bytes_string(images_in_bytes):
     zip_stream = BytesIO()
-    with zipfile.ZipFile(zip_stream, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+    with ZipFile(zip_stream, 'w', ZIP_DEFLATED) as zip_file:
         for filename, image_bytes in images_in_bytes.items():
             zip_file.writestr(filename, image_bytes)
 
@@ -45,7 +45,7 @@ def image_zip_to_images(file):
     memory_file.seek(0)
     images = []
     
-    with zipfile.ZipFile(memory_file, 'r') as zip_ref:
+    with ZipFile(memory_file, 'r') as zip_ref:
         for file_info in zip_ref.infolist():
             if file_info.filename.endswith(('png', 'jpg', 'jpeg')):
                 with zip_ref.open(file_info) as image_file:
@@ -78,9 +78,9 @@ def group_into_sentences(words):
 
 def do(f, x):
     print(f.__name__)
-    start_time = time.time()
+    start_time = time()
     x = f(x)
-    end_time = time.time()
+    end_time = time()
     execution_time = end_time - start_time
     print(f"Time: {execution_time} seconds")
     return x
@@ -224,3 +224,7 @@ def find_most_similar_word(x, a, threshold=60):
         return x
 
     return most_similar_word
+
+
+# python -m pipreqs.pipreqs --use-local .
+# pyinstaller main.spec

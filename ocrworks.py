@@ -1,12 +1,11 @@
 from io import BytesIO
 from os import listdir, environ, pathsep, path as px
 from json import dumps
-
 from pdf2image import convert_from_bytes
 from pypdf import PdfMerger
 from tesserocr import PyTessBaseAPI
-from imageworks import improve_image, img2bytes, bytes2img
 
+from imageworks import improve_image, img2bytes, bytes2img
 from helper import isWindows, cpus, chunkify, pool
 from hocrworks import hocr_transform
 
