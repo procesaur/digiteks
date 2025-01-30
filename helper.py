@@ -7,7 +7,7 @@ from io import BytesIO
 from base64 import b64encode, b64decode
 from psutil import cpu_count
 from multiprocessing.dummy import Pool as ThreadPool
-from fuzzywuzzy import fuzz, process
+from fuzzywuzzy import fuzz
 
 
 cpus = cpu_count()
