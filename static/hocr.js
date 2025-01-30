@@ -16,7 +16,17 @@ function prepare(element, top=0.94, saturation=0.5) {
     Array.from(words).forEach(function (word) {
         var conf = parseInt(word.title.substring(word.title.lastIndexOf(' ')))/100;
         var conf = word.getAttribute("new_conf");
-        word.style  = "--red:255; --conf:"+conf;
+
+        const oldValue = word.dataset.original;
+        const newValue = word.innerText;
+
+        if (oldValue != newValue && newValue==word.getAttribute("lm_guess")){
+            word.style  = "--red:0; --blue:255; --conf:"+conf;
+        }
+        else{
+            word.style  = "--red:255; --blue:0; --conf:"+conf;
+        }
+    
         //word.dataset.original = word.innerText;
         word.contentEditable = 'true';
         word.setAttribute("onblur", "handleTextChange(event)");

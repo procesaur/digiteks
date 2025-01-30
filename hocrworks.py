@@ -38,7 +38,7 @@ def enrich_soup(soup):
             column_class = paragraph.get('column-type')
             column_n = paragraph.get('layout-type')
             if column_n != 2:
-                paragraph.decompose()
+                paragraph["del-candidate"] = "yes"
             else:
                 if column_class == 'left column':
                     process_paragraph(paragraph, l_bounds, column_n)
@@ -84,8 +84,11 @@ def lm_processing(soup):
     new_words = lm_fix_words(words, new_confs)
     for span, word, new_word in zip(spans, words, new_words):
         if word != new_word:
-            span.string = word + " > " + new_word
-            span['style'] = "--red:255; --conf:1"
+            if new_word != "":
+                span.string = new_word
+                span['lm_guess'] = new_word
+        else:
+            span["new_conf"] = 1
     return soup
 
 
@@ -176,12 +179,10 @@ def determine_column_type(paragraph, mid_x, tolerance=1):
 
 def determine_layout_type_for_group(group, mid_x):
     three_column = False
-
     for paragraph in group:
         column_type = determine_column_type(paragraph, mid_x)
         if column_type == 'middle column':
             three_column = True
-
     return 3 if three_column else 2
 
 
