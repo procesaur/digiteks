@@ -9,7 +9,7 @@ a = Analysis(
         ('static', 'static'), 
         ('templates', 'templates'),  
         ('bin', 'bin'),
-        ('config.json', 'config.json')
+        ('config.json', '')
     ],
     hiddenimports=[],
     hookspath=[],
@@ -25,7 +25,7 @@ exe = EXE(
     pyz,
     a.scripts,
     [],
-    exclude_binaries=True,
+    exclude_binaries=False,
     name='digiteks',
     debug=False,
     bootloader_ignore_signals=False,
@@ -37,10 +37,11 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='/static/favicon.ico'
+    icon='static/favicon.ico'
 )
 coll = COLLECT(
     exe,
+    a.binaries,
     a.datas,
     strip=False,
     upx=True,
