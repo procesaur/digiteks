@@ -28,6 +28,7 @@ def pdf_to_images(file_bytes, img_down=False):
     return [img2bytes(a) for a in images]
 
 def ocr_images(images,  lang="srp+srp_latn"):
+    
     for chunk in chunkify(images):
         results = pool.map(ocr_img, ((img, lang) for img in chunk))
         for result in results:
@@ -35,9 +36,9 @@ def ocr_images(images,  lang="srp+srp_latn"):
 
 def ocr_img(profile):
     img, lang = profile
-    img = (improve_image(bytes2img(img)))
+    img = improve_image(bytes2img(img))
     tessdata_path = px.join(px.dirname(px.realpath(__file__)), "bin/Tesseract-OCR/tessdata")
-    with PyTessBaseAPI(lang=lang, path=tessdata_path) as api:
+    with PyTessBaseAPI(lang=lang, path=tessdata_path, psm=1) as api:
         api.SetImage(bytes2img(img))
         hocr = api.GetHOCRText(0)
     return hocr

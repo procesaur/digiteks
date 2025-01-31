@@ -39,6 +39,8 @@ def enrich_soup(soup):
             column_n = paragraph.get('layout-type')
             if column_n != 2:
                 paragraph["del-candidate"] = "yes"
+                process_paragraph(paragraph, global_bounds, column_n)
+                get_and_set_word_paddings(paragraph, global_bounds)
             else:
                 if column_class == 'left column':
                     process_paragraph(paragraph, l_bounds, column_n)
@@ -116,7 +118,7 @@ def get_global_bounds(hocr_element):
     return {'minX': min_x, 'maxX': max_x}
 
 
-def group_paragraphs_by_y(hocr_element, tolerance=20):
+def group_paragraphs_by_y(hocr_element, tolerance=10):
     y_groups = []
     paragraphs = hocr_element.find_all(class_='ocr_par')
 
@@ -160,7 +162,7 @@ def process_y_groups(hocr_element):
             paragraph['layout-type'] = layout_type
 
 
-def determine_column_type(paragraph, mid_x, tolerance=1):
+def determine_column_type(paragraph, mid_x, tolerance=100):
     title = paragraph.get('title', '')
     parts = title.split(';')
     bbox = next((part for part in parts if 'bbox' in part), None)

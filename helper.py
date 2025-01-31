@@ -211,7 +211,7 @@ def combined_similarity(x, y, weight_fuzzy=0.25, weight_length=0.25, weight_visu
     visual_score = visual_similarity_score(x, y)
     return weight_fuzzy * fuzzy_score + weight_length * length_score + weight_visual * visual_score
 
-def find_most_similar_word(x, a, threshold=60):
+def find_most_similar_word(x, a, threshold=70):
     most_similar_word = None
     highest_combined_score = float('-inf')
     similarity_scores = []

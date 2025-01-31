@@ -54,31 +54,46 @@
     </div>
     <div id="temphtml"></div>
     <div class="helpmain main">
-        <h4 id="-">ДигиТекс је вишеплатформна апликација за дигитализацију докумената на српском језику, заснована на оптичком препознавању карактера (и језичким моделима*).</h4>
-<h4 id="-https-poppler-freedesktop-org-https-github-com-tesseract-ocr-tesseract-355-https-huggingface-co-jerteh-jerteh-355-">Документ који је предмет дигитализације се најпре трансформише у слику помоћу <a href="https://poppler.freedesktop.org/">Поплера</a>, док је за препознавање текста на слици задужен <a href="https://github.com/tesseract-ocr/tesseract">Гугл Тесеракт</a>. (Коначно, текст се обрађује језичким моделом за српски језик, <a href="https://huggingface.co/jerteh/Jerteh-355">јертех355</a>, што омогућава прецизније одређивање вероватноће сваке речи у контексту, као и аутоматско исправљање лоше рашчитаног текста.*)</h4>
-<h4 id="-https-flask-palletsprojects-com-_-_-_-_-3-12-https-www-python-org-downloads-release-python-3120-">Дигитекс се може покретати као <a href="https://flask.palletsprojects.com/">Фласк</a> веб апликација на рачунарима са <em>Виндоус</em> и <em>Виндоус сервер</em> оперативним системима, за шта је неопходно инсталирати <a href="https://www.python.org/downloads/release/python-3120/">Пајтон 3.12</a>, или се може скинути и покренути компајлована верзија која у себи садржи неопходан софтвер.</h4>
+        <h4 id="-">ДигиТекс је вишеплатформна апликација за дигитализацију докумената на српском језику, заснована на оптичком препознавању карактера и језичким моделима за српски језик.</h4>
+<h4 id="-https-poppler-freedesktop-org-https-github-com-tesseract-ocr-tesseract-">Документ који је предмет дигитализације се најпре трансформише у слику помоћу <a href="https://poppler.freedesktop.org/">Поплера</a>, док је за препознавање текста на слици задужен <a href="https://github.com/tesseract-ocr/tesseract">Гугл Тесеракт</a>. Коначно, текст се обрађује језичким моделом за српски језик, што омогућава прецизније одређивање вероватноће сваке речи у контексту, као и аутоматско исправљање лоше рашчитаног текста.</h4>
+<h4 id="-https-flask-palletsprojects-com-3-12-https-www-python-org-downloads-release-python-3120-">Дигитекс се може покретати као <a href="https://flask.palletsprojects.com/">Фласк</a> веб апликација на рачунарима са различитим оперативним системима, за шта је неопходно инсталирати <a href="https://www.python.org/downloads/release/python-3120/">Пајтон 3.12</a>, или се може скинути и покренути компајлована верзија која у себи садржи неопходан софтвер (за Виндоус оперативне системе).</h4>
+<h2 id="-1-01">Функционланости у верзији 1.01</h2>
+<h3 id="-">Рад са документима</h3>
+<ol>
+<li>Учитавање докумената припремљених у виду јединствене ПДф датотеке или ЗИП датотеке са сликама страна;</li>
+<li>Датотека се у сваком случају претвара у низ слика, које се аутоматски побољшавају (препознавање и уклањање артефакта, увеличавање, исправљање неповољне ротације);</li>
+<li>Преузимање парова оригиналних и побољшаних слика путем интерфејса.</li>
+</ol>
+<h3 id="-">Аутоматско рашчитавање текста</h3>
+<ol>
+<li>Одабир модела за оптичко препознавање карактера: српска ћирилица, српска латиница, ћирилица + латиница (подразумевано);</li>
+<li>Оптичко препознавање на клик, паралелно на процесору, са аутоматским препознавањем броја језгара/нити за оптималну брзину.</li>
+</ol>
+<h3 id="-">Препроцесирање рашчитаног документа</h3>
+<ol>
+<li>Рашчитани документ (у ХОЦР) формату се препроцесира, при чему се за сваки параграф одређује припадност по ступцима, маргине и поравнање, а те информације се уграђују у документ;</li>
+<li>За речи у документу се такође утврђују позиције и одређују маргине, како би се пронашли кандидати за спајање прелома;</li>
+<li>Препознате преломљене речи се аутоматки спајају;</li>
+</ol>
+<h3 id="-">Обрада помоћу језичког модела</h3>
+<ol>
+<li>Речи из документа се класификују према поузданости рашчитавања, а непоуздани кандидати се додатно проверавају у контексту, како би се израчунале нове поузданости тачности;</li>
+<li>Непоуздане речи се процесирају у максималном контексту како би се произвели могући кандидати за исправак. Кандидати се упоређују са оригиналном ниском, како би се одабрао адекватан исправак, уколико постоји;</li>
+<li>Излаз језичког модела се комбинује са оригиналним документом, при чему се он обогаћује информацијама о новим вероватноћама и евентуалним исправкама.</li>
+</ol>
+<h3 id="-">Интерфејс за даљу обраду</h3>
+<ol>
+<li>Документ се током обраде учитава у интерфејс страну по страну;</li>
+<li>Пре приказивања, интерфејс обогаћује документ додатним кућицама (по једна за сваки параграф и сваку линију), које омогућавају групну обраду са неколико функција: померање горе доле, брисање и обележавање као добро препознато;</li>
+<li>Исправљене речи обележене су плавом бојом, несигурне жутом, а параграфи који се не уклапају ни у један ступац црвеном бојом, при чему је кроз интерфејс могуће подесити граничну вероватноћу за обележавање као и сатурацију маркера;</li>
+<li>Свака проверена (кликнута) реч се обележава као исправна;</li>
+<li>Речи се могу директно исправљати, при чему су исправке обележене зеленом бојом;</li>
+<li>У сваком тренутку се документ може сачувати, и у сваком тренутку се може учитати претходно сачувани документ.</li>
+<li>Документ се поред чувања у овом, ДигиТекс формату, може сачувати и као текст или ХТМЛ.</li>
+</ol>
 <h1 id="-">Покретање апликације</h1>
 <h2 id="-">Виндоус апликација</h2>
 <p>Скините прекомпајловану апликацију доступну на <a href="https://github.com/procesaur/digiteks/releases">Гитхаб репозиторијуму софтвера</a> и покрените програм на вашем рачунару.</p>
-<h2 id="-">Виндоус (командна линија, припремљено виртуелно окружење)</h2>
-<ol>
-<li><p>Преузмите апликацију у целости и сачувајте је на вашем рачунару.</p>
-</li>
-<li><p>Инсталирајте Пајтон интерпретер (препоручена верзија 3.12)</p>
-</li>
-<li><p>У командној линији подесите радно окружење на директоријум у којем је похрањен преузети софтвер</p>
-<pre><code class="lang-console">cd .<span class="hljs-regexp">/direktorijum/</span>digiteks<span class="hljs-regexp">/softvera</span>
-</code></pre>
-</li>
-<li><p>Покрените припремљено виртуелно окружење</p>
-<pre><code class="lang-console">.<span class="hljs-symbol">\v</span>env<span class="hljs-symbol">\S</span>cripts<span class="hljs-symbol">\a</span>ctivate
-</code></pre>
-</li>
-<li><p>Покрените апликацију</p>
-<pre><code class="lang-console"><span class="hljs-keyword">python</span> main.<span class="hljs-keyword">py</span>
-</code></pre>
-</li>
-</ol>
 <h2 id="-">Виндоус (командна линија, ваше Пајтон окружење)</h2>
 <ol>
 <li><p>Преузмите апликацију у целости и сачувајте је на вашем рачунару.</p>
@@ -119,15 +134,15 @@
 </code></pre>
 </li>
 <li><p>Инсталирајте <em>Tesseract</em></p>
-<pre><code class="lang-console">apt-<span class="hljs-built_in">get</span> install tesseract-ocr libtesseract-<span class="hljs-built_in">dev</span> libleptonica-<span class="hljs-built_in">dev</span> pkg-config
+<pre><code class="lang-console">sudo apt-<span class="hljs-built_in">get</span> install tesseract-ocr libtesseract-<span class="hljs-built_in">dev</span> libleptonica-<span class="hljs-built_in">dev</span> pkg-config
 </code></pre>
 </li>
 <li><p>Инсталирајте <em>Poppler</em></p>
-<pre><code class="lang-console">apt-<span class="hljs-keyword">get</span> install -y poppler-utils
+<pre><code class="lang-console">sudo apt-<span class="hljs-keyword">get</span> install -y poppler-utils
 </code></pre>
 </li>
 <li><p>Инсталирајте пакет (<em>tesserocr</em>) </p>
-<pre><code class="lang-console">pip <span class="hljs-keyword">install</span> pip <span class="hljs-keyword">install</span> tesserocr
+<pre><code class="lang-console">pip <span class="hljs-keyword">install</span> tesserocr
 </code></pre>
 </li>
 <li><p>Покрените апликацију</p>
@@ -146,19 +161,19 @@
 </code></pre>
 </li>
 <li><p>Инсталиратје неопходне Пајтон пакете</p>
-<pre><code class="lang-console">pip <span class="hljs-keyword">install</span> -r requirements.txt
+<pre><code class="lang-console">sudo -H pip3 <span class="hljs-keyword">install</span> -r requirements.txt
 </code></pre>
 </li>
 <li><p>Инсталирајте <em>Tesseract</em></p>
-<pre><code class="lang-console">apt-<span class="hljs-built_in">get</span> install tesseract-ocr libtesseract-<span class="hljs-built_in">dev</span> libleptonica-<span class="hljs-built_in">dev</span> pkg-config
+<pre><code class="lang-console">sudo apt-<span class="hljs-built_in">get</span> install tesseract-ocr libtesseract-<span class="hljs-built_in">dev</span> libleptonica-<span class="hljs-built_in">dev</span> pkg-config ffmpeg libsm6 libxext6
 </code></pre>
 </li>
 <li><p>Инсталирајте <em>Poppler</em></p>
-<pre><code class="lang-console">apt-<span class="hljs-keyword">get</span> install -y poppler-utils
+<pre><code class="lang-console">sudo apt-<span class="hljs-keyword">get</span> install -y poppler-utils
 </code></pre>
 </li>
 <li><p>Инсталирајте пакет (<em>tesserocr</em>) </p>
-<pre><code class="lang-console">pip <span class="hljs-keyword">install</span> pip <span class="hljs-keyword">install</span> tesserocr
+<pre><code class="lang-console">sudo -H pip3 <span class="hljs-keyword">install</span> tesserocr
 </code></pre>
 </li>
 <li><p>Инсталација и подешавање <em>apache</em> веб сервера</p>
@@ -172,32 +187,33 @@ sudo a2enmod wsgi
 sudo nano /etc/apache2/sites-available/digiteks.conf
 </code></pre>
 <p>У конфигурациону датотеку упишите:</p>
-<pre><code class="lang-apache"><span class="hljs-section">&lt;Directory /var/www/digiteks&gt;</span>
-<span class="hljs-attribute"><span class="hljs-nomarkup">Options</span></span> Indexes FollowSymLinks
-<span class="hljs-attribute">AllowOverride</span> <span class="hljs-literal">All</span>
-<span class="hljs-attribute">Require</span> <span class="hljs-literal">all</span> granted
-<span class="hljs-section">&lt;/Directory&gt;</span>
+<pre><code class="lang-apache"><span class="hljs-section">&lt;VirtualHost *:5001&gt;</span>
+
+<span class="hljs-attribute">WSGIDaemonProcess</span> digiteks user=www-data group=www-data threads=5
+        <span class="hljs-attribute">WSGIScriptAlias</span> / /var/www/digiteks/digiteks.wsgi
+
+        <span class="hljs-section">&lt;Directory /var/www/digiteks&gt;</span>
+                <span class="hljs-attribute">WSGIProcessGroup</span> digiteks
+                <span class="hljs-attribute">WSGIApplicationGroup</span> <span class="hljs-variable">%{GLOBAL}</span>
+                <span class="hljs-attribute"><span class="hljs-nomarkup">Order</span></span> deny,allow
+                <span class="hljs-attribute"><span class="hljs-nomarkup">Allow</span></span> from 127.0.0.1 ::1/128 &lt;ADRESA SERVERA&gt;
+        <span class="hljs-section">&lt;/Directory&gt;</span>
+<span class="hljs-section">&lt;/VirtualHost&gt;</span>
 </code></pre>
 <p>sudo nano /etc/apache2/ports.conf</p>
 <pre><code class="lang-apache"><span class="hljs-attribute"><span class="hljs-nomarkup">Listen</span></span> 5001
 </code></pre>
-<p>Урадите неопходни рестарт сервиса</p>
-<pre><code class="lang-console">sudo service apache2 <span class="hljs-built_in">restart</span>
+<p>Урадите неопходно ажурирање и рестарт сервиса</p>
+<pre><code class="lang-console">sudo a2ensite digiteks
+sudo service apache2 <span class="hljs-built_in">restart</span>
 </code></pre>
 <p>и апликација ће бити покренута и доступна на порту 5001</p>
 <h1 id="-">Предстојећи кораци:</h1>
 <ol>
-<li><p>Припремање прекомпајловане апликације за <em>Linux</em> оперативне системе;</p>
-</li>
-<li><p>Припрема детаљнијег упутства за употребу;</p>
-</li>
-<li><p>Имплементација адекватних језичких модела путем библиотеке <em>трансформерс</em>.</p>
-</li>
+<li>Додатна унапређења у виду бољег препознавања текста и структуре документа.</li>
 </ol>
 <h1 id="-">Напомене</h1>
 <h4 id="-">Развој апликације, у сарадњи са <em>ЈП Службени Гласник</em>, омогућио је програм <em>Говтех</em>, који финансира <em>Фонд за иновациону делатност Републике Србије</em>.</h4>
-<h4 id="-e-markdown-">*Функционланости још увек нису имплементиране.e markdown.</h4>
-
 </div>
 </body>
 </html>
