@@ -179,27 +179,32 @@ function handleStreaming(sessionId, loadingGif, images, imagesDataElement) {
 
 function stream_ocr(lang, loadingGif, imagesDataElement ) {
 
-    loadingGif.style.display = 'block';
-    let images = JSON.parse(imagesDataElement.dataset.images);
-    // Send the images data to the /start_ocr endpoint
-    fetch(`/ocr/${lang}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ images: images })
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Start OCR response:', data); // Debugging: Print start OCR response
-        if (data.status === 'OCR started') {
-            handleStreaming(data.session_id, loadingGif, images, imagesDataElement);
-        }
-    })
-    .catch(error => {
-        console.error('Fetch error:', error); // Debugging: Print fetch error
+    if (imagesDataElement){
+        let images = JSON.parse(imagesDataElement.dataset.images);
+        loadingGif.style.display = 'block';
+        // Send the images data to the /start_ocr endpoint
+        fetch(`/ocr/${lang}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ images: images })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Start OCR response:', data); // Debugging: Print start OCR response
+            if (data.status === 'OCR started') {
+                handleStreaming(data.session_id, loadingGif, images, imagesDataElement);
+            }
+        })
+        .catch(error => {
+            console.error('Fetch error:', error); // Debugging: Print fetch error
+            loadingGif.style.display = 'none';
+        });
+    }
+    else{
         loadingGif.style.display = 'none';
-    });
+    }
 }
 
 function getAlignmentClass(align) {
