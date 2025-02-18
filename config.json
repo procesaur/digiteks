@@ -3,7 +3,7 @@
     "cuda" : true,
     "context_size" : 512,
     "batch_size" : 16,
-    "top_k" : 60,
+    "top_k" : 10,
     "min_conf_combined" : 0.92,
     "min_conf_ocr" : 0.93,
     "reasonable_doubt_index" : 0.05,

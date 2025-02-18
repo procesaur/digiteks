@@ -1,10 +1,12 @@
 from torch import tensor, no_grad, softmax
 from helper import cfg, group_into_sentences, lat2cyr, find_most_similar_word
-from torch import cuda, topk, stack, cat, long as tlong
-from transformers import RobertaTokenizerFast, RobertaForMaskedLM
+from torch import cuda, topk, stack, cat, long as tlong, nn, ones
+from transformers import AutoTokenizer
+from modeling_roberta import RobertaForMaskedLM
 
 
 modelname = cfg["model"]
+#modelname = "answerdotai/ModernBERT-base"
 batch_size = cfg["batch_size"]
 reasonable_doubt = cfg["reasonable_doubt_index"]
 max_perplexity = cfg["max_perplexity"]
@@ -15,7 +17,11 @@ prefix = [".", "-"]
 cuda = cuda.is_available() and cfg["cuda"]
 print("cuda:", cuda)
 
-tokenizer = RobertaTokenizerFast.from_pretrained(modelname, add_prefix_space=True, max_len=512, pad_token="<pad>", unk_token="<unk>", mask_token="<mask>", pad_to_max_length=True)
+
+tokenizer = AutoTokenizer.from_pretrained(modelname)
+#tokenizer = AutoTokenizer.from_pretrained(modelname, add_prefix_space=True, max_len=512, pad_token="<pad>", unk_token="<unk>", mask_token="<mask>", pad_to_max_length=True)
+special_token_indices = tokenizer.all_special_ids
+
 if cuda:
     model = RobertaForMaskedLM.from_pretrained(modelname).to(0)
 else:
@@ -71,16 +77,21 @@ def lm_inspect(words, pre_confs=None, conf_threshold=min_conf_ocr, max_perplexit
     input_ids_list, masked_tokens = create_batches_to_fix(bathces, for_masking)
 
     for i in range(0, len(input_ids_list), batch_size):
-        if cuda:
-            batch_input_ids = pad_and_stack_batches(input_ids_list[i:i + batch_size]).to(0)
-        else:
-            batch_input_ids = pad_and_stack_batches(input_ids_list[i:i + batch_size])
+        batch_input_ids, batch_attention_masks = pad_and_stack_batches(input_ids_list[i:i + batch_size])
         with no_grad():
-            outputs = model(batch_input_ids)
+            outputs = model(batch_input_ids, attention_mask=batch_attention_masks)
 
         for j in range(batch_input_ids.size(0)):
+
             masked_index = (batch_input_ids[j] == tokenizer.mask_token_id).nonzero(as_tuple=True)[0].item()
             masked_logits = outputs.logits[j, masked_index, :]
+
+            #mask = ones(masked_logits.size(), dtype=bool)
+            #mask[special_token_indices] = 0
+            #if cuda:
+             #   mask = mask.to(0)
+            #masked_logits = masked_logits.masked_fill(~mask, float('-inf'))
+
             original_token_prob = softmax(masked_logits, dim=0)[masked_tokens[i+j]].item()
             perplexities.append(1/original_token_prob)
 
@@ -108,20 +119,23 @@ def lm_fix_words(words, confs):
     results = []
 
     for i in range(0, len(input_ids_list), batch_size):
-        if cuda:
-            batch_input_ids = pad_and_stack_batches(input_ids_list[i:i + batch_size]).to(0)
-        else:
-            batch_input_ids = pad_and_stack_batches(input_ids_list[i:i + batch_size])
+
+        batch_input_ids, batch_attention_masks = pad_and_stack_batches(input_ids_list[i:i + batch_size])
         with no_grad():
-            outputs = model(batch_input_ids)
+            outputs = model(batch_input_ids, attention_mask=batch_attention_masks)
 
         for j in range(batch_input_ids.size(0)):
             masked_index = (batch_input_ids[j] == tokenizer.mask_token_id).nonzero(as_tuple=True)[0].item()
             masked_logits = outputs.logits[j, masked_index, :]
+            probabilities = nn.functional.softmax(masked_logits, dim=0)
             top_k_indices = topk(masked_logits, top_k, dim=0).indices.tolist()
+            top_k_probabilities = probabilities[top_k_indices]
             top_k_tokens = [tokenizer.decode([token_id]) for token_id in top_k_indices]
             all_predictions.append(top_k_tokens)
  
+            for x,y  in zip(top_k_tokens, top_k_probabilities):
+                print(x, y)
+
     inspection_prediction = {x : y for x, y in zip(to_fix, all_predictions)}
     for i, word in enumerate(words):
         if i not in inspection_prediction.keys():
@@ -134,10 +148,28 @@ def lm_fix_words(words, confs):
     return results
 
 
-def pad_and_stack_batches(input_ids_list):
-    max_length = max(len(batch) for batch in input_ids_list)
+def pad_and_stack_batches_old(input_ids_list):
     padded_batches = [cat([batch, tensor([tokenizer.pad_token_id] * (max_length - len(batch)), dtype=tlong)]) for batch in input_ids_list]
+    padded_batches = stack(padded_batches).to(0)
+
     return stack(padded_batches)
+
+
+def pad_and_stack_batches(input_ids_list):
+    padded_batches = []
+    attention_masks = []
+
+    for batch in input_ids_list:
+        padding_length = max_length - len(batch)
+        padded_batch = cat([batch, tensor([tokenizer.pad_token_id] * padding_length, dtype=tlong)])
+        attention_mask = (padded_batch != tokenizer.pad_token_id).long()
+        padded_batches.append(padded_batch)
+        attention_masks.append(attention_mask)
+
+    padded_batches = stack(padded_batches).to(0)
+    attention_masks = stack(attention_masks).to(0)
+
+    return padded_batches, attention_masks
 
 
 def create_batches_to_fix(token_batches, for_masking):
@@ -168,3 +200,6 @@ def fix_text(text):
     results = lm_fix_words(words, [min_conf_ocr-0.1 for x in words])
     return " ".join(f"<b>{x}</b>" if x and x!=y else y for x, y in zip(results, words))
      
+
+
+
