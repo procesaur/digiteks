@@ -92,11 +92,11 @@ def posthtml():
 @app.route('/test', methods=['GET','POST'])
 def test():
     try:
-        input = process_req_test(request)
+        input = process_req_test(request)[0]
     except:
         input = ""
     if input:
-        output = fix_text(input[0])
+        output = fix_text(input)
     else:
         output = ""
     return render_template('inference.html', input=input, output=output)
