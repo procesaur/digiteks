@@ -137,8 +137,6 @@ def lm_fix_words(words, confs):
             top_k_tokens = [tokenizer.decode([token_id]) for token_id in top_k_indices]
             all_predictions.append(top_k_tokens)
  
-            for x,y  in zip(top_k_tokens, top_k_probabilities):
-                print(x, y)
 
     inspection_prediction = {x : y for x, y in zip(to_fix, all_predictions)}
     for i, word in enumerate(words):

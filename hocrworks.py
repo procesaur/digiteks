@@ -1,12 +1,14 @@
-from bs4 import BeautifulSoup as bs4
+from bs4 import BeautifulSoup as bs4, Tag
 from lmworks import lm_inspect, lm_fix_words, confidence_rework
 from helper import do, strip_non_alphanumeric
+from re import compile
 
 
 lineclass = ["ocr_line", "ocr_caption", "ocr_textfloat", "ocr_header"]
+split_pattern = compile(r'(\w+)?(\d+)?(\W+)?$')
 
 def hocr_transform(hocr):
-    processes = (make_soup, enrich_soup, arrange_fix, newline_fix)
+    processes = (make_soup, enrich_soup, arrange_fix, newline_fix, punct_separation)
     for p in processes:
         hocr = p(hocr)
     processes = (lm_processing,)
@@ -71,6 +73,25 @@ def newline_fix(soup):
         except:
             pass
     return soup
+
+
+def punct_separation(soup):
+    spans = soup.find_all("span", {"class": "ocrx_word"})
+    for span in spans:
+        word = span.text
+        match = split_pattern.match(word)
+        if match:
+            mg = [x for x in match.groups() if x]
+            if len(mg)>1:
+                new_spans = []
+                for x in mg:
+                    new_word_span = Tag(name="span", attrs=span.attrs)
+                    new_word_span.string = x
+                    new_word_span["data-original"] = x
+                    new_spans.append(new_word_span)
+                span.replace_with(*new_spans)
+    return soup
+
 
 def lm_processing(soup):
     spans = soup.find_all("span", {"class": "ocrx_word"})
