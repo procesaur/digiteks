@@ -8,11 +8,28 @@ from base64 import b64encode, b64decode
 from psutil import cpu_count
 from multiprocessing.dummy import Pool as ThreadPool
 from fuzzywuzzy import fuzz
+from re import compile
 
 
 cpus = cpu_count()
 pool = ThreadPool(cpus)
+split_pattern = compile(r'([ ]?\w+)?(\d+)?(\W+)?$')
 
+
+def xsplit(x):
+    match = split_pattern.match(x)
+    if not match:
+        return [x]
+    mg = [y for y in match.groups() if y]
+    return mg
+
+def textsplit(text):
+    result = []
+    words = [" " + x for x in text.rstrip().replace("\n", " ").split()]
+    for x in words:
+        result+=xsplit(x)
+    print(result)
+    return result
 
 def load_conf(path=None):
     if not path:
@@ -205,19 +222,20 @@ def length_similarity(x, y):
     len_y = len(y)
     return 100 - abs(len_x - len_y) / max(len_x, len_y) * 100
 
-def combined_similarity(x, y, weight_fuzzy=0.25, weight_length=0.25, weight_visual=0.5):
+def combined_similarity(x, y, lm_prob, weight_fuzzy=0.2, weight_length=0.2, weight_visual=0.4, weight_lm=0.2):
     fuzzy_score = fuzz.ratio(x, y)
     length_score = length_similarity(x, y)
     visual_score = visual_similarity_score(x, y)
-    return weight_fuzzy * fuzzy_score + weight_length * length_score + weight_visual * visual_score
+    lm_score = 100 * lm_prob
+    return weight_fuzzy * fuzzy_score + weight_length * length_score + weight_visual * visual_score + weight_lm * lm_score
 
 def find_most_similar_word(x, a, threshold=70):
     most_similar_word = None
     highest_combined_score = float('-inf')
     similarity_scores = []
 
-    for word in a:
-        combined_score = combined_similarity(x, word)
+    for word, prob in a:
+        combined_score = combined_similarity(x, word, prob)
         similarity_scores.append((word, combined_score))
         if combined_score > highest_combined_score:
             highest_combined_score = combined_score

@@ -1,11 +1,11 @@
 from bs4 import BeautifulSoup as bs4, Tag
 from lmworks import lm_inspect, lm_fix_words, confidence_rework
-from helper import do, strip_non_alphanumeric
-from re import compile
+from helper import do, strip_non_alphanumeric, xsplit
+
 
 
 lineclass = ["ocr_line", "ocr_caption", "ocr_textfloat", "ocr_header"]
-split_pattern = compile(r'(\w+)?(\d+)?(\W+)?$')
+
 
 def hocr_transform(hocr):
     processes = (make_soup, enrich_soup, arrange_fix, newline_fix, punct_separation)
@@ -55,8 +55,8 @@ def enrich_soup(soup):
 
 def newline_fix(soup):
     lines = soup.find_all("span", {"class": lineclass})
-    dahses = ["-", "«", "－", "-", "﹣", "֊", "᠆", "‐", "-", "–", "—", "﹘", "―", "⁓", "⹝", "〜", "𐺭", "⸚", "־", "−", "⁻", "₋", "~"]
-    not_dashes = [",", ".", "\""]
+    dahses = ["-", "«", "－", "-", "﹣", "֊", "᠆", "‐", "-", "–", "—", "﹘", "―", "⁓", "⹝", "〜", "𐺭", "⸚", "־", "−", "⁻", "₋", "~", "="]
+    not_dashes = [",", ".", "\"", ":"]
     for i, line in enumerate(lines):
         try:
             last = lines[i].find_all("span", {"class": "ocrx_word"})[-1]
@@ -68,7 +68,7 @@ def newline_fix(soup):
             next_maybe_broken = next["maybe_broken"] == "yes"
             possible_hit = ends_strange and maybe_broken and next_maybe_broken
             if not_a_char and (ends_with_dash or possible_hit):
-                last.string = strip_non_alphanumeric(last.getText()) + next.getText()
+                last.string = strip_non_alphanumeric(last.getText()) + next.getText().lstrip()
                 next.decompose()
         except:
             pass
@@ -78,18 +78,15 @@ def newline_fix(soup):
 def punct_separation(soup):
     spans = soup.find_all("span", {"class": "ocrx_word"})
     for span in spans:
-        word = span.text
-        match = split_pattern.match(word)
-        if match:
-            mg = [x for x in match.groups() if x]
-            if len(mg)>1:
-                new_spans = []
-                for x in mg:
-                    new_word_span = Tag(name="span", attrs=span.attrs)
-                    new_word_span.string = x
-                    new_word_span["data-original"] = x
-                    new_spans.append(new_word_span)
-                span.replace_with(*new_spans)
+        mg = xsplit(span.text)
+        if len(mg) > 1:
+            new_spans = []
+            for x in mg:
+                new_word_span = Tag(name="span", attrs=span.attrs)
+                new_word_span.string = x
+                new_word_span["data-original"] = x
+                new_spans.append(new_word_span)
+            span.replace_with(*new_spans)
     return soup
 
 
@@ -245,7 +242,8 @@ def process_paragraph(paragraph, global_bounds, column_n=2, tolerance=150):
 def get_and_set_word_paddings(paragraph, global_bounds, tolerance=50):
     words = paragraph.find_all(class_='ocrx_word')
     for word in words:
-        word["data-original"] = word.get_text()
+        word["data-original"] = " " + word.get_text()
+        word.string = " " + word.get_text()
         title = word.get('title', '')
         parts = title.split(';')
         bbox = next((part for part in parts if 'bbox' in part), None)
