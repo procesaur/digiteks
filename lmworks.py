@@ -32,8 +32,8 @@ else:
     tokenizer = AutoTokenizer.from_pretrained(modelname, add_prefix_space=True, max_len=512, pad_token="<pad>", unk_token="<unk>", mask_token="<mask>", pad_to_max_length=True)
 
 
-encodes = [tokenizer.decode([i]).lower() for i in range(len(tokenizer))]
-encodes = [lat2cyr(x) for x in encodes if x not in roman]
+encodes = [tokenizer.decode([i]) for i in range(len(tokenizer))]
+encodes = [lat2cyr(x.lower()) if x.strip() not in roman else x for x in encodes ]
 
 special_token_indices = tokenizer.all_special_ids
 

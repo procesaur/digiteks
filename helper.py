@@ -117,6 +117,13 @@ def strip_non_alphanumeric(s):
         i -= 1
     return s[:i + 1]
 
+roman = [
+        "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
+        "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX",
+        "XXI", "XXII", "XXIII", "XXIV", "XXV", "XXVI", "XXVII", "XXVIII", "XXIX", "XXX",
+        "XXXI", "XXXII", "XXXIII", "XXXIV", "XXXV", "XXXVI", "XXXVII", "XXXVIII", "XXXIX", "XL",
+        "XLI", "XLII", "XLIII", "XLIV", "XLV", "XLVI", "XLVII", "XLVIII"
+    ]
 
 cyr2lat_map = {
     'Љ': 'Lj',
@@ -245,13 +252,5 @@ def find_most_similar_word(x, xconf, a, threshold=0.5):
 
     return most_similar_word
 
-
-roman = [
-        "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
-        "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX",
-        "XXI", "XXII", "XXIII", "XXIV", "XXV", "XXVI", "XXVII", "XXVIII", "XXIX", "XXX",
-        "XXXI", "XXXII", "XXXIII", "XXXIV", "XXXV", "XXXVI", "XXXVII", "XXXVIII", "XXXIX", "XL",
-        "XLI", "XLII", "XLIII", "XLIV", "XLV", "XLVI", "XLVII", "XLVIII"
-    ]
 # python -m pipreqs.pipreqs --use-local --force .
 # pyinstaller digiteks.spec
