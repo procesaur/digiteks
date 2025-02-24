@@ -220,22 +220,21 @@ def visual_similarity_score(x, y):
 def length_similarity(x, y):
     len_x = len(x)
     len_y = len(y)
-    return 100 - abs(len_x - len_y) / max(len_x, len_y) * 100
+    return 100 - abs(len_x - len_y) / max(len_x, len_y)
 
-def combined_similarity(x, y, lm_prob, weight_fuzzy=0.2, weight_length=0.2, weight_visual=0.4, weight_lm=0.2):
+def combined_similarity(x, y, weight_fuzzy=0.25, weight_length=0.25, weight_visual=0.5):
     fuzzy_score = fuzz.ratio(x, y)
     length_score = length_similarity(x, y)
     visual_score = visual_similarity_score(x, y)
-    lm_score = 100 * lm_prob
-    return weight_fuzzy * fuzzy_score + weight_length * length_score + weight_visual * visual_score + weight_lm * lm_score
+    return weight_fuzzy * fuzzy_score + weight_length * length_score + weight_visual * visual_score
 
-def find_most_similar_word(x, a, threshold=70):
+def find_most_similar_word(x, xconf, a, threshold=0.5):
     most_similar_word = None
     highest_combined_score = float('-inf')
     similarity_scores = []
 
     for word, prob in a:
-        combined_score = combined_similarity(x, word, prob)
+        combined_score = (combined_similarity(x, word)**xconf)*prob**(1-xconf)
         similarity_scores.append((word, combined_score))
         if combined_score > highest_combined_score:
             highest_combined_score = combined_score
@@ -247,5 +246,12 @@ def find_most_similar_word(x, a, threshold=70):
     return most_similar_word
 
 
+roman = [
+        "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
+        "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX",
+        "XXI", "XXII", "XXIII", "XXIV", "XXV", "XXVI", "XXVII", "XXVIII", "XXIX", "XXX",
+        "XXXI", "XXXII", "XXXIII", "XXXIV", "XXXV", "XXXVI", "XXXVII", "XXXVIII", "XXXIX", "XL",
+        "XLI", "XLII", "XLIII", "XLIV", "XLV", "XLVI", "XLVII", "XLVIII"
+    ]
 # python -m pipreqs.pipreqs --use-local --force .
 # pyinstaller digiteks.spec

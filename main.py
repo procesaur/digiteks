@@ -95,10 +95,7 @@ def test():
         input = process_req_test(request)[0]
     except:
         input = ""
-    if input:
-        output = fix_text(input)
-    else:
-        output = ""
+    output = fix_text(input) if input else ""
     return render_template('inference.html', input=input, output=output)
 
 

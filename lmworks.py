@@ -1,6 +1,6 @@
 from torch import tensor, no_grad, softmax
-from helper import cfg, group_into_sentences, lat2cyr, find_most_similar_word, textsplit
-from torch import cuda, stack, cat, long as tlong, nn, clamp
+from helper import cfg, group_into_sentences, lat2cyr, find_most_similar_word, textsplit, roman
+from torch import cuda, stack, cat, long as tlong, nn
 from transformers import AutoTokenizer, RobertaForMaskedLM, ModernBertForMaskedLM
 
 
@@ -32,7 +32,8 @@ else:
     tokenizer = AutoTokenizer.from_pretrained(modelname, add_prefix_space=True, max_len=512, pad_token="<pad>", unk_token="<unk>", mask_token="<mask>", pad_to_max_length=True)
 
 
-encodes = [lat2cyr(tokenizer.decode([i])) for i in range(len(tokenizer))]
+encodes = [tokenizer.decode([i]).lower() for i in range(len(tokenizer))]
+encodes = [lat2cyr(x) for x in encodes if x not in roman]
 
 special_token_indices = tokenizer.all_special_ids
 
@@ -117,14 +118,15 @@ def confidence_rework(ocr_confs, lm_confs, rdi=1-reasonable_doubt):
     return [(y*rdi)**(1-x) if x<min_conf_ocr else x for x, y in zip(ocr_confs, lm_confs)]
 
 
-def lm_fix_words(words, confs):
+def lm_fix_words(words, confs, ocr_confs):
     token_batches, token_word = prepare_batches(words)
     to_fix = [i for i, x in enumerate(confs) if x < min_conf_combined]
     for_masking = [[i for i, y in enumerate(token_word) if y==x] for x in to_fix]
     input_ids_list, _ = create_batches_to_fix(token_batches, for_masking)
-    all_predictions= []
+    all_probabilities = []
     results = []
     outputs = []
+
     for i in range(0, len(input_ids_list), batch_size):
         batch_input_ids, attention_masks = pad_and_stack_batches(input_ids_list[i:i + batch_size])
         with no_grad():
@@ -133,18 +135,16 @@ def lm_fix_words(words, confs):
         for j in range(batch_input_ids.size(0)):
             masked_index = (batch_input_ids[j] == tokenizer.mask_token_id).nonzero(as_tuple=True)[0].item()
             masked_logits = outputs.logits[j, masked_index, :]
-            probabilities = nn.functional.softmax(masked_logits, dim=0)
-            probabilities[probabilities == 0] = 1e-10
-            probabilities = clamp(1/probabilities/max_perplexity, min=0, max=1).tolist()
-            all_predictions.append([(i, probabilities[i]) for i in range(len(probabilities))])
- 
-    inspection_prediction = {x : y for x, y in zip(to_fix, all_predictions)}
+            all_probabilities.append(nn.functional.softmax(masked_logits, dim=0).tolist())
+
+    inspection_prediction = {x : y for x, y in zip(to_fix, all_probabilities)}
     for i, word in enumerate(words):
         if i not in inspection_prediction.keys():
             results.append(word)
         else:
-            predictions = [(encodes[x], y) for x, y in inspection_prediction[i]]
-            results.append(find_most_similar_word(word, predictions))
+            predictions = [(encodes[k], inspection_prediction[i][k]) for k in range(len(inspection_prediction[i])) if inspection_prediction[i][k] > 0.01]
+            results.append(find_most_similar_word(word, ocr_confs[i], predictions))
+
     return results
 
 

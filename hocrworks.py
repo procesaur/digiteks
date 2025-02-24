@@ -11,7 +11,7 @@ def hocr_transform(hocr):
     processes = (make_soup, enrich_soup, arrange_fix, newline_fix, punct_separation)
     for p in processes:
         hocr = p(hocr)
-    processes = (lm_processing,)
+    processes = (lm_processing, lm_fix)
     for p in processes:
         hocr = do(p, hocr)
     return str(hocr)
@@ -100,8 +100,15 @@ def lm_processing(soup):
         span["ocr_conf"] = ocr_conf
         span["lm_conf"] = lm_conf
         span["new_conf"] = new_conf
+    return soup
 
-    new_words = lm_fix_words(words, new_confs)
+
+def lm_fix(soup):
+    spans = soup.find_all("span", {"class": "ocrx_word"})
+    words = [span.get_text() for span in spans]
+    ocr_confs= [span["ocr_conf"] for span in spans]
+    new_confs = [span["new_conf"] for span in spans]
+    new_words = lm_fix_words(words, new_confs, ocr_confs)
     for span, word, new_word in zip(spans, words, new_words):
         if word != new_word:
             if new_word != "":
