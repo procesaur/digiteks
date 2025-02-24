@@ -1,6 +1,6 @@
 from torch import tensor, no_grad, softmax
 from helper import cfg, group_into_sentences, lat2cyr, find_most_similar_word, textsplit, roman
-from torch import cuda, stack, cat, long as tlong, nn
+from torch import cuda, stack, clamp, cat, long as tlong, nn
 from transformers import AutoTokenizer, RobertaForMaskedLM, ModernBertForMaskedLM
 
 
@@ -32,10 +32,9 @@ else:
     tokenizer = AutoTokenizer.from_pretrained(modelname, add_prefix_space=True, max_len=512, pad_token="<pad>", unk_token="<unk>", mask_token="<mask>", pad_to_max_length=True)
 
 
+special_token_indices = tokenizer.all_special_ids
 encodes = [tokenizer.decode([i]) for i in range(len(tokenizer))]
 encodes = [lat2cyr(x.lower()) if x.strip() not in roman else x for x in encodes ]
-
-special_token_indices = tokenizer.all_special_ids
 
 if cuda:
     model = modellclass.from_pretrained(modelname).to(0)
@@ -105,7 +104,7 @@ def lm_inspect(words, pre_confs=None, conf_threshold=min_conf_ocr, max_perplexit
 
     inspection_perplexities = {x[0] : y for x, y in zip(for_masking, perplexities)}
 
-    for i, word in enumerate(words):
+    for i in range(len(words)):
         token_idxs = [j for j, x in enumerate(token_word) if x==i]
         wv = [inspection_perplexities[x] if x in inspection_perplexities else pre_confs[i] for x in token_idxs]
         words_conf.append(sum(wv)/len(wv))
@@ -135,39 +134,37 @@ def lm_fix_words(words, confs, ocr_confs):
         for j in range(batch_input_ids.size(0)):
             masked_index = (batch_input_ids[j] == tokenizer.mask_token_id).nonzero(as_tuple=True)[0].item()
             masked_logits = outputs.logits[j, masked_index, :]
-            all_probabilities.append(nn.functional.softmax(masked_logits, dim=0).tolist())
+            probabilities = nn.functional.softmax(masked_logits, dim=0)
+            probabilities[probabilities == 0] = 1e-10
+            probabilities = clamp(1/probabilities/max_perplexity, min=0, max=1).tolist()
+            all_probabilities.append(probabilities)
 
     inspection_prediction = {x : y for x, y in zip(to_fix, all_probabilities)}
     for i, word in enumerate(words):
         if i not in inspection_prediction.keys():
             results.append(word)
         else:
-            predictions = [(encodes[k], inspection_prediction[i][k]) for k in range(len(inspection_prediction[i])) if inspection_prediction[i][k] > 0.01]
+            predictions = [(encodes[k], p) for k, p in enumerate(inspection_prediction[i]) if k not in special_token_indices]
             results.append(find_most_similar_word(word, ocr_confs[i], predictions))
-
     return results
 
 
 def pad_and_stack_batches(input_ids_list):
     padded_batches = []
     attention_masks = []
-
     for batch in input_ids_list:
         padding_length = max_length - len(batch)
         padded_batch = cat([batch, tensor([tokenizer.pad_token_id] * padding_length, dtype=tlong)])
         attention_mask = (padded_batch != tokenizer.pad_token_id).long()
         padded_batches.append(padded_batch)
         attention_masks.append(attention_mask)
-
     if cuda:
         padded_batches = stack(padded_batches).to(0)
         attention_masks = stack(attention_masks).to(0)
     else:
         padded_batches = stack(padded_batches)
         attention_masks = stack(attention_masks)
-
     return padded_batches, attention_masks
-
 
 
 def create_batches_to_fix(token_batches, for_masking):
@@ -176,7 +173,7 @@ def create_batches_to_fix(token_batches, for_masking):
     batch_min = 0
     batch_max = 0
 
-    for i, batch in enumerate(token_batches):
+    for batch in token_batches:
         batch_max += len(batch)
 
         for to_mask in for_masking:
@@ -190,8 +187,8 @@ def create_batches_to_fix(token_batches, for_masking):
                 masked_contexts.append(tensor(masked_context, dtype=tlong))
 
         batch_min = batch_max
-
     return masked_contexts, masked_tokens
+
 
 def fix_text(text):
     words = textsplit(text)

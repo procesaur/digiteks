@@ -7,7 +7,7 @@ from io import BytesIO
 from base64 import b64encode, b64decode
 from psutil import cpu_count
 from multiprocessing.dummy import Pool as ThreadPool
-from fuzzywuzzy import fuzz
+from rapidfuzz.distance import Levenshtein, Hamming
 from re import compile
 
 
@@ -222,26 +222,35 @@ def map_visual_similarity(word):
 def visual_similarity_score(x, y):
     mapped_x = map_visual_similarity(x)
     mapped_y = map_visual_similarity(y)
-    return fuzz.ratio(mapped_x, mapped_y)
+    return similarity(mapped_x, mapped_y)/100
+    return fuzz.ratio(mapped_x, mapped_y)/100
 
 def length_similarity(x, y):
     len_x = len(x)
     len_y = len(y)
-    return 100 - abs(len_x - len_y) / max(len_x, len_y)
+    return 1 - abs(len_x - len_y) / max(len_x, len_y)
 
 def combined_similarity(x, y, weight_fuzzy=0.25, weight_length=0.25, weight_visual=0.5):
-    fuzzy_score = fuzz.ratio(x, y)
-    length_score = length_similarity(x, y)
+    fuzzy_score = similarity(x, y)/100
     visual_score = visual_similarity_score(x, y)
+    length_score = length_similarity(x, y)
     return weight_fuzzy * fuzzy_score + weight_length * length_score + weight_visual * visual_score
 
-def find_most_similar_word(x, xconf, a, threshold=0.5):
+
+def similarity(str1, str2):
+    distance = Hamming.distance(str1, str2)
+    max_len = max(len(str1), len(str2))
+    similarity = 1 - (distance / max_len)
+    return similarity
+
+def find_most_similar_word(x, xconf, a, threshold=0.1):
     most_similar_word = None
     highest_combined_score = float('-inf')
     similarity_scores = []
 
     for word, prob in a:
-        combined_score = (combined_similarity(x, word)**xconf)*prob**(1-xconf)
+        cs = combined_similarity(x, word)
+        combined_score = (cs**xconf)#+(prob**(1-xconf))/50
         similarity_scores.append((word, combined_score))
         if combined_score > highest_combined_score:
             highest_combined_score = combined_score
