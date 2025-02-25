@@ -24,6 +24,7 @@ def img2bytes(img):
     img.save(img_byte_arr, format='PNG')
     return img_byte_arr.getvalue()
 
+
 def bytes2img(img):
     return Image.open(BytesIO(img))
 
@@ -49,11 +50,9 @@ def erode_img(img):
 
 
 def blur_img(img):
-
     img = threshold(bilateralFilter(img, 5, 75, 75), 0, 255, THRESH_BINARY + THRESH_OTSU)[1]
     # img = adaptiveThreshold(bilateralFilter(img, 5, 100, 100), 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, 31, 2)
     # img = threshold(img, 0, 255, THRESH_BINARY + THRESH_OTSU)[1]
-
     return img
 
 
@@ -88,5 +87,3 @@ def correct_skew(image, delta=0.3, limit=8):
     rotated = warpAffine(image, M, (w, h), flags=INTER_CUBIC, borderMode=BORDER_REPLICATE)
 
     return rotated
-
-

@@ -1,7 +1,9 @@
 from torch import tensor, no_grad, softmax
-from helper import cfg, group_into_sentences, lat2cyr, find_most_similar_word, textsplit, roman
+from helper import cfg, group_into_sentences 
+from stringworks import lat2cyr, find_most_similar_word, textsplit, roman, isnumber, map_visual_similarity
 from torch import cuda, stack, clamp, cat, long as tlong, nn
 from transformers import AutoTokenizer, RobertaForMaskedLM, ModernBertForMaskedLM
+from tqdm import tqdm
 
 
 modelname = cfg["model"]
@@ -24,6 +26,7 @@ class RobertaForMaskedLM2(RobertaForMaskedLM):
 class ModernBertForMaskedLM2(ModernBertForMaskedLM):
     _supports_param_buffer_assignment = False
 
+
 if modern:
     modellclass = ModernBertForMaskedLM2
     tokenizer = AutoTokenizer.from_pretrained(modelname)
@@ -34,7 +37,8 @@ else:
 
 special_token_indices = tokenizer.all_special_ids
 encodes = [tokenizer.decode([i]) for i in range(len(tokenizer))]
-encodes = [lat2cyr(x.lower()) if x.strip() not in roman else x for x in encodes ]
+encodes = [lat2cyr(x.lower()) if x.strip() not in roman else x for x in encodes]
+mapped_encodes =  [map_visual_similarity(x) for x in encodes]
 
 if cuda:
     model = modellclass.from_pretrained(modelname).to(0)
@@ -119,7 +123,7 @@ def confidence_rework(ocr_confs, lm_confs, rdi=1-reasonable_doubt):
 
 def lm_fix_words(words, confs, ocr_confs):
     token_batches, token_word = prepare_batches(words)
-    to_fix = [i for i, x in enumerate(confs) if x < min_conf_combined]
+    to_fix = [i for i, x in enumerate(confs) if x < min_conf_combined and not isnumber(words[i])]
     for_masking = [[i for i, y in enumerate(token_word) if y==x] for x in to_fix]
     input_ids_list, _ = create_batches_to_fix(token_batches, for_masking)
     all_probabilities = []
@@ -140,11 +144,11 @@ def lm_fix_words(words, confs, ocr_confs):
             all_probabilities.append(probabilities)
 
     inspection_prediction = {x : y for x, y in zip(to_fix, all_probabilities)}
-    for i, word in enumerate(words):
+    for i, word in tqdm(enumerate(words)):
         if i not in inspection_prediction.keys():
             results.append(word)
         else:
-            predictions = [(encodes[k], p) for k, p in enumerate(inspection_prediction[i]) if k not in special_token_indices]
+            predictions = [(encodes[k], mapped_encodes[k], p) for k, p in enumerate(inspection_prediction[i]) if k not in special_token_indices and p>0]
             results.append(find_most_similar_word(word, ocr_confs[i], predictions))
     return results
 

@@ -8,5 +8,5 @@
     "min_conf_combined" : 0.92,
     "min_conf_ocr" : 0.93,
     "reasonable_doubt_index" : 0.05,
-    "max_perplexity" : 10000
+    "max_perplexity" : 2000
 }

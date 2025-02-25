@@ -7,29 +7,11 @@ from io import BytesIO
 from base64 import b64encode, b64decode
 from psutil import cpu_count
 from multiprocessing.dummy import Pool as ThreadPool
-from rapidfuzz.distance import Levenshtein, Hamming
-from re import compile
 
 
 cpus = cpu_count()
 pool = ThreadPool(cpus)
-split_pattern = compile(r'([ ]?\w+)?(\d+)?(\W+)?$')
 
-
-def xsplit(x):
-    match = split_pattern.match(x)
-    if not match:
-        return [x]
-    mg = [y for y in match.groups() if y]
-    return mg
-
-def textsplit(text):
-    result = []
-    words = [" " + x for x in text.rstrip().replace("\n", " ").split()]
-    for x in words:
-        result+=xsplit(x)
-    print(result)
-    return result
 
 def load_conf(path=None):
     if not path:
@@ -110,156 +92,6 @@ def chunkify(lst, n=cpus):
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
-
-def strip_non_alphanumeric(s):
-    i = len(s) - 1
-    while i >= 0 and not s[i].isalnum():
-        i -= 1
-    return s[:i + 1]
-
-roman = [
-        "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
-        "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX",
-        "XXI", "XXII", "XXIII", "XXIV", "XXV", "XXVI", "XXVII", "XXVIII", "XXIX", "XXX",
-        "XXXI", "XXXII", "XXXIII", "XXXIV", "XXXV", "XXXVI", "XXXVII", "XXXVIII", "XXXIX", "XL",
-        "XLI", "XLII", "XLIII", "XLIV", "XLV", "XLVI", "XLVII", "XLVIII"
-    ]
-
-cyr2lat_map = {
-    'Љ': 'Lj',
-    'Њ': 'Nj',
-    'Џ': 'Dž',
-    'А': 'A',
-    'Б': 'B',
-    'В': 'V',
-    'Г': 'G',
-    'Д': 'D',
-    'Ђ': 'Đ',
-    'Е': 'E',
-    'Ж': 'Ž',
-    'З': 'Z',
-    'И': 'I',
-    'Ј': 'J',
-    'К': 'K',
-    'Л': 'L',
-    'М': 'M',
-    'Н': 'N',
-    'О': 'O',
-    'П': 'P',
-    'Р': 'R',
-    'С': 'S',
-    'Т': 'T',
-    'Ћ': 'Ć',
-    'У': 'U',
-    'Ф': 'F',
-    'Х': 'H',
-    'Ц': 'C',
-    'Ч': 'Č',
-    'Ш': 'Š',
-    'љ': 'lj',
-    'њ': 'nj',
-    'џ': 'dž',
-    'а': 'a',
-    'б': 'b',
-    'в': 'v',
-    'г': 'g',
-    'д': 'd',
-    'ђ': 'đ',
-    'е': 'e',
-    'ж': 'ž',
-    'з': 'z',
-    'и': 'i',
-    'ј': 'j',
-    'к': 'k',
-    'л': 'l',
-    'м': 'm',
-    'н': 'n',
-    'о': 'o',
-    'п': 'p',
-    'р': 'r',
-    'с': 's',
-    'т': 't',
-    'ћ': 'ć',
-    'у': 'u',
-    'ф': 'f',
-    'х': 'h',
-    'ц': 'c',
-    'ч': 'č',
-    'ш': 'š'
-}
-
-lat2cyr_map = {v: k for k, v in cyr2lat_map.items()}
-
-def cyr2lat(x):
-    for key in cyr2lat_map.keys():
-        x = (x.replace(key, cyr2lat_map[key]))
-    return x
-    
-def lat2cyr(x):
-    for key in lat2cyr_map.keys():
-        x = (x.replace(key, lat2cyr_map[key]))
-    return x
-
-visual_similarity = {
-    'а': ['г'],
-    'б': ['6'],
-    'в': ['з', '3'],
-    'ђ': ['ћ', '5'],
-    'ж': ['х'],
-	'ј': ['1'],
-    'и': ['п', 'н', 'њ', 'л', 'љ'],
-    'о': ['с','е','р', '0'],
-    'ц': ['ч', 'џ', 'д']
-}
-
-def map_visual_similarity(word):
-    word = word.lower()
-    for x in visual_similarity:
-        for y in visual_similarity[x]:
-            word = word.replace(y,x)
-    return word
-
-def visual_similarity_score(x, y):
-    mapped_x = map_visual_similarity(x)
-    mapped_y = map_visual_similarity(y)
-    return similarity(mapped_x, mapped_y)/100
-    return fuzz.ratio(mapped_x, mapped_y)/100
-
-def length_similarity(x, y):
-    len_x = len(x)
-    len_y = len(y)
-    return 1 - abs(len_x - len_y) / max(len_x, len_y)
-
-def combined_similarity(x, y, weight_fuzzy=0.25, weight_length=0.25, weight_visual=0.5):
-    fuzzy_score = similarity(x, y)/100
-    visual_score = visual_similarity_score(x, y)
-    length_score = length_similarity(x, y)
-    return weight_fuzzy * fuzzy_score + weight_length * length_score + weight_visual * visual_score
-
-
-def similarity(str1, str2):
-    distance = Hamming.distance(str1, str2)
-    max_len = max(len(str1), len(str2))
-    similarity = 1 - (distance / max_len)
-    return similarity
-
-def find_most_similar_word(x, xconf, a, threshold=0.1):
-    most_similar_word = None
-    highest_combined_score = float('-inf')
-    similarity_scores = []
-
-    for word, prob in a:
-        cs = combined_similarity(x, word)
-        combined_score = (cs**xconf)#+(prob**(1-xconf))/50
-        similarity_scores.append((word, combined_score))
-        if combined_score > highest_combined_score:
-            highest_combined_score = combined_score
-            most_similar_word = word
-
-    if highest_combined_score < threshold:
-        return ""
-
-    return most_similar_word
 
 # python -m pipreqs.pipreqs --use-local --force .
 # pyinstaller digiteks.spec

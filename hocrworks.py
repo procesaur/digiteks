@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup as bs4, Tag
 from lmworks import lm_inspect, lm_fix_words, confidence_rework
-from helper import do, strip_non_alphanumeric, xsplit
-
+from helper import do
+from stringworks import strip_non_alphanumeric, xsplit
 
 
 lineclass = ["ocr_line", "ocr_caption", "ocr_textfloat", "ocr_header"]
@@ -16,8 +16,10 @@ def hocr_transform(hocr):
         hocr = do(p, hocr)
     return str(hocr)
 
+
 def make_soup(hocr):
     return bs4(hocr, 'html.parser')
+
 
 def enrich_soup(soup):
     pages = soup.find_all(class_='ocr_page')
