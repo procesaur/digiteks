@@ -167,11 +167,10 @@ def similarity(str1, str2):
     return similarity
 
 
-def find_most_similar_word(x, xconf, a, threshold=0.1):
+def find_most_similar_word(x, mapped_x, xconf, a, threshold=0.1):
     most_similar_word = None
     highest_combined_score = 0
     similarity_scores = []
-    mapped_x = map_visual_similarity(x)
 
     for word, mapped_y, prob in a:
         cs = combined_similarity(x, word, mapped_x, mapped_y)

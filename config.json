@@ -1,6 +1,6 @@
 {
-    "model" : "f:/pripravnik355",
-    "modern" : false,
+    "model" : "f:/model",
+    "modern" : true,
     "cuda" : true,
     "context_size" : 512,
     "batch_size" : 16,
