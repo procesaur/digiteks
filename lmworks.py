@@ -1,6 +1,6 @@
 from torch import tensor, no_grad, softmax
 from helper import cfg, group_into_sentences
-from stringworks import textsplit, isnumber, map_visual_similarity, calculate_similarities
+from stringworks import textsplit, isnumber, map_visual_similarity, calculate_similarities, harmonize_array, roman
 from torch import cuda, stack, clamp, cat, long as tlong, nn
 from transformers import AutoTokenizer, RobertaForMaskedLM, ModernBertForMaskedLM
 from numpy import array as nparray, clip, newaxis
@@ -30,6 +30,7 @@ length_similarities = []
 for i in range(cfg["max_len_similarity"] + 1):
     t = abs(encodes_length-i)/clip(encodes_length, a_min=i, a_max=None)
     length_similarities.append(1-t)
+roman_boost = nparray([1+cfg["roman_numerals_boost"] if e in roman else 1 for e in encodes])
 
 if cuda:
     model = modellclass.from_pretrained(cfg["model"]).to(0)
@@ -115,7 +116,8 @@ def confidence_rework(ocr_confs, lm_confs, rdi=1-cfg["reasonable_doubt_index"]):
 def lm_fix_words(words, confs, ocr_confs):
     token_batches, token_word = prepare_batches(words)
     to_fix = [i for i, x in enumerate(confs) if x < cfg["min_conf_combined"] and not isnumber(words[i])]
-    words_to_fix = [words[x] for x in to_fix]
+    words_to_fix_orig = [words[x] for x in to_fix]
+    words_to_fix = [x.lower() for x in words_to_fix_orig]
     mapped_to_fix = [map_visual_similarity(x) for x in words_to_fix]
     for_masking = [[i for i, y in enumerate(token_word) if y==x] for x in to_fix]
     input_ids_list, _ = create_batches_to_fix(token_batches, for_masking)
@@ -142,11 +144,12 @@ def lm_fix_words(words, confs, ocr_confs):
             all_probabilities.append(probabilities.cpu().numpy())
 
     combined_similarities += nparray(all_probabilities)*(1-ocr_confs_to_fix)
+    combined_similarities[:, special_token_indices] = 0
+    combined_similarities *= roman_boost
     guesses = combined_similarities.argmax(axis=1)
-
+    guesses = harmonize_array([encodes[x] for x in guesses], words_to_fix_orig)
     inspection_prediction = {x : y for x, y in zip(to_fix, guesses)}
-    results = [encodes[inspection_prediction[i]] if i in inspection_prediction.keys() else word for i, word in enumerate(words)]
-
+    results = [inspection_prediction[i] if i in inspection_prediction.keys() else word for i, word in enumerate(words)]
     return results
 
 

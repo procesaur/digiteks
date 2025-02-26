@@ -1,9 +1,8 @@
 from rapidfuzz import process, fuzz
 from re import compile
 from string import digits, punctuation
-from helper import cpus
+from helper import cpus, pool
 from numpy import uint8
-
 
 
 split_pattern = compile(r'([ ]?\w+)?(\d+)?(\W+)?$')
@@ -25,13 +24,13 @@ visual_similarity = {
     'б': ['6'],
     'в': ['з', '3'],
     'ђ': ['ћ', '5'],
-    'ж': ['х', 'X'],
-	'ј': ['1'],
+    'ж': ['х', 'x'],
+	'ј': ['1', "i"],
     'и': ['п', 'н', 'њ', 'л', 'љ', 'ii'],
     'о': ['с','е','р', '0', 'ф'],
     'ц': ['ч', 'џ', 'д'],
-    'V': ["м", "у"],
-    'III': ['ш']
+    "у": ["м", "v"],
+    'ш': ['iii']
 }
 
 
@@ -76,3 +75,22 @@ def calculate_similarities(a, b):
     a, b, scorer=fuzz.ratio,
     dtype=uint8, score_cutoff=10, workers=cpus)
     return scores/100
+
+
+def harmonize(args):
+    x, y = args
+    if x in roman:
+        return roman[x]
+    if y.strip().isupper():
+        return x.upper()
+    if y.strip()[0].isupper():
+        return x.lstrip().capitalize()
+    return x
+
+
+def harmonize_array(a, b):
+    return pool.map(harmonize, zip(a,b))
+    x = []
+    for u in zip(a,b):
+        x.append(harmonize(u))
+    return x
