@@ -4,9 +4,14 @@
     "cuda" : true,
     "context_size" : 512,
     "batch_size" : 16,
-    "top_k" : 10,
     "min_conf_combined" : 0.92,
     "min_conf_ocr" : 0.93,
     "reasonable_doubt_index" : 0.05,
-    "max_perplexity" : 2000
+    "max_perplexity" : 5000,
+    "prefix" : ["<s>"],
+    "suffix" : ["</s>"],
+    "len_sim_weight" : 0.25,
+    "sim_weight" : 0.25,
+    "mapped_sim_weight" : 0.5,
+    "max_len_similarity": 20
 }

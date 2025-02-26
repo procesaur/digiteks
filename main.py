@@ -87,7 +87,6 @@ def posthtml():
         return Response(content, mimetype='text/html')
     return 'Invalid file'
 
-
 @app.route('/test', methods=['GET','POST'])
 def test():
     try:
@@ -96,7 +95,6 @@ def test():
         input = ""
     output = fix_text(input) if input else ""
     return render_template('inference.html', input=input, output=output)
-
 
 @app.route('/visual', methods=['GET','POST'])
 def visaul():
