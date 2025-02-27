@@ -75,7 +75,7 @@ section{
     margin: 10px;
 }
 
-canvas{
+#vp{
     max-width:calc(100vw - 60px) !important;
     max-height:calc(100vh - 300px) !important;
     min-height:500px

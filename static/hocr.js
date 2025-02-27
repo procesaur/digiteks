@@ -49,9 +49,14 @@ function prepare(element, top=0.94, saturation=0.5) {
     Array.from(pars).forEach(function (par) {
 
         const checkbox = document.createElement('input');
+        const button = document.createElement('button');
+        button.textContent = '🔍';
+        button.setAttribute('onclick', 'showPopupevent(event)');    
+        button.style.float = "right";  
         checkbox.type = 'checkbox';
         checkbox.className = 'dynamic-checkbox par-checkbox';
         par.style.position = 'relative'; 
+        par.insertBefore(button, par.firstChild);
         par.insertBefore(checkbox, par.firstChild);
         par.setAttribute("onclick", "checkall(event)");
     }); 

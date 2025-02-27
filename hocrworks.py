@@ -48,16 +48,6 @@ def enrich_soup(soup, image=None):
     paragraphs = soup.find_all(class_='ocr_par')
     for paragraph in paragraphs:
         paragraph["image_id"] = img_id
-        button = soup.new_tag('button')
-        button.string = 'Show Popup'
-        
-        # Add the button with onclick attribute to call the showPopup function
-        button['onclick'] = "showPopupevent(event)"
-        
-        # Append the button to the paragraph
-        paragraph.append(button)
-
-
         column_class = paragraph.get('column-type')
         column_n = paragraph.get('layout-type')
         if column_n != 2:
@@ -71,6 +61,9 @@ def enrich_soup(soup, image=None):
             elif column_class == 'right column':
                 process_paragraph(paragraph, r_bounds, column_n)
                 get_and_set_word_paddings(paragraph, r_bounds)
+            else:
+                process_paragraph(paragraph, global_bounds, column_n)
+                get_and_set_word_paddings(paragraph, global_bounds)
     return soup
 
 
@@ -254,9 +247,6 @@ def process_paragraph(paragraph, global_bounds, column_n=2, tolerance=150):
             align = 'center'
         else:
             align = 'justify'
-
-        if column_n != 2:
-                return '', '', '', x1, y1, x2, y2
 
         paragraph["right_padding"] = right_padding
         paragraph["left_padding"] = left_padding

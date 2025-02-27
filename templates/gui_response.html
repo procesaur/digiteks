@@ -215,31 +215,25 @@
             });
         }
         
-    function showPopup(image_id, x1, x2, y1, y2) {
-        var img = document.getElementById(image_id);
-        var canvas = document.getElementById('canvas');
-        var ctx = canvas.getContext('2d');
+function showPopup(image_id, x1, x2, y1, y2) {
+    if (x1 && x2 && y1 && y2 && image_id){
+            var img = document.getElementById(image_id);
+            var canvas = document.getElementById('canvas');
+            var ctx = canvas.getContext('2d');
 
-        // Calculate the width and height of the cropped area
-        var cropWidth = x2 - x1;
-        var cropHeight = y2 - y1;
+            var cropWidth = x2 - x1;
+            var cropHeight = y2 - y1;
+            canvas.width = cropWidth;
+            canvas.height = cropHeight;
+            var image = new Image();
+            image.src = img.src;
+            image.onload = function() {
+                ctx.drawImage(image, x1, y1, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+            };
 
-        // Set canvas dimensions to match the aspect ratio of the cropped area
-        var aspectRatio = cropWidth / cropHeight;
-        canvas.width = cropWidth;
-        canvas.height = cropHeight;
-
-        // Draw the cropped image on the canvas
-        var image = new Image();
-        image.src = img.src;
-        image.onload = function() {
-            // Draw the image on the canvas maintaining the aspect ratio
-            ctx.drawImage(image, x1, y1, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
-        };
-
-        // Show the popup and overlay
-        document.getElementById('overlay').style.display = 'block';
-        document.getElementById('popup').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('popup').style.display = 'block';
+        }
     }
 
     function hidePopup() {
@@ -337,7 +331,7 @@
     </div>
         <div class="overlay" id="overlay" onclick="hidePopup()"></div>
         <div class="popup" id="popup" onclick="hidePopup()">
-            <canvas id="canvas" onclick="hidePopup()"></canvas>
+            <canvas id="canvas" onclick="hidePopup()" style="max-width: 100%;"></canvas>
         </div>
         <div id="popup_settings_hocr" class="popup">
             <div class="popup-content">
