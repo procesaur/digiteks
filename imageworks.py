@@ -1,27 +1,36 @@
 from io import BytesIO
 from PIL import Image
 from cv2 import cvtColor, resize, threshold, dilate, erode, warpAffine, getRotationMatrix2D, medianBlur, adaptiveThreshold, GaussianBlur, bilateralFilter, filter2D
-from cv2 import BORDER_REPLICATE, COLOR_BGR2RGB, COLOR_RGB2BGR, COLOR_BGR2GRAY, THRESH_OTSU, THRESH_BINARY, INTER_CUBIC, ADAPTIVE_THRESH_GAUSSIAN_C
+from cv2 import BORDER_REPLICATE, COLOR_BGR2RGB, COLOR_RGB2BGR, COLOR_BGR2GRAY, THRESH_OTSU, THRESH_BINARY, INTER_CUBIC, ADAPTIVE_THRESH_GAUSSIAN_C, INTER_AREA, INTER_LINEAR
 from numpy import ndarray, array as nparray, ones, uint8, max, sum as npsum, arange
+from pdf2image import convert_from_bytes
+from helper import cpus, pool, read_zip, do
 
 
 def improve_image(img):
+    processing = [
+        convert_from_image_to_cv2,
+        img_color_convert,
+        #resize_img,
+        blur_img,
+        erode_img,
+        #resize_img,
+        correct_skew,
+        convert_from_cv2_to_image
+    ] 
+    
+    for x in processing:
+        img = x(img)
 
-    img = convert_from_image_to_cv2(img)
-    img = resize_img(img)
-    img = cvtColor(img, COLOR_BGR2GRAY)
-
-    img = blur_img(img)
-    img = erode_img(img)
-    img = correct_skew(img)
-
-    img = convert_from_cv2_to_image(img)
     return img2bytes(img)
 
 
+def img_color_convert(img):
+    return cvtColor(img, COLOR_BGR2GRAY)
+
 def img2bytes(img):
     img_byte_arr = BytesIO()
-    img.save(img_byte_arr, format='PNG')
+    img.save(img_byte_arr, format='PNG', color=2)
     return img_byte_arr.getvalue()
 
 
@@ -29,28 +38,25 @@ def bytes2img(img):
     return Image.open(BytesIO(img))
 
 
-def sharpen_img(img):
-    sharpen_kernel = nparray([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
-    sharpen = filter2D(img, -1, sharpen_kernel)
-    return sharpen
 
-
-def resize_img(img):
+def resize_img(img, x=2, y=2, interpolation=INTER_CUBIC):
     #img = resize(img, (0, 0), fx=2, fy=2)
-    img = resize(img, None, fx=1.2, fy=1.2, interpolation=INTER_CUBIC)
+    img = resize(img, None, fx=x, fy=y, interpolation=interpolation)
     return img
 
 
 def erode_img(img):
     kernel = ones((1, 1), uint8)
 
-    img = erode(img, kernel, iterations=1)
-    img = dilate(img, kernel, iterations=2)
+    img = dilate(img, kernel, iterations=3)
+    img = erode(img, kernel, iterations=2)
+
     return img
 
 
 def blur_img(img):
     img = threshold(bilateralFilter(img, 5, 75, 75), 0, 255, THRESH_BINARY + THRESH_OTSU)[1]
+    #img = threshold(img, 128, 255, THRESH_BINARY)[1] #make bianary
     # img = adaptiveThreshold(bilateralFilter(img, 5, 100, 100), 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, 31, 2)
     # img = threshold(img, 0, 255, THRESH_BINARY + THRESH_OTSU)[1]
     return img
@@ -64,11 +70,11 @@ def convert_from_image_to_cv2(img: Image) -> ndarray:
     return cvtColor(nparray(img), COLOR_RGB2BGR)
 
 
-def correct_skew(image, delta=0.3, limit=8):
+def correct_skew(image, delta=0.3, limit=6):
     (h, w) = image.shape[:2]
     center = (w // 2, h // 2)
 
-    def determine_score(image, angle):
+    def determine_score(angle):
         M = getRotationMatrix2D(center, angle, 1.0)
         data = warpAffine(image, M, (w, h), flags=INTER_CUBIC, borderMode=BORDER_REPLICATE)
 
@@ -76,14 +82,24 @@ def correct_skew(image, delta=0.3, limit=8):
         score = npsum((histogram[1:] - histogram[:-1]) ** 2, dtype=float)
         return score
 
-    scores = []
     angles = arange(-limit, limit + delta, delta)
-    for angle in angles:
-        scores.append(determine_score(image, angle))
+    scores = [determine_score(angle) for angle in angles]
 
     best_angle = angles[scores.index(max(scores))]
-
     M = getRotationMatrix2D(center, best_angle, 1.0)
     rotated = warpAffine(image, M, (w, h), flags=INTER_CUBIC, borderMode=BORDER_REPLICATE)
-
     return rotated
+
+
+def pdf_to_images(file_bytes, img_down=False):
+    images = convert_from_bytes(file_bytes, dpi=300, thread_count=cpus)
+    if img_down:
+        images_improved = pool.map(improve_image, images)
+        return [(img2bytes(a), b) for a, b in zip(images, images_improved)]
+    return [img2bytes(a) for a in images]
+
+
+def image_zip_to_images(file):
+    images = read_zip(file)    
+    images_improved = pool.map(improve_image, images)
+    return images, images_improved

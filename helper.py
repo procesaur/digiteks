@@ -34,23 +34,21 @@ def zip_bytes_string(images_in_bytes):
     zip_stream.seek(0)
     return zip_stream
 
-
-def image_zip_to_images(file):
+def read_zip(file):
     if isinstance(file, bytes):
         memory_file = BytesIO(file)
     else:
         memory_file = BytesIO()
         file.save(memory_file)
     memory_file.seek(0)
-    images = []
+    result = []
     
     with ZipFile(memory_file, 'r') as zip_ref:
         for file_info in zip_ref.infolist():
             if file_info.filename.endswith(('png', 'jpg', 'jpeg')):
                 with zip_ref.open(file_info) as image_file:
-                    images.append(image_file.read())
-    return images
-
+                    result.append(image_file.read())
+    return result
 
 def encode_images(images):
     return [b64encode(image_data).decode('utf-8') for image_data in images]

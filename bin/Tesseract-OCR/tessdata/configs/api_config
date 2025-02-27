@@ -1,1 +1,2 @@
 tessedit_zero_rejection T
+omp_set_num_threads 1

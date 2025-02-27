@@ -109,8 +109,10 @@ def lm_inspect(words, pre_confs=None, conf_threshold=cfg["min_conf_ocr"], max_pe
     return words_conf, words
 
 
-def confidence_rework(ocr_confs, lm_confs, rdi=1-cfg["reasonable_doubt_index"]):
-    return [(y*rdi)**(1-x) if x<cfg["min_conf_ocr"] else x for x, y in zip(ocr_confs, lm_confs)]
+def confidence_rework(ocr_confs, lm_confs, rdi=cfg["reasonable_doubt_index"]):
+    lm_confs = clip(nparray(lm_confs), a_min=rdi, a_max=1-rdi)
+    lm_confs = lm_confs**(cfg["min_conf_ocr"]-nparray(ocr_confs))
+    return list(lm_confs)
 
 
 def lm_fix_words(words, confs, ocr_confs):

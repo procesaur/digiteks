@@ -1,11 +1,12 @@
 from flask import Flask, request, render_template, send_file, Response, jsonify, send_from_directory
 from os import environ, path as px
 from rq_handler import process_req, process_req_test
-from ocrworks import pdf_to_images, ocr_images
+from ocrworks import ocr_images
+from imageworks import pdf_to_images, image_zip_to_images
 from webbrowser import open_new
 from threading import Timer
 from lmworks import lm_inspect, fix_text
-from helper import zip_bytes_string, image_zip_to_images, do, encode_images, decode_images
+from helper import zip_bytes_string, do, encode_images, decode_images
 from uuid import uuid4
 
 

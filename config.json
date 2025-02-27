@@ -14,5 +14,5 @@
     "sim_weight" : 0.25,
     "mapped_sim_weight" : 0.5,
     "max_len_similarity": 20,
-    "roman_numerals_boost" : 0.025
+    "roman_numerals_boost" : 0.02
 }
