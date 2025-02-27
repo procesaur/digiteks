@@ -214,7 +214,48 @@
                 });
             });
         }
+        
+    function showPopup(image_id, x1, x2, y1, y2) {
+        var img = document.getElementById(image_id);
+        var canvas = document.getElementById('canvas');
+        var ctx = canvas.getContext('2d');
 
+        // Calculate the width and height of the cropped area
+        var cropWidth = x2 - x1;
+        var cropHeight = y2 - y1;
+
+        // Set canvas dimensions to match the aspect ratio of the cropped area
+        var aspectRatio = cropWidth / cropHeight;
+        canvas.width = cropWidth;
+        canvas.height = cropHeight;
+
+        // Draw the cropped image on the canvas
+        var image = new Image();
+        image.src = img.src;
+        image.onload = function() {
+            // Draw the image on the canvas maintaining the aspect ratio
+            ctx.drawImage(image, x1, y1, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+        };
+
+        // Show the popup and overlay
+        document.getElementById('overlay').style.display = 'block';
+        document.getElementById('popup').style.display = 'block';
+    }
+
+    function hidePopup() {
+        document.getElementById('overlay').style.display = 'none';
+        document.getElementById('popup').style.display = 'none';
+    }
+
+    function showPopupevent(event) {
+            const parent = event.target.parentElement;
+            const image_id = parent.getAttribute('image_id');
+            const x1 = parent.getAttribute('x1');
+            const x2 = parent.getAttribute('x2');
+            const y1 = parent.getAttribute('y1');
+            const y2 = parent.getAttribute('y2');
+            showPopup(image_id, x1, x2, y1, y2);
+        }
     </script>
     <style>
         :root {
@@ -294,7 +335,10 @@
         <button type="button" onclick="getText('{{filename}}')" class="button process">⭳ Текст</button>
         <button type="button" onclick="getHtml('{{filename}}')" class="button process">⭳ ХТМЛ</button>
     </div>
-
+        <div class="overlay" id="overlay" onclick="hidePopup()"></div>
+        <div class="popup" id="popup" onclick="hidePopup()">
+            <canvas id="canvas" onclick="hidePopup()"></canvas>
+        </div>
         <div id="popup_settings_hocr" class="popup">
             <div class="popup-content">
               <span class="close-button" id="closePopupButton"  onclick="closehocrsettings()">&times;</span>

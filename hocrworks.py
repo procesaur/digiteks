@@ -1,14 +1,17 @@
 from bs4 import BeautifulSoup as bs4, Tag
 from lmworks import lm_inspect, lm_fix_words, confidence_rework
-from helper import do
+from helper import do, make_id
 from stringworks import strip_non_alphanumeric, xsplit
 
 
 lineclass = ["ocr_line", "ocr_caption", "ocr_textfloat", "ocr_header"]
 
 
-def hocr_transform(hocr):
-    processes = (make_soup, enrich_soup, arrange_fix, newline_fix, punct_separation)
+def hocr_transform(hocr, image=None):
+    hocr = make_soup(hocr)
+    hocr = enrich_soup(hocr, image)
+
+    processes = (arrange_fix, newline_fix, punct_separation)
     for p in processes:
         hocr = p(hocr)
     processes = (lm_processing, lm_fix)
@@ -21,37 +24,53 @@ def make_soup(hocr):
     return bs4(hocr, 'html.parser')
 
 
-def enrich_soup(soup):
-    pages = soup.find_all(class_='ocr_page')
+def enrich_soup(soup, image=None):
+    if image:
+        img_id = make_id()
+        img_tag = soup.new_tag("img")
+        img_tag['src'] = f"data:image/png;base64,{image}"
+        img_tag['id'] = img_id
+        img_tag['style'] = 'display: none;'
+        soup.append(img_tag)
 
-    for hocr_element in pages:
-        global_bounds = get_global_bounds(hocr_element)
-        mid_x = (global_bounds['minX'] + global_bounds['maxX']) / 2
-        l_bounds = {'minX': global_bounds['minX'], 'maxX': mid_x}
-        r_bounds = {'minX': mid_x, 'maxX': global_bounds['maxX']}
-        y_groups = group_paragraphs_by_y(hocr_element)
-        for group in y_groups:
-            layout_type = determine_layout_type_for_group(group, mid_x)
-            for paragraph in group:
-                column_type = determine_column_type(paragraph, mid_x)
-                paragraph['column-type'] = column_type
-                paragraph['layout-type'] = layout_type
+    global_bounds = get_global_bounds(soup)
+    mid_x = (global_bounds['minX'] + global_bounds['maxX']) / 2
+    l_bounds = {'minX': global_bounds['minX'], 'maxX': mid_x}
+    r_bounds = {'minX': mid_x, 'maxX': global_bounds['maxX']}
+    y_groups = group_paragraphs_by_y(soup)
+    for group in y_groups:
+        layout_type = determine_layout_type_for_group(group, mid_x)
+        for paragraph in group:
+            column_type = determine_column_type(paragraph, mid_x)
+            paragraph['column-type'] = column_type
+            paragraph['layout-type'] = layout_type
 
-        paragraphs = hocr_element.find_all(class_='ocr_par')
-        for paragraph in paragraphs:
-            column_class = paragraph.get('column-type')
-            column_n = paragraph.get('layout-type')
-            if column_n != 2:
-                paragraph["del-candidate"] = "yes"
-                process_paragraph(paragraph, global_bounds, column_n)
-                get_and_set_word_paddings(paragraph, global_bounds)
-            else:
-                if column_class == 'left column':
-                    process_paragraph(paragraph, l_bounds, column_n)
-                    get_and_set_word_paddings(paragraph, l_bounds)
-                elif column_class == 'right column':
-                    process_paragraph(paragraph, r_bounds, column_n)
-                    get_and_set_word_paddings(paragraph, r_bounds)
+    paragraphs = soup.find_all(class_='ocr_par')
+    for paragraph in paragraphs:
+        paragraph["image_id"] = img_id
+        button = soup.new_tag('button')
+        button.string = 'Show Popup'
+        
+        # Add the button with onclick attribute to call the showPopup function
+        button['onclick'] = "showPopupevent(event)"
+        
+        # Append the button to the paragraph
+        paragraph.append(button)
+
+
+        column_class = paragraph.get('column-type')
+        column_n = paragraph.get('layout-type')
+        if column_n != 2:
+            paragraph["del-candidate"] = "yes"
+            process_paragraph(paragraph, global_bounds, column_n)
+            get_and_set_word_paddings(paragraph, global_bounds)
+        else:
+            if column_class == 'left column':
+                process_paragraph(paragraph, l_bounds, column_n)
+                get_and_set_word_paddings(paragraph, l_bounds)
+            elif column_class == 'right column':
+                process_paragraph(paragraph, r_bounds, column_n)
+                get_and_set_word_paddings(paragraph, r_bounds)
     return soup
 
 

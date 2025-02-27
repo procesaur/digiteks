@@ -6,8 +6,7 @@ from imageworks import pdf_to_images, image_zip_to_images
 from webbrowser import open_new
 from threading import Timer
 from lmworks import lm_inspect, fix_text
-from helper import zip_bytes_string, do, encode_images, decode_images
-from uuid import uuid4
+from helper import zip_bytes_string, do, encode_images, decode_images, make_id
 
 
 app = Flask(__name__)
@@ -70,7 +69,7 @@ def showzip():
 
 @app.route('/ocr/<lang>', methods=['POST'])
 def api(lang):
-    session_id = str(uuid4())
+    session_id = make_id()
     image_data = request.json.get('images') 
     session_images[session_id] = decode_images(image_data), lang
     return jsonify({'status': 'OCR started', 'session_id': session_id})

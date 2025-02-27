@@ -7,10 +7,15 @@ from io import BytesIO
 from base64 import b64encode, b64decode
 from psutil import cpu_count
 from multiprocessing.dummy import Pool as ThreadPool
+from uuid import uuid4
 
 
 cpus = cpu_count()
 pool = ThreadPool(cpus)
+
+
+def make_id():
+   return str(uuid4()) 
 
 
 def load_conf(path=None):
