@@ -1,10 +1,10 @@
 from io import BytesIO
 from PIL import Image
-from cv2 import cvtColor, resize, threshold, dilate, erode, warpAffine, getRotationMatrix2D, medianBlur, adaptiveThreshold, GaussianBlur, bilateralFilter, filter2D
-from cv2 import BORDER_REPLICATE, COLOR_BGR2RGB, COLOR_RGB2BGR, COLOR_BGR2GRAY, THRESH_OTSU, THRESH_BINARY, INTER_CUBIC, ADAPTIVE_THRESH_GAUSSIAN_C, INTER_AREA, INTER_LINEAR
+from cv2 import cvtColor, resize, threshold, dilate, erode, warpAffine, getRotationMatrix2D, bilateralFilter
+from cv2 import BORDER_REPLICATE, COLOR_BGR2RGB, COLOR_RGB2BGR, COLOR_BGR2GRAY, THRESH_OTSU, THRESH_BINARY, INTER_CUBIC, INTER_AREA
 from numpy import ndarray, array as nparray, ones, uint8, max, sum as npsum, arange
 from pdf2image import convert_from_bytes
-from helper import cpus, pool, read_zip, do
+from helper import cpus, pool, read_zip
 
 
 def improve_image(img):
@@ -56,9 +56,6 @@ def erode_img(img):
 
 def blur_img(img):
     img = threshold(bilateralFilter(img, 5, 75, 75), 0, 255, THRESH_BINARY + THRESH_OTSU)[1]
-    #img = threshold(img, 128, 255, THRESH_BINARY)[1] #make bianary
-    # img = adaptiveThreshold(bilateralFilter(img, 5, 100, 100), 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, 31, 2)
-    # img = threshold(img, 0, 255, THRESH_BINARY + THRESH_OTSU)[1]
     return img
 
 

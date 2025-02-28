@@ -68,6 +68,10 @@ def prepare_batches(words):
     return bathces, token_word
 
 
+def should_merge(x, y):
+    return False
+
+
 def lm_inspect(words, pre_confs=None, conf_threshold=cfg["min_conf_ocr"], max_perplexity=cfg["max_perplexity"]):
     if isinstance(words, str):
         words = words.rstrip().replace("\n", " ")
