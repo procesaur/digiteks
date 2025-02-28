@@ -20,17 +20,30 @@ numbers = set(digits).union(set(punctuation))
 
 
 visual_similarity = {
-    'а': ['г'],
+    'а': ['д'],
     'б': ['6'],
     'в': ['з', '3'],
     'ђ': ['ћ', '5'],
     'ж': ['х', 'x'],
-	'ј': ['1', "i"],
+	'ј': ['1', 'i'],
     'и': ['п', 'н', 'њ', 'л', 'љ', 'ii'],
     'о': ['с','е','р', '0', 'ф'],
-    'ц': ['ч', 'џ', 'д'],
-    "у": ["м", "v"],
-    'ш': ['iii']
+    'ц': ['ч', 'џ', ],
+    'у': ['м', 'v'],
+    'ш': ['iii'],
+
+    'а': ['a'],
+    'б': ['b'],
+    'ђ': ['s', 'š'],
+	'ј': ['j', 'l', 't', 'f'],
+    'и': ['n', 'h'],
+    'о': ['g', 'd', 'e', 'o', 'ć', 'č', 'c', 'q'],
+    'у': ['m', 'y'],
+    'ш': ['w'],
+    '2' : ['ž', 'z'],
+    'к' : ['k'],
+    'р' : ['p'],
+    'г' : ['r']
 }
 
 
@@ -84,7 +97,9 @@ def harmonize(args):
     if y.strip().isupper():
         return x.upper()
     if y.strip()[0].isupper():
-        return x.lstrip().capitalize()
+        if x[0]!= " ":
+            return x.capitalize()
+        return " " + x.lstrip().capitalize()
     return x
 
 

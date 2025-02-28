@@ -111,7 +111,7 @@ def lm_inspect(words, pre_confs=None, conf_threshold=cfg["min_conf_ocr"], max_pe
 
 def confidence_rework(ocr_confs, lm_confs, rdi=cfg["reasonable_doubt_index"]):
     lm_confs = clip(nparray(lm_confs), a_min=rdi, a_max=1-rdi)
-    lm_confs = lm_confs**(cfg["min_conf_ocr"]-nparray(ocr_confs))
+    lm_confs = lm_confs**(cfg["min_conf_ocr"]+rdi/2-nparray(ocr_confs))
     return list(lm_confs)
 
 
