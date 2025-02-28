@@ -72,42 +72,57 @@ def newline_fix(soup):
     dahses = ["-", "«", "－", "-", "﹣", "֊", "᠆", "‐", "-", "–", "—", "﹘", "―", "⁓", "⹝", "〜", "𐺭", "⸚", "־", "−", "⁻", "₋", "~", "="]
     not_dashes = [",", ".", "\"", ":"]
     for i, line in enumerate(lines):
-        try:
-            last = lines[i].find_all("span", {"class": "ocrx_word"})[-1]
-            if last.getText() == " .":
-                v = 1
-            second_to_last = lines[i].find_all("span", {"class": "ocrx_word"})[-2]
-            while len(strip_non_alphanumeric(last.getText())) < 1 and second_to_last["maybe_broken"] == "yes":
-                last.decompose()
-                last = lines[i].find_all("span", {"class": "ocrx_word"})[-1]
-                second_to_last = lines[i].find_all("span", {"class": "ocrx_word"})[-2]
+        line_words = lines[i].find_all("span", {"class": "ocrx_word"})
+        if line_words:
+            last = line_words[-1]
+            if len(line_words) > 1:
+                second_to_last = line_words[-2]
+                escape = False
+            else:
+                escape = True
+            while len(strip_non_alphanumeric(last.getText())) < 1 and second_to_last["maybe_broken"] == "yes" and not escape:
+                try:
+                    last.decompose()
+                    last = line_words[-1]
+                    second_to_last = line_words[-2]
+                except:
+                    escape = True
 
-            next = lines[i+1].find_all("span", {"class": "ocrx_word"})[0]
-            second_next = lines[i+1].find_all("span", {"class": "ocrx_word"})[1]
-            while len(strip_non_alphanumeric(next.getText())) < 1 and second_next["maybe_broken"] == "yes":
-                next.decompose()
-                next = lines[i+1].find_all("span", {"class": "ocrx_word"})[0]
-                second_next = lines[i+1].find_all("span", {"class": "ocrx_word"})[1]
+            if len(lines)>i+1:
+                next_line_words = lines[i+1].find_all("span", {"class": "ocrx_word"})
+                next = next_line_words[0]
+                if len(next_line_words) > 1:
+                    second_next = next_line_words[1]
+                    escape = False
+                else:
+                    escape = True
 
-            if last["maybe_broken"] == "yes" and  next["maybe_broken"] == "yes":
-                if last.getText()[-1] in dahses:
-                    last.string = strip_non_alphanumeric(last.getText()) + next.getText().lstrip()
-                    next.decompose()
-                elif not last.getText()[-1].isalnum():
-                    if last.getText()[-1] not in not_dashes:
+                while len(strip_non_alphanumeric(next.getText())) < 1 and second_next["maybe_broken"] == "yes" and not escape:
+                    try:
+                        next.decompose()
+                        next = next_line_words[0]
+                        second_next = next_line_words[1]
+                    except:
+                        escape = True
+
+                if last["maybe_broken"] == "yes" and  next["maybe_broken"] == "yes":
+                    if last.getText()[-1] in dahses:
                         last.string = strip_non_alphanumeric(last.getText()) + next.getText().lstrip()
                         next.decompose()
-                    else:
-                        if should_merge(last.getText(), next.getText(), strip_non_alphanumeric(last.getText()) + next.getText().lstrip()):
+                    elif not last.getText()[-1].isalnum():
+                        if last.getText()[-1] not in not_dashes:
                             last.string = strip_non_alphanumeric(last.getText()) + next.getText().lstrip()
                             next.decompose()
-            else:
-                if last.getText()[-1] in dahses:
-                    if should_merge(strip_non_alphanumeric(last.getText()), next.getText(), strip_non_alphanumeric(last.getText()) + next.getText().lstrip()):
-                        last.string = strip_non_alphanumeric(last.getText()) + next.getText().lstrip()
-                        next.decompose()
-        except:
-            pass
+                        else:
+                            if should_merge(strip_non_alphanumeric(last.getText()), next.getText(), strip_non_alphanumeric(last.getText()) + next.getText().lstrip()):
+                                last.string = strip_non_alphanumeric(last.getText()) + next.getText().lstrip()
+                                next.decompose()
+                else:
+                    if last.getText()[-1] in dahses:
+                        if should_merge(strip_non_alphanumeric(last.getText()), next.getText(), strip_non_alphanumeric(last.getText()) + next.getText().lstrip()):
+                            last.string = strip_non_alphanumeric(last.getText()) + next.getText().lstrip()
+                            next.decompose()
+
     return soup
 
 
