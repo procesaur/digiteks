@@ -1,5 +1,5 @@
 {
-    "model" : "f:/model",
+    "model" : "procesaur/test",
     "modern" : true,
     "cuda" : true,
     "context_size" : 512,

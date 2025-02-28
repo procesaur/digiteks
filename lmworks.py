@@ -68,7 +68,14 @@ def prepare_batches(words):
     return bathces, token_word
 
 
-def should_merge(x, y):
+def should_merge(x, y, c):
+    c = len(tokenizer.tokenize(c))
+    if c == 1:
+        return True
+    x = len(tokenizer.tokenize(x))
+    y = len(tokenizer.tokenize(y))
+    if c < x+y:
+        return True
     return False
 
 

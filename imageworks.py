@@ -48,7 +48,7 @@ def resize_img(img, x=2, y=2, interpolation=INTER_CUBIC):
 def erode_img(img):
     kernel = ones((1, 1), uint8)
 
-    img = dilate(img, kernel, iterations=3)
+    img = dilate(img, kernel, iterations=2)
     img = erode(img, kernel, iterations=2)
 
     return img

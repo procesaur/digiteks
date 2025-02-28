@@ -98,12 +98,12 @@ def newline_fix(soup):
                         last.string = strip_non_alphanumeric(last.getText()) + next.getText().lstrip()
                         next.decompose()
                     else:
-                        if should_merge(last.getText(), next.getText()):
+                        if should_merge(last.getText(), next.getText(), strip_non_alphanumeric(last.getText()) + next.getText().lstrip()):
                             last.string = strip_non_alphanumeric(last.getText()) + next.getText().lstrip()
                             next.decompose()
             else:
                 if last.getText()[-1] in dahses:
-                    if should_merge(last.getText(), next.getText()):
+                    if should_merge(strip_non_alphanumeric(last.getText()), next.getText(), strip_non_alphanumeric(last.getText()) + next.getText().lstrip()):
                         last.string = strip_non_alphanumeric(last.getText()) + next.getText().lstrip()
                         next.decompose()
         except:
