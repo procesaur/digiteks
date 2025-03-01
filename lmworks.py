@@ -127,6 +127,8 @@ def confidence_rework(ocr_confs, lm_confs, rdi=cfg["reasonable_doubt_index"]):
 
 
 def lm_fix_words(words, confs, ocr_confs):
+    if not words:
+        return []
     token_batches, token_word = prepare_batches(words)
     to_fix = [i for i, x in enumerate(confs) if x < cfg["min_conf_combined"] and not isnumber(words[i])]
     words_to_fix_orig = [words[x] for x in to_fix]

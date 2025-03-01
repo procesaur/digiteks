@@ -67,7 +67,7 @@ def convert_from_image_to_cv2(img: Image) -> ndarray:
     return cvtColor(nparray(img), COLOR_RGB2BGR)
 
 
-def correct_skew(image, delta=0.3, limit=6):
+def correct_skew(image, delta=0.3, limit=9):
     (h, w) = image.shape[:2]
     center = (w // 2, h // 2)
 

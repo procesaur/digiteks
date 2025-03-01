@@ -1,3 +1,4 @@
+from ast import excepthandler
 from bs4 import BeautifulSoup as bs4, Tag
 from lmworks import lm_inspect, lm_fix_words, confidence_rework, should_merge
 from helper import do, make_id
@@ -72,39 +73,31 @@ def newline_fix(soup):
     dahses = ["-", "«", "－", "-", "﹣", "֊", "᠆", "‐", "-", "–", "—", "﹘", "―", "⁓", "⹝", "〜", "𐺭", "⸚", "־", "−", "⁻", "₋", "~", "="]
     not_dashes = [",", ".", "\"", ":"]
     for i, line in enumerate(lines):
-        line_words = lines[i].find_all("span", {"class": "ocrx_word"})
-        if line_words:
-            last = line_words[-1]
-            if len(line_words) > 1:
-                second_to_last = line_words[-2]
-                escape = False
-            else:
-                escape = True
-            while len(strip_non_alphanumeric(last.getText())) < 1 and second_to_last["maybe_broken"] == "yes" and not escape:
-                try:
+        if lines[i].find_all("span", {"class": "ocrx_word"}):
+            last = lines[i].find_all("span", {"class": "ocrx_word"})[-1]
+            try:
+                second_to_last = lines[i].find_all("span", {"class": "ocrx_word"})[-2]
+                while len(strip_non_alphanumeric(last.getText())) < 1 and second_to_last["maybe_broken"] == "yes":
                     last.decompose()
-                    last = line_words[-1]
-                    second_to_last = line_words[-2]
-                except:
-                    escape = True
+                    last = lines[i].find_all("span", {"class": "ocrx_word"})[-1]
+                    second_to_last = lines[i].find_all("span", {"class": "ocrx_word"})[-2]
+            except:
+                pass
 
-            if len(lines)>i+1:
-                next_line_words = lines[i+1].find_all("span", {"class": "ocrx_word"})
-                next = next_line_words[0]
-                if len(next_line_words) > 1:
-                    second_next = next_line_words[1]
-                    escape = False
-                else:
-                    escape = True
-
-                while len(strip_non_alphanumeric(next.getText())) < 1 and second_next["maybe_broken"] == "yes" and not escape:
-                    try:
+        if len(lines) > i+1:
+            if lines[i+1].find_all("span", {"class": "ocrx_word"}):
+                next = lines[i+1].find_all("span", {"class": "ocrx_word"})[0]
+                try:
+                    second_next = lines[i+1].find_all("span", {"class": "ocrx_word"})[1]
+                    while len(strip_non_alphanumeric(next.getText())) < 1 and second_next["maybe_broken"] == "yes":
                         next.decompose()
-                        next = next_line_words[0]
-                        second_next = next_line_words[1]
-                    except:
-                        escape = True
-
+                        next = lines[i+1].find_all("span", {"class": "ocrx_word"})[0]
+                        second_next = lines[i+1].find_all("span", {"class": "ocrx_word"})[1]
+                except:
+                    pass
+        
+        if last and next:
+            try:
                 if last["maybe_broken"] == "yes" and  next["maybe_broken"] == "yes":
                     if last.getText()[-1] in dahses:
                         last.string = strip_non_alphanumeric(last.getText()) + next.getText().lstrip()
@@ -122,6 +115,8 @@ def newline_fix(soup):
                         if should_merge(strip_non_alphanumeric(last.getText()), next.getText(), strip_non_alphanumeric(last.getText()) + next.getText().lstrip()):
                             last.string = strip_non_alphanumeric(last.getText()) + next.getText().lstrip()
                             next.decompose()
+            except:
+                pass
 
     return soup
 
