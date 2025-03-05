@@ -6,6 +6,7 @@ from numpy import uint8
 
 
 split_pattern = compile(r'([ ]?\w+)?(\d+)?(\W+)?$')
+split_pattern2 = compile(r'([ ]?\w+)(\W+)([ ]?\w+)(\W+)?$')
 
 roman = {x.lower(): x for x in [
         "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
@@ -54,7 +55,10 @@ def isnumber(x):
 def xsplit(x):
     match = split_pattern.match(x)
     if not match:
-        return [x]
+        match = split_pattern2.match(x)
+        if not match:
+            return [x]
+
     mg = [y for y in match.groups() if y]
     return mg
 

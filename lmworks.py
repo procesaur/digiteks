@@ -20,27 +20,28 @@ if cfg["modern"]:
 else:
     modellclass = RobertaForMaskedLM2
 
-tokenizer = AutoTokenizer.from_pretrained(cfg["model"], add_prefix_space=True, max_len=512, pad_token="<pad>", unk_token="<unk>", mask_token="<mask>", pad_to_max_length=True)
-special_token_indices = tokenizer.all_special_ids
+if cfg["model"]:
+    tokenizer = AutoTokenizer.from_pretrained(cfg["model"], add_prefix_space=True, max_len=512, pad_token="<pad>", unk_token="<unk>", mask_token="<mask>", pad_to_max_length=True)
+    special_token_indices = tokenizer.all_special_ids
 
-encodes = [tokenizer.decode([i]) for i in range(len(tokenizer))]
-mapped_encodes = [map_visual_similarity(x) for x in encodes]
-encodes_length = nparray([len(x) for x in encodes])
-length_similarities = []
-for i in range(cfg["max_len_similarity"] + 1):
-    t = abs(encodes_length-i)/clip(encodes_length, a_min=i, a_max=None)
-    length_similarities.append(1-t)
-roman_boost = nparray([1+cfg["roman_numerals_boost"] if e in roman else 1 for e in encodes])
+    encodes = [tokenizer.decode([i]) for i in range(len(tokenizer))]
+    mapped_encodes = [map_visual_similarity(x) for x in encodes]
+    encodes_length = nparray([len(x) for x in encodes])
+    length_similarities = []
+    for i in range(cfg["max_len_similarity"] + 1):
+        t = abs(encodes_length-i)/clip(encodes_length, a_min=i, a_max=None)
+        length_similarities.append(1-t)
+    roman_boost = nparray([1+cfg["roman_numerals_boost"] if e in roman else 1 for e in encodes])
 
-if cuda:
-    model = modellclass.from_pretrained(cfg["model"]).to(0)
-else:
-    model = modellclass.from_pretrained(cfg["model"])
-model.eval()
+    if cuda:
+        model = modellclass.from_pretrained(cfg["model"]).to(0)
+    else:
+        model = modellclass.from_pretrained(cfg["model"])
+    model.eval()
 
-max_length=tokenizer.model_max_length - len(cfg["prefix"]) - len(cfg["suffix"]) - 2
-if max_length > cfg["context_size"]:
-    max_length = cfg["context_size"]
+    max_length=tokenizer.model_max_length - len(cfg["prefix"]) - len(cfg["suffix"]) - 2
+    if max_length > cfg["context_size"]:
+        max_length = cfg["context_size"]
 
 
 def prepare_batches(words):
@@ -69,6 +70,8 @@ def prepare_batches(words):
 
 
 def should_merge(x, y, c):
+    if not cfg["model"]:
+        return False
     c = len(tokenizer.tokenize(c))
     if c == 1:
         return True
@@ -80,6 +83,9 @@ def should_merge(x, y, c):
 
 
 def lm_inspect(words, pre_confs=None, conf_threshold=cfg["min_conf_ocr"], max_perplexity=cfg["max_perplexity"]):
+    if not cfg["model"]:
+        print("No language model loaded!")
+        return pre_confs, words
     if isinstance(words, str):
         words = words.rstrip().replace("\n", " ")
         words = words.split()
@@ -127,6 +133,9 @@ def confidence_rework(ocr_confs, lm_confs, rdi=cfg["reasonable_doubt_index"]):
 
 
 def lm_fix_words(words, confs, ocr_confs):
+    if not cfg["model"]:
+        print("No language model loaded!")
+        return words
     if not words:
         return []
     token_batches, token_word = prepare_batches(words)
@@ -210,6 +219,8 @@ def create_batches_to_fix(token_batches, for_masking):
 
 
 def fix_text(text):
+    if not cfg["model"]:
+        return "No language model loaded! Check config!"
     words = textsplit(text)
     probs = [cfg["min_conf_ocr"]-0.1 for x in words]
     results = lm_fix_words(words, probs)

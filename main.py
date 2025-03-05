@@ -5,7 +5,6 @@ from ocrworks import ocr_images
 from imageworks import pdf_to_images, image_zip_to_images
 from webbrowser import open_new
 from threading import Timer
-from lmworks import lm_inspect, fix_text
 from helper import zip_bytes_string, do, encode_images, decode_images, make_id
 
 
@@ -86,25 +85,6 @@ def posthtml():
         content = file.read().decode('utf-8')
         return Response(content, mimetype='text/html')
     return 'Invalid file'
-
-@app.route('/test', methods=['GET','POST'])
-def test():
-    try:
-        input = process_req_test(request)[0]
-    except:
-        input = ""
-    output = fix_text(input) if input else ""
-    return render_template('inference.html', input=input, output=output)
-
-@app.route('/visual', methods=['GET','POST'])
-def visaul():
-    mp = 800
-    try:
-        input, mp = process_req_test(request, fields=["text", "mp"])
-    except:
-        input, vals, tokens = "", [], []
-    vals, tokens = lm_inspect(input, max_perplexity=int(mp))
-    return render_template('visualize.html', input=input, vals=[1-x for x in vals], tokens=tokens, mp=mp)
 
 def open_browser():
     open_new("http://127.0.0.1:5001")

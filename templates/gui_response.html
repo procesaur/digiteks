@@ -8,13 +8,13 @@
     <script>
         const lc = '.ocr_line, .ocr_caption, .ocr_textfloat, .ocr_header';
         function handleTextChange(event) {
-            const oldValue = event.target.dataset.original;
-            const newValue = event.target.innerText;
+            const oldValue = event.target.dataset.original.trim();
+            const newValue = event.target.innerText.trim();
             if (oldValue != newValue){
-                event.target.style  = "--red:0; --conf:0";
+                event.target.style  = "--red:0; --conf:0; --blue: 0";
             }
             else{
-                event.target.style  = "--red:255; --conf:1";
+                event.target.style  = "--red:255; --conf:1; --blue: 0";
             }
         }
 
@@ -255,6 +255,7 @@ function showPopup(image_id, x1, x2, y1, y2) {
         :root {
             --topconf: 0.94;
             --saturation: 0.5;
+            --blue : 0;
         }
         .ocr_separator {
             border: 2px solid black;

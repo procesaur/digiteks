@@ -1,4 +1,3 @@
-from ast import excepthandler
 from bs4 import BeautifulSoup as bs4, Tag
 from lmworks import lm_inspect, lm_fix_words, confidence_rework, should_merge
 from helper import do, make_id
@@ -105,15 +104,18 @@ def newline_fix(soup):
                     elif not last.getText()[-1].isalnum():
                         if last.getText()[-1] not in not_dashes:
                             last.string = strip_non_alphanumeric(last.getText()) + next.getText().lstrip()
+                            last["data-original"] = last.string
                             next.decompose()
                         else:
                             if should_merge(strip_non_alphanumeric(last.getText()), next.getText(), strip_non_alphanumeric(last.getText()) + next.getText().lstrip()):
                                 last.string = strip_non_alphanumeric(last.getText()) + next.getText().lstrip()
+                                last["data-original"] = last.string
                                 next.decompose()
                 else:
                     if last.getText()[-1] in dahses:
                         if should_merge(strip_non_alphanumeric(last.getText()), next.getText(), strip_non_alphanumeric(last.getText()) + next.getText().lstrip()):
                             last.string = strip_non_alphanumeric(last.getText()) + next.getText().lstrip()
+                            last["data-original"] = last.string
                             next.decompose()
             except:
                 pass
@@ -156,9 +158,9 @@ def lm_fix(soup):
     new_confs = [span["new_conf"] for span in spans]
     new_words = lm_fix_words(words, new_confs, ocr_confs)
     for span, word, new_word in zip(spans, words, new_words):
+        span.string = new_word
         if word != new_word:
             if new_word != "":
-                span.string = new_word
                 span['lm_guess'] = new_word
         else:
             span["new_conf"] = 1
