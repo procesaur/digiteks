@@ -342,3 +342,17 @@ def get_alignment_class(align):
         return "Basic-Paragraph"
     else:
         return "Basic-Paragraph"
+
+
+def hocr_to_plain_text(hocr_content):
+    hocr_element = bs4(hocr_content, 'html.parser')
+    plain_text = ""
+    pages = hocr_element.find_all(class_='ocr_page')
+    for hocr_page in pages:
+        paragraphs = hocr_page.find_all(class_='ocr_par')
+        for paragraph in paragraphs:
+            words = paragraph.find_all(class_='ocrx_word')
+            for word in words:
+                plain_text += word.text
+            plain_text += "\n"
+    return plain_text

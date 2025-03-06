@@ -3,7 +3,7 @@ from os import environ, path as px
 from rq_handler import process_req
 from ocrworks import ocr_images
 from imageworks import pdf_to_images, image_zip_to_images
-from hocrworks import hocr_to_plain_html
+from hocrworks import hocr_to_plain_html, hocr_to_plain_text
 from webbrowser import open_new
 from threading import Timer
 from helper import zip_bytes_string, do, encode_images, decode_images, make_id
@@ -91,6 +91,11 @@ def posthtml():
 def hocr2html():
     hocr_content = request.data.decode('utf-8')
     return hocr_to_plain_html(hocr_content)
+
+@app.route('/hocr2text', methods=['POST'])
+def hocr2text():
+    hocr_content = request.data.decode('utf-8')
+    return hocr_to_plain_text(hocr_content)
 
 def open_browser():
     open_new("http://127.0.0.1:5001")

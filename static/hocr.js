@@ -100,10 +100,20 @@ function getHtml(filename){
 }
 
 function getText(filename){
-    var html = document.getElementById("full_hocr")
-    var x = html.textContent;
-    x = x.replace(/\s\s+/g, ' ');
-    dwn(x, "text/plain", filename, ".txt");
+    var hocrContent = document.getElementById("digiteks_hocr_content").innerHTML;
+    fetch('/hocr2text', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'text/html'
+        },
+        body: hocrContent
+    })
+    .then(response => response.text())
+    .then(plainText => {
+
+        dwn(plainText, "text/plain", filename, ".txt");
+    })
+    .catch(error => console.error('Error:', error));
 }
 
 function uploadHocr(event){
