@@ -21,11 +21,14 @@ if isWindows():
         environ[x] = str(1)
 
 
-def ocr_images(images,  lang="srp+srp_latn"):  
+def ocr_images(images,  lang="srp+srp_latn", just_result=False):  
     for chunk in chunkify(images):        
         results = pool.map(ocr_img, ((img, lang) for img in chunk))
         for result in results:
-            yield f"data: {dumps({'html': hocr_transform(result[0], b64encode(result[1]).decode('utf-8'))})}\n\n"
+            if just_result:
+                yield hocr_transform(result[0], b64encode(result[1]).decode('utf-8'))
+            else:
+                yield f"data: {dumps({'html': hocr_transform(result[0], b64encode(result[1]).decode('utf-8'))})}\n\n"
 
 
 def ocr_img(profile):

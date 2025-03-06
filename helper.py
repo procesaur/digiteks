@@ -96,5 +96,11 @@ def chunkify(lst, n=cpus):
         yield lst[i:i + n]
 
 
+def read_file_bytes(file_path):
+    with open(file_path, 'rb') as file:
+        file_bytes = file.read()
+    return file_bytes
+
+    
 # python -m pipreqs.pipreqs --use-local --force .
 # pyinstaller digiteks.spec

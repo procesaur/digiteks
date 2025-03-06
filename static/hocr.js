@@ -83,37 +83,21 @@ function getHocr(filename){
 }
 
 function getHtml(filename){
-    var body = document.getElementById("digiteks_hocr_content");
+    var hocrContent = document.getElementById("digiteks_hocr_content").innerHTML;
+    fetch('/hocr2html', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'text/html'
+        },
+        body: hocrContent
+    })
+    .then(response => response.text())
+    .then(plainHtml => {
 
-    dwn(`<!DOCTYPE html><html><body>${hocrToPlainHtml(body)}</body></html>`, "text/html", filename, ".html");
+        dwn(`<!DOCTYPE html><html><body>${plainHtml}</body></html>`, "text/html", filename, ".html");
+    })
+    .catch(error => console.error('Error:', error));
 }
-
-function hocrToPlainHtml(hocrElementx) {
-    let plainHtml = "";
-
-    const pages = hocrElementx.getElementsByClassName('ocr_page');
-    Array.from(pages).forEach(hocrElement => {
-    
-        const paragraphs = hocrElement.getElementsByClassName('ocr_par');
-        Array.from(paragraphs).forEach(paragraph => {
-            const align = paragraph.getAttribute("xalign");
-            const alignmentClass = getAlignmentClass(align);
-            plainHtml += `<p class="${alignmentClass}">`;
-            
-            const words = paragraph.getElementsByClassName('ocrx_word');
-            Array.from(words).forEach((word, index) => {
-                plainHtml += word.textContent;
-                if (index < words.length - 1) {
-                    plainHtml += " ";
-                }
-            });
-            plainHtml += "</p>\n";
-        });
-    });
-
-    return plainHtml;
-}
-
 
 function getText(filename){
     var html = document.getElementById("full_hocr")
@@ -210,18 +194,4 @@ function stream_ocr(lang, loadingGif, imagesDataElement ) {
     else{
         loadingGif.style.display = 'none';
     }
-}
-
-function getAlignmentClass(align) {
-    switch (align) {
-        case 'center':
-            return "odluka-zakon";
-        case 'left':
-            return "Basic-Paragraph";
-        case 'right':
-            return "potpis";
-        case 'justify':
-            return "Basic-Paragraph";
-      }
-    return "Basic-Paragraph";
 }

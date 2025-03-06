@@ -1,8 +1,9 @@
 from flask import Flask, request, render_template, send_file, Response, jsonify, send_from_directory
 from os import environ, path as px
-from rq_handler import process_req, process_req_test
+from rq_handler import process_req
 from ocrworks import ocr_images
 from imageworks import pdf_to_images, image_zip_to_images
+from hocrworks import hocr_to_plain_html
 from webbrowser import open_new
 from threading import Timer
 from helper import zip_bytes_string, do, encode_images, decode_images, make_id
@@ -85,6 +86,11 @@ def posthtml():
         content = file.read().decode('utf-8')
         return Response(content, mimetype='text/html')
     return 'Invalid file'
+
+@app.route('/hocr2html', methods=['POST'])
+def hocr2html():
+    hocr_content = request.data.decode('utf-8')
+    return hocr_to_plain_html(hocr_content)
 
 def open_browser():
     open_new("http://127.0.0.1:5001")

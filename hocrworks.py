@@ -310,3 +310,35 @@ def get_and_set_word_paddings(paragraph, global_bounds, tolerance=50):
                 word["maybe_broken"] = "yes"
             else:
                 word["maybe_broken"] = "no"
+
+
+def hocr_to_plain_html(hocr_content):
+    hocr_element = bs4(hocr_content, 'html.parser')
+    plain_html = ""
+
+    pages = hocr_element.find_all(class_='ocr_page')
+    for hocr_page in pages:
+        paragraphs = hocr_page.find_all(class_='ocr_par')
+        for paragraph in paragraphs:
+            align = paragraph.get('xalign')
+            alignment_class = get_alignment_class(align)
+            plain_html += f'<p class="{alignment_class}">'
+            
+            words = paragraph.find_all(class_='ocrx_word')
+            for word in words:
+                plain_html += word.text
+            plain_html += "</p>\n"
+    return plain_html
+
+
+def get_alignment_class(align):
+    if align == 'center':
+        return "odluka-zakon"
+    elif align == 'left':
+        return "Basic-Paragraph"
+    elif align == 'right':
+        return "potpis"
+    elif align == 'justify':
+        return "Basic-Paragraph"
+    else:
+        return "Basic-Paragraph"
