@@ -4,7 +4,7 @@ from cv2 import cvtColor, resize, threshold, dilate, erode, warpAffine, getRotat
 from cv2 import BORDER_REPLICATE, COLOR_BGR2RGB, COLOR_RGB2BGR, COLOR_BGR2GRAY, THRESH_OTSU, THRESH_BINARY, INTER_CUBIC, INTER_AREA
 from numpy import ndarray, array as nparray, ones, uint8, max, sum as npsum, arange
 from pdf2image import convert_from_bytes
-from helper import cpus, pool, read_zip
+from helper import cpus, pool, read_zip, decode_image, encode_image
 
 
 def improve_image(img):
@@ -100,3 +100,15 @@ def image_zip_to_images(file):
     images = read_zip(file)    
     images_improved = pool.map(improve_image, images)
     return images, images_improved
+
+
+def crop_image(base64_image, x1, y1, x2, y2):
+    image_data = decode_image(base64_image)
+    image = Image.open(BytesIO(image_data))
+    
+    cropped_image = image.crop((x1, y1, x2, y2))
+    
+    buffered = BytesIO()
+    cropped_image.save(buffered, format="JPEG")
+
+    return encode_image(buffered.getvalue())

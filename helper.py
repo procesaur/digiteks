@@ -62,6 +62,15 @@ def encode_images(images):
 def decode_images(images):
     return [b64decode(image) for image in images]
 
+
+def encode_image(image_data):
+    return b64encode(image_data).decode('utf-8')
+
+
+def decode_image(image_data):
+    return b64decode(image_data) 
+
+
 def group_into_sentences(words):
     sentences = []
     current_sentence = []

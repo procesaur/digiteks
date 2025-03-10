@@ -10,9 +10,9 @@
     "max_perplexity" : 5000,
     "prefix" : ["<s>"],
     "suffix" : ["</s>"],
-    "len_sim_weight" : 0.25,
-    "sim_weight" : 0.25,
-    "mapped_sim_weight" : 0.5,
+    "len_sim_weight" : 0.3,
+    "sim_weight" : 0.1,
+    "mapped_sim_weight" : 0.6,
     "max_len_similarity": 20,
-    "roman_numerals_boost" : 0.01
+    "roman_numerals_boost" : 0
 }

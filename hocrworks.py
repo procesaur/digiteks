@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup as bs4, Tag
 from lmworks import lm_inspect, lm_fix_words, confidence_rework, should_merge
 from helper import do, make_id
 from stringworks import strip_non_alphanumeric, xsplit
+from imageworks import crop_image
 
 
 lineclass = ["ocr_line", "ocr_caption", "ocr_textfloat", "ocr_header"]
@@ -32,6 +33,22 @@ def enrich_soup(soup, image=None):
         img_tag['id'] = img_id
         img_tag['style'] = 'display: none;'
         soup.append(img_tag)
+
+    hocr_elements = soup.find_all('div', class_='ocr_photo')
+    
+    for hocr_element in hocr_elements:
+        img_element = soup.new_tag('img')
+       
+        title_attr = hocr_element.get('title')
+        if title_attr:
+            bbox = title_attr.split('bbox ')[1].split()
+            x1, y1, x2, y2 = map(int, bbox)
+            img_element['src'] = f'data:image/jpeg;base64,{crop_image(image, x1, y1, x2, y2)}'
+            img_element['style']= 'max-width:85vw'
+
+        new_div = soup.new_tag('span', **{'class': 'ocr_par', 'title': hocr_element['title'] })
+        new_div.append(img_element)
+        hocr_element.replace_with(new_div)
 
     global_bounds = get_global_bounds(soup)
     mid_x = (global_bounds['minX'] + global_bounds['maxX']) / 2
@@ -127,14 +144,13 @@ def punct_separation(soup):
     spans = soup.find_all("span", {"class": "ocrx_word"})
     for span in spans:
         mg = xsplit(span.text)
-        if len(mg) > 1:
-            new_spans = []
-            for x in mg:
-                new_word_span = Tag(name="span", attrs=span.attrs)
-                new_word_span.string = x
-                new_word_span["data-original"] = x
-                new_spans.append(new_word_span)
-            span.replace_with(*new_spans)
+        new_spans = []
+        for x in mg:
+            new_word_span = Tag(name="span", attrs=span.attrs)
+            new_word_span.string = x
+            new_word_span["data-original"] = x
+            new_spans.append(new_word_span)
+        span.replace_with(*new_spans)
     return soup
 
 
@@ -162,8 +178,6 @@ def lm_fix(soup):
         if word != new_word:
             if new_word != "":
                 span['lm_guess'] = new_word
-        else:
-            span["new_conf"] = 1
     return soup
 
 
@@ -291,7 +305,7 @@ def process_paragraph(paragraph, global_bounds, column_n=2, tolerance=150):
         paragraph["y2"] = y2
 
 
-def get_and_set_word_paddings(paragraph, global_bounds, tolerance=50):
+def get_and_set_word_paddings(paragraph, global_bounds, tolerance=100):
     words = paragraph.find_all(class_='ocrx_word')
     for word in words:
         word["data-original"] = " " + word.get_text()
