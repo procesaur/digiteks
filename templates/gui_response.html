@@ -6,7 +6,7 @@
     <script src="{{url_for('static', filename='hocr.js')}}"></script>
 
     <script>
-        const lc = '.ocr_line, .ocr_caption, .ocr_textfloat, .ocr_header';
+        const lc = '.ocr_line, .ocr_caption, .ocr_textfloat, .ocr_header, .ocr_image';
         function handleTextChange(event) {
             const oldValue = event.target.dataset.original.trim();
             const newValue = event.target.innerText.trim();
@@ -44,15 +44,8 @@
             popup.style.display = 'none';
         }
 
-        function checkall(event){
-            const childCheckboxes = event.target.parentElement.querySelectorAll('.dynamic-checkbox');
-
-            childCheckboxes.forEach(childCheckbox => { childCheckbox.checked = event.target.checked;});
-        }
-        
-        function MoveUp() {
-
-        var lines = document.querySelectorAll(lc);
+        function getSelected(){
+            var lines = document.querySelectorAll(lc);
             var elements = [];
             lines.forEach(function(line) {
                 var checkbox = line.querySelector('input[type="checkbox"]');
@@ -71,8 +64,21 @@
                 areas.get(parentArea).push(element);
             }
             });
+            return [elements, areas];
+        }
 
-            // Process each '.ocr_par' based on the selection
+        function checkall(event){
+            const childCheckboxes = event.target.parentElement.querySelectorAll('.dynamic-checkbox');
+
+            childCheckboxes.forEach(childCheckbox => { childCheckbox.checked = event.target.checked;});
+        }
+        
+        function MoveUp() {
+
+            spans = getSelected();
+            elements = spans[0];
+            areas = spans[1];
+
             areas.forEach((selectedLines, area) => {
                 const allLines = Array.from(area.querySelectorAll(lc));
                 var parcheckbox = area.querySelector('.par-checkbox');
@@ -100,30 +106,12 @@
 
 
         }
+
         function MoveDown() {
-            var lines = document.querySelectorAll(lc);
-            var elements = [];
-            lines.forEach(function(line) {
-                var checkbox = line.querySelector('input[type="checkbox"]');
-                if (checkbox && checkbox.checked) {
-                    elements.push(line);
-                }
-            });
+            spans = getSelected();
+            elements = spans[0];
+            areas = spans[1];
 
-            // Group elements by their parent '.ocr_par'
-            const areas = new Map();
-
-            elements.forEach(element => {
-                const parentArea = element.closest('.ocr_par');
-                if (parentArea) {
-                    if (!areas.has(parentArea)) {
-                        areas.set(parentArea, []);
-                    }
-                    areas.get(parentArea).push(element);
-                }
-            });
-
-            // Process each '.ocr_par' based on the selection
             areas.forEach((selectedLines, area) => {
                 const allLines = Array.from(area.querySelectorAll(lc));
                 var parcheckbox = area.querySelector('.par-checkbox');
@@ -164,27 +152,112 @@
             checkboxes.forEach(checkbox => { checkbox.checked = false; }); 
         }
 
+
+        function Figurize() {
+            var spans = getSelected();
+            var elements = spans[0];
+            var areas = Array.from(spans[1].keys());
+
+            var x1s = [];
+            var x2s = [];
+            var y1s = [];
+            var y2s = [];
+            var image_ids = [];
+
+            areas.forEach(function(element) {
+                var x1 = element.getAttribute('x1');
+                var x2 = element.getAttribute('x2');
+                var y1 = element.getAttribute('y1');
+                var y2 = element.getAttribute('y2');
+                var image_id = element.getAttribute('image_id');
+                
+                if (x1 !== null) {
+                    x1s.push(x1);
+                }
+                if (x2 !== null) {
+                    x2s.push(x2);
+                }
+                if (y1 !== null) {
+                    y1s.push(y1);
+                }
+                if (y2 !== null) {
+                    y2s.push(y2);
+                }
+                if (image_id !== null) {
+                    image_ids.push(image_id);
+                }
+            });
+
+            const allSameImageId = image_ids.every((val, i, arr) => val === arr[0]);
+    
+            if (!allSameImageId) {
+                alert('Сви параграфи морају бити са исте стране.');
+                return;
+            }
+            
+            const image_id = image_ids[0];
+            const min_x1 = Math.min(...x1s);
+            const min_y1 = Math.min(...y1s);
+            const max_x2 = Math.max(...x2s);
+            const max_y2 = Math.max(...y2s);
+
+            var originalImg = document.getElementById(image_id);
+            // Create a canvas to crop the image
+            var canvas = document.createElement('canvas');
+            var ctx = canvas.getContext('2d');
+
+            // Set canvas dimensions to the crop size
+            canvas.width = max_x2 - min_x1;
+            canvas.height = max_y2 - min_y1;
+
+            // Draw the cropped image onto the canvas
+            ctx.drawImage(originalImg, min_x1, min_y1, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
+
+            // Get the cropped image data URL
+            var croppedImageSrc = canvas.toDataURL('image/jpeg');
+
+            // Create new img element with the cropped image as src
+            var newImg = document.createElement('img');
+            newImg.src = croppedImageSrc;
+            
+            // Create a new span element with class="ocr_par"
+            var newSpan = document.createElement('span');
+            var newLine = document.createElement('span');
+            newSpan.className = 'ocr_par';
+            newLine.className = 'ocr_image';
+            newSpan.setAttribute('x1', min_x1);
+            newSpan.setAttribute('y1', min_y1);
+            newSpan.setAttribute('x2', max_x2);
+            newSpan.setAttribute('y2', max_y2);
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'dynamic-checkbox';
+            newLine.style.position = 'relative';
+
+            const checkbox2 = document.createElement('input');
+            checkbox2.type = 'checkbox';
+            checkbox2.className = 'dynamic-checkbox par-checkbox';
+
+            newLine.insertBefore(checkbox, newLine.firstChild);
+            newSpan.insertBefore(checkbox2, newSpan.firstChild);
+
+            newLine.appendChild(newImg);
+            newSpan.appendChild(newLine);
+            newSpan.setAttribute("onclick", "checkall(event)");
+            areas.forEach(function(element, index) {
+                if (index === 0) {
+                    element.parentNode.replaceChild(newSpan, element);
+                } else {
+                    element.remove();
+                }
+            });
+        }
+
         function deleteCheckedElements() {
-            var lines = document.querySelectorAll(lc);
-            var elements = [];
-            lines.forEach(function(line) {
-                var checkbox = line.querySelector('input[type="checkbox"]');
-                if (checkbox && checkbox.checked) {
-                    elements.push(line);
-                }
-            });
-
-            const areas = new Map();
-
-            elements.forEach(element => {
-                const parentArea = element.closest('.ocr_par');
-                if (parentArea) {
-                    if (!areas.has(parentArea)) {
-                        areas.set(parentArea, []);
-                    }
-                    areas.get(parentArea).push(element);
-                }
-            });
+            spans = getSelected();
+            elements = spans[0];
+            areas = spans[1];
 
             areas.forEach((selectedLines, area) => {
                 const allLines = Array.from(area.querySelectorAll(lc));
@@ -197,15 +270,11 @@
                 }
             });
         }
+
         function VerifyBulk() {
-            var lines = document.querySelectorAll(lc);
-            var elements = [];
-            lines.forEach(function(line) {
-                var checkbox = line.querySelector('input[type="checkbox"]');
-                if (checkbox && checkbox.checked) {
-                    elements.push(line);
-                }
-            });
+            spans = getSelected();
+            elements = spans[0];
+            areas = spans[1];
 
             elements.forEach(line => {
                 const words = line.querySelectorAll('.ocrx_word');
@@ -215,40 +284,40 @@
             });
         }
         
-function showPopup(image_id, x1, x2, y1, y2) {
-    if (x1 && x2 && y1 && y2 && image_id){
-            var img = document.getElementById(image_id);
-            var canvas = document.getElementById('canvas');
-            var ctx = canvas.getContext('2d');
+        function showPopup(image_id, x1, x2, y1, y2) {
+            if (x1 && x2 && y1 && y2 && image_id){
+                var img = document.getElementById(image_id);
+                var canvas = document.getElementById('canvas');
+                var ctx = canvas.getContext('2d');
 
-            var cropWidth = x2 - x1;
-            var cropHeight = y2 - y1;
-            canvas.width = cropWidth;
-            canvas.height = cropHeight;
-            var image = new Image();
-            image.src = img.src;
-            image.onload = function() {
-                ctx.drawImage(image, x1, y1, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
-            };
+                var cropWidth = x2 - x1;
+                var cropHeight = y2 - y1;
+                canvas.width = cropWidth;
+                canvas.height = cropHeight;
+                var image = new Image();
+                image.src = img.src;
+                image.onload = function() {
+                    ctx.drawImage(image, x1, y1, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+                };
 
-            document.getElementById('overlay').style.display = 'block';
-            document.getElementById('popup').style.display = 'block';
+                document.getElementById('overlay').style.display = 'block';
+                document.getElementById('popup').style.display = 'block';
+            }
         }
-    }
 
-    function hidePopup() {
-        document.getElementById('overlay').style.display = 'none';
-        document.getElementById('popup').style.display = 'none';
-    }
+        function hidePopup() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('popup').style.display = 'none';
+        }
 
-    function showPopupevent(event) {
-            const parent = event.target.parentElement;
-            const image_id = parent.getAttribute('image_id');
-            const x1 = parent.getAttribute('x1');
-            const x2 = parent.getAttribute('x2');
-            const y1 = parent.getAttribute('y1');
-            const y2 = parent.getAttribute('y2');
-            showPopup(image_id, x1, x2, y1, y2);
+        function showPopupevent(event) {
+                const parent = event.target.parentElement;
+                const image_id = parent.getAttribute('image_id');
+                const x1 = parent.getAttribute('x1');
+                const x2 = parent.getAttribute('x2');
+                const y1 = parent.getAttribute('y1');
+                const y2 = parent.getAttribute('y2');
+                showPopup(image_id, x1, x2, y1, y2);
         }
     </script>
     <style>
@@ -264,6 +333,10 @@ function showPopup(image_id, x1, x2, y1, y2) {
         .ocr_par {
             border: 1px solid gray;
             margin-top: 2px;
+        }
+
+        .ocr_image img{
+            max-width:85vw;
         }
 
         .ocr_line:after, .ocr_caption:after, .ocr_textfloat:after, .ocr_header:after {
@@ -322,7 +395,7 @@ function showPopup(image_id, x1, x2, y1, y2) {
         }
     </style>
 </head>
-<body draggable="false">
+<body draggable="false"  ondragstart="return false;" ondrop="return false;">
     <div class="helphead">
         <input type="file" id="hocrInput" onchange="uploadHocr(event)" style="display:none" accept=".html">
         <button type="button" onclick="document.getElementById('hocrInput').click()" class="button process">⭱ Учитај</button>
@@ -358,6 +431,7 @@ function showPopup(image_id, x1, x2, y1, y2) {
             <button class="menubutton" title="Помери горе" onclick="MoveUp()">↑</button>
             <button class="menubutton" title="Помери доле" onclick="MoveDown()">↓</button>
             <button class="menubutton" title="Одчекирај" onclick="Uncheck()">☐</button>
+            <button class="menubutton" title="Замени текст сликом" onclick="Figurize()">🖼</button>
             <button class="menubutton" title="Обриши" onclick="deleteCheckedElements()">␡</button>
             <button class="menubutton" title="Обележи као добро" onclick="VerifyBulk()">✓</button>
         </div>

@@ -47,7 +47,21 @@ def enrich_soup(soup, image=None):
             img_element['style']= 'max-width:85vw'
 
         new_div = soup.new_tag('span', **{'class': 'ocr_par', 'title': hocr_element['title'] })
-        new_div.append(img_element)
+        new_div2 = soup.new_tag('span', **{'class': 'ocr_image' })
+
+        checkbox = soup.new_tag('input')
+        checkbox.attrs['type'] = 'checkbox'
+        checkbox.attrs['class'] = 'dynamic-checkbox'
+
+        # Set the style of the line to 'relative'
+        new_div2.attrs['style'] = 'position: relative;'
+        
+        # Insert the checkbox before the first child of the line
+        new_div2.insert(0, checkbox)
+
+
+        new_div2.append(img_element)
+        new_div.append(new_div2)
         hocr_element.replace_with(new_div)
 
     global_bounds = get_global_bounds(soup)

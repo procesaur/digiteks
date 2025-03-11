@@ -1,4 +1,4 @@
-const lineclass = '.ocr_line, .ocr_caption, .ocr_textfloat, .ocr_header';
+const lineclass = '.ocr_line, .ocr_caption, .ocr_textfloat, .ocr_header, ocr_image';
 
 function prepare(element, top=0.94, saturation=0.5) {
 
