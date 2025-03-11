@@ -6,6 +6,81 @@
     <script src="{{url_for('static', filename='hocr.js')}}"></script>
 
     <script>
+        
+        function handleStreaming(sessionId, loadingGif, images, imagesDataElement) {
+            const eventSource = new EventSource(`/stream/${sessionId}`);
+
+            eventSource.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                const resultElement = document.createElement('div');
+                resultElement.innerHTML =  data.html;
+
+                // Append the result to the digiteks_hocr_content element
+                const resultsDiv = document.getElementById('digiteks_hocr_content');
+                prepare(resultElement)
+                resultsDiv.appendChild(resultElement);
+
+                const pages = resultElement.querySelectorAll('.ocr_page');
+
+                pages.forEach(page => {
+                    originalContents.set(page.id, page.innerHTML);
+                });
+        
+                // Remove the processed image from the images data
+                images.shift();
+                imagesDataElement.dataset.images = JSON.stringify(images);
+
+                // Remove the hidden div containing images data when all images are processed
+                if (images.length === 0) {
+                    loadingGif.style.display = 'none';
+                    eventSource.close();
+                    const imagesDataDiv = document.getElementById('imagesData');
+                    imagesDataDiv.remove();
+                }
+            };
+
+            eventSource.onerror = function(event) {
+                console.error('EventSource error:', event); // Debugging: Print error event
+                // Hide the loading GIF when done or on error
+                loadingGif.style.display = 'none';
+                eventSource.close();
+
+                // Remove the hidden div containing images data
+                const imagesDataDiv = document.getElementById('imagesData');
+                imagesDataDiv.remove();
+            };
+        }
+
+        function stream_ocr(lang, loadingGif, imagesDataElement ) {
+
+            if (imagesDataElement){
+                let images = JSON.parse(imagesDataElement.dataset.images);
+                loadingGif.style.display = 'block';
+                // Send the images data to the /start_ocr endpoint
+                fetch(`/ocr/${lang}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ images: images })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Start OCR response:', data); // Debugging: Print start OCR response
+                    if (data.status === 'OCR started') {
+                        handleStreaming(data.session_id, loadingGif, images, imagesDataElement);
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error); // Debugging: Print fetch error
+                    loadingGif.style.display = 'none';
+                });
+            }
+            else{
+                loadingGif.style.display = 'none';
+            }
+        }
+
         const lc = '.ocr_line, .ocr_caption, .ocr_textfloat, .ocr_header, .ocr_image';
         function handleTextChange(event) {
             const oldValue = event.target.dataset.original.trim();
@@ -15,6 +90,10 @@
             }
             else{
                 event.target.style  = "--red:255; --conf:1; --blue: 0";
+            }
+            const parentPage = event.target.closest('.ocr_page'); 
+            if (parentPage) {
+                saveCurrentState(parentPage);
             }
         }
 
@@ -103,8 +182,6 @@
                 });
                 }
             });
-
-
         }
 
         function MoveDown() {
@@ -144,6 +221,61 @@
         if (event.key === 'Delete') { 
             event.preventDefault();
             event.target.innerHTML = "";
+            }
+        }
+
+        const originalContents = new Map();
+        const historyQueue = [];
+        const redoQueue = [];
+        
+        const pages = document.querySelectorAll('.ocr_page');
+        pages.forEach(page => {
+            originalContents.set(page.id, page.innerHTML);
+        });
+
+        pages.forEach(page => {
+            historyMap.set(page.id, [page.innerHTML]);
+            redoMap.set(page.id, []);
+        });
+
+
+
+        // Function to save the current state
+        function saveCurrentState(page) {
+   
+            historyQueue.push({
+                id: page.id,
+                newValue: [page.innerHTML]
+            });
+            redoQueue.length = 0; 
+            if (historyQueue.length > 10) {
+                historyQueue.shift(); 
+            }
+        }
+
+        function undo() {
+            if (historyQueue.length > 0) {
+                const lastChange = historyQueue.pop();
+                redoQueue.push(lastChange);
+                const page = document.getElementById(lastChange.id);
+                const originalValue = originalContents.get(lastChange.id);
+                page.innerHTML = originalValue; // Restore the original state
+                originalContents.set(lastChange.id, originalValue); // Reset original state
+                // Apply remaining changes
+                historyQueue.forEach(change => {
+                    if (change.id === lastChange.id) {
+                        page.innerHTML = change.newValue;
+                    }
+                });
+            }
+        }
+
+        function redo() {
+            if (redoQueue.length > 0) {
+                const lastRedo = redoQueue.pop();
+                historyQueue.push(lastRedo);
+                const page = document.getElementById(lastRedo.id);
+                page.innerHTML = lastRedo.newValue;
             }
         }
 
@@ -434,6 +566,8 @@
             <button class="menubutton" title="Замени текст сликом" onclick="Figurize()">🖼</button>
             <button class="menubutton" title="Обриши" onclick="deleteCheckedElements()">␡</button>
             <button class="menubutton" title="Обележи као добро" onclick="VerifyBulk()">✓</button>
+            <button class="menubutton" title="Корак уназад" onclick="undo()">↩</button>
+            <button class="menubutton" title="Корак унапред" onclick="redo()">↪</button>
         </div>
 
         <!-- Hidden div to store the images data -->

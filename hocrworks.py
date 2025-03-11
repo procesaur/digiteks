@@ -35,7 +35,8 @@ def enrich_soup(soup, image=None):
         soup.append(img_tag)
 
     hocr_elements = soup.find_all('div', class_='ocr_photo')
-    
+    page = soup.find('div', class_='ocr_page')
+    page["id"] = "p_" + img_id
     for hocr_element in hocr_elements:
         img_element = soup.new_tag('img')
        
@@ -52,13 +53,8 @@ def enrich_soup(soup, image=None):
         checkbox = soup.new_tag('input')
         checkbox.attrs['type'] = 'checkbox'
         checkbox.attrs['class'] = 'dynamic-checkbox'
-
-        # Set the style of the line to 'relative'
         new_div2.attrs['style'] = 'position: relative;'
-        
-        # Insert the checkbox before the first child of the line
         new_div2.insert(0, checkbox)
-
 
         new_div2.append(img_element)
         new_div.append(new_div2)
