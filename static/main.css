@@ -176,7 +176,7 @@ br{
 div.main, iframe.main {
     min-width: 550px;
     height: calc(100vh - 48px);
-    width: calc(50vw - 52px);
+    width: calc(100vw - 52px);
     display: inline-block;
     border: 5px double #543310;
     border-radius: 20px;
@@ -250,11 +250,21 @@ display: none;
 }
 
 .preview{
-    width: 100%;
-    height: calc(100vh - 105px);
+    width: calc(100vw - 20px);
+    height: calc(100vh - 35px);
     margin-top: 20px;
     border: 5px double #543310;
     border-radius: 15px;
+    position: absolute;
+    top: 0px;
+    left: 5px;
+    margin-right: 40px;
+}
+
+.mainmenu{
+    float: left;
+    z-index: 10;
+    position: absolute;
 }
 
 .rightside {

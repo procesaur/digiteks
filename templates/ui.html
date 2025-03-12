@@ -7,7 +7,7 @@
             var upbox = document.getElementById("fileElem")
             if (upbox.value!= ""){
                 if (process){
-                    document.getElementById('if').src = "/load";
+                    document.getElementById('preview').src = "/load";
                 }
                 setTimeout(function() {
                     if (process){
@@ -35,13 +35,14 @@
 </head>
 <body>
 <div class="main">
-    <form target="if" id ="fileform" method="post" enctype = "multipart/form-data" style="display: inline;">
-        <span id="dropzone" class="dropzone">
-          ПРЕВУЦИ ПДФ овде или 
-          <input class="dropzone-input" type="file" name="file" id="fileElem" accept="application/pdf, .zip">
-          <label class="button" >ОДАБЕРИ</label> са диска
-        </span>
-    </form>
+    <div class="mainmenu">
+        <form target="if" id ="fileform" method="post" enctype = "multipart/form-data" style="display: inline;">
+            <span id="dropzone" class="dropzone">
+            ПРЕВУЦИ ПДФ овде или 
+            <input class="dropzone-input" type="file" name="file" id="fileElem" accept="application/pdf, .zip">
+            <label class="button" >ОДАБЕРИ</label> са диска
+            </span>
+        </form>
         <button type = "button" onclick="process(false)" class="button process" title="Преузми као слике">⭳ Слике</button>
 
         <button type = "button" class="button process" onclick="process()" style="float: right;">ОБРАДИ</button>
@@ -51,12 +52,12 @@
             <option value="srp">Ћирилица</option>
             <option value="srp_latn">Латиница</option>
         </select>
-
+    </div>
  
-        <iframe id="preview" class="preview" src="/img"></iframe>
+        <iframe id="preview" name="if" class="preview" src="/help"></iframe>
    
 </div>
-<iframe id="if" name="if" class="rightside" src="/help"></iframe>
+<!--iframe id="if" name="if" class="rightside" src="/help"></iframe-->
 
 <script>
     var dropzone = document.getElementById('dropzone');

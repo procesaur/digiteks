@@ -28,11 +28,19 @@ def make_soup(hocr):
 def enrich_soup(soup, image=None):
     if image:
         img_id = make_id()
-        img_tag = soup.new_tag("img")
-        img_tag['src'] = f"data:image/png;base64,{image}"
-        img_tag['id'] = img_id
-        img_tag['style'] = 'display: none;'
-        soup.append(img_tag)
+        img_tag = soup.new_tag('img', **{
+            'class': 'page_image',
+            'id' : img_id,
+            'src' :  f"data:image/png;base64,{image}",
+            'onload': "document.querySelector('#SaveimagesData').insertBefore(this.parentElement, Array.from(document.querySelectorAll('#SaveimagesData img')).pop())",
+            'style': 'width:100%'
+            })
+
+        img_cont = soup.new_tag('div', **{'class': 'image-container'})
+        canv = soup.new_tag('canvas ', **{'class': 'overlay-canvas', 'id' : "c"+img_id})
+        img_cont.append(img_tag)
+        img_cont.append(canv)
+        soup.append(img_cont)
 
     hocr_elements = soup.find_all('div', class_='ocr_photo')
     page = soup.find('div', class_='ocr_page')

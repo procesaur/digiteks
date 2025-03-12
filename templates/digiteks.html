@@ -601,7 +601,7 @@
             saveCurrentStatePages(pages);
         }
         
-        function showPopup(image_id, x1, x2, y1, y2) {
+        function showPopup_old(image_id, x1, x2, y1, y2) {
             if (x1 && x2 && y1 && y2 && image_id){
                 var img = document.getElementById(image_id);
                 var canvas = document.getElementById('canvas');
@@ -622,6 +622,46 @@
             }
         }
 
+        function showPopup(image_id, x1, x2, y1, y2) {
+            if (x1 && x2 && y1 && y2 && image_id) {
+                var img = document.getElementById(image_id);
+                var canvas = document.getElementById("c" + image_id);
+                var ctx = canvas.getContext('2d');
+
+            canvas.width = img.clientWidth;
+            canvas.height = img.clientHeight;
+
+            // Calculate the scaling factor
+            var scaleX = canvas.width / img.naturalWidth;
+            var scaleY = canvas.height / img.naturalHeight;
+
+            // Draw a rectangle around the specified coordinates, scaled to match the displayed image size
+            ctx.strokeStyle = 'red';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x1 * scaleX, y1 * scaleY, (x2 - x1) * scaleX, (y2 - y1) * scaleY);
+
+            // Calculate zoom level to fit the rectangle
+            const rectCenterX = (x1 + (x2 - x1) / 2) * scaleX;
+            const rectCenterY = (y1 + (y2 - y1) / 2) * scaleY;
+            const containerCenterX = canvas.width / 2;
+            const containerCenterY = canvas.height / 2;
+            
+            const offsetX = containerCenterX - rectCenterX;
+            const offsetY = containerCenterY - rectCenterY;
+            
+            //const rectWidth = (x2 - x1) * scaleX;
+            //const rectHeight = (y2 - y1) * scaleY;
+            //const zoomScale = Math.min(canvas.width / rectWidth, canvas.height / rectHeight);
+
+            const cont = document.getElementById("SaveimagesData")
+            //cont.style.transform = `scale(${zoomScale})`;
+            //cont.style.left = `${-x1 * zoomScale}px`;
+            //cont.style.top = `${-y1 * zoomScale}px`;
+            img.parentNode.style.left = `${offsetX}px`;
+            img.parentNode.style.top = `${offsetY}px`;
+            }
+        }
+
         function hidePopup() {
             document.getElementById('overlay').style.display = 'none';
             document.getElementById('popup').style.display = 'none';
@@ -636,6 +676,66 @@
                 const y2 = parent.getAttribute('y2');
                 showPopup(image_id, x1, x2, y1, y2);
         }
+
+        function setupZoomAndDrag(container) {
+            let scale = 1;
+            let isDragging = false;
+            let startX, startY;
+            let wasDragging = false; // Flag to track if dragging occurred
+
+            function zoom(event) {
+                if (event.ctrlKey) { // Check if Ctrl key is pressed
+                    event.preventDefault();
+                    const newScale = scale + event.deltaY * -0.01;
+                    // Only allow zooming in, but allow zooming out to the original size
+                    if (newScale >= 1 && newScale <= 3) {
+                        scale = newScale;
+                        container.style.transform = `scale(${scale})`;
+                        if (scale == 1)
+                        {
+                            container.style.left = '0px';
+                            container.style.top = '0px';
+                        }
+                    }
+                }
+            }
+
+            function handleZoom(event) {
+                if (!wasDragging) {
+                    zoom(event);
+                }
+                wasDragging = false; // Reset the flag
+            }
+
+            function startDrag(event) {
+                if (scale > 1) { // Only allow dragging when zoomed in
+                    isDragging = true;
+                    startX = event.clientX - container.offsetLeft;
+                    startY = event.clientY - container.offsetTop;
+                    container.style.cursor = 'grabbing'; // Change cursor to grabbing
+                }
+            }
+
+            function drag(event) {
+                if (isDragging) {
+                    const x = event.clientX - startX;
+                    const y = event.clientY - startY;
+                    container.style.left = `${x}px`;
+                    container.style.top = `${y}px`;
+                }
+            }
+
+            function stopDrag() {
+                isDragging = false;
+                container.style.cursor = 'grab'; // Change cursor back to grab
+            }
+
+            container.addEventListener('wheel', handleZoom);
+            container.addEventListener('mousedown', startDrag);
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', stopDrag);
+        }
+        
     </script>
     <style>
         :root {
@@ -710,6 +810,48 @@
             
             filter: invert(100%); /* Invert colors for the loading GIF */
         }
+
+        #ImgCont{
+            width: calc(50vw - 50px);
+            margin-right: 30px;
+            overflow: auto;
+            height: calc(100vh - 100px);
+        }
+
+        #SaveimagesData{
+            position: relative;
+            display: inline-block;
+
+            cursor: grab; /* Change cursor to indicate draggable element */
+            transition: transform 0.3s; /* Smooth zoom transition */
+        }
+
+        .image-container{
+            display: block;
+        }
+
+        #digiteks_hocr_content{
+            width: calc(50vw - 50px);
+            overflow: auto;
+            height: calc(100vh - 100px);
+        }
+
+        #full_hocr{
+            overflow: clip;
+        }
+
+        .overlay-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none; 
+        }
+        .page_image {
+            position: relative;
+            top: 0;
+            left: 0;
+        }
+
     </style>
 </head>
 <body draggable="false"  ondragstart="return false;" ondrop="return false;">
@@ -721,7 +863,7 @@
         <button type="button" onclick="getHtml('{{filename}}')" class="button process">⭳ ХТМЛ</button>
     </div>
         <div class="overlay" id="overlay" onclick="hidePopup()"></div>
-        <div class="popup" id="popup" onclick="hidePopup()">
+        <div class="popup" id="popup" onclick="hidePopup()" style="display: none;">
             <canvas id="canvas" onclick="hidePopup()" style="max-width: 100%;"></canvas>
         </div>
         <div id="popup_settings_hocr" class="popup">
@@ -743,28 +885,37 @@
           </div>
           
     <div class="helpmain main" id="full_hocr" draggable="false"  style="padding-left: 20pt;">
-        <div class=meni>
-            <button id="openPopupButton" onclick="openhocrsettings()" class="menubutton" title="Отвори подешавања" style="float: right;">⚙</button>
-            <button class="menubutton" title="Помери горе" onclick="MoveUp()">↑</button>
-            <button class="menubutton" title="Помери доле" onclick="MoveDown()">↓</button>
-            <button class="menubutton" title="Одчекирај" onclick="Uncheck()">☐</button>
-            <button class="menubutton" title="Замени текст сликом" onclick="Figurize()">🖼</button>
-            <button class="menubutton" title="Обриши" onclick="deleteCheckedElements()">␡</button>
-            <button class="menubutton" title="Обележи као добро" onclick="VerifyBulk()">✓</button>
-            <button class="menubutton" title="Корак уназад" onclick="undo()">↩</button>
-            <button class="menubutton" title="Корак унапред" onclick="redo()">↪</button>
-        </div>
 
-        <!-- Hidden div to store the images data -->
         <div id="imagesData" style="display:none;" data-images='{{ images | tojson | safe }}'></div>
-        <div id="digiteks_hocr_content">
+
+        <div style="display:flex"> 
+            <div id="ImgCont" style="display:block;">
+                <div id="SaveimagesData" style="display:block;"  draggable="false" ondragstart="return false;" ondrop="return false;">
+                    <img id="loading" src="{{ url_for('static', filename='load.gif') }}" style="display: none;" alt="Loading...">
+                    <canvas id="overlayCanvas" class="overlay-canvas"></canvas>
+                </div>
+            </div>
+            <div id="digiteks_hocr_content" draggable="false" ondragstart="return false;" ondrop="return false;">
+                <div class=meni>
+                    <button id="openPopupButton" onclick="openhocrsettings()" class="menubutton" title="Отвори подешавања" style="float: right;">⚙</button>
+                    <button class="menubutton" title="Помери горе" onclick="MoveUp()">↑</button>
+                    <button class="menubutton" title="Помери доле" onclick="MoveDown()">↓</button>
+                    <button class="menubutton" title="Одчекирај" onclick="Uncheck()">☐</button>
+                    <button class="menubutton" title="Замени текст сликом" onclick="Figurize()">🖼</button>
+                    <button class="menubutton" title="Обриши" onclick="deleteCheckedElements()">␡</button>
+                    <button class="menubutton" title="Обележи као добро" onclick="VerifyBulk()">✓</button>
+                    <button class="menubutton" title="Корак уназад" onclick="undo()">↩</button>
+                    <button class="menubutton" title="Корак унапред" onclick="redo()">↪</button>
+                </div>
+            </div>
         </div>
-        <img id="loading" src="{{ url_for('static', filename='load.gif') }}" style="display: none;" alt="Loading...">
         <script>
             window.onload = function() {
                 const imagesDataElement = document.getElementById('imagesData');
                 const loadingGif = document.getElementById('loading');
+                document.querySelectorAll('#SaveimagesData').forEach(setupZoomAndDrag);
                 stream_ocr('{{lang}}', loadingGif, imagesDataElement);
+                
             }
         </script>
     </div>
