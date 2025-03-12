@@ -3,49 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" type="text/css" href="/static/main.css">
-    <script src="/static/hocr.js"></script>
     <script>
         function help(){
             document.getElementById('if').src = "/help";
         }
-    </script>
 
-<script>
-    function uploadHocrhelp(event){
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
+        function uploadHocrhelp(event){
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
 
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(e.target.result, 'text/html');
-                const newContent = doc.querySelector('#digiteks_hocr_content');
-                if (newContent) {
-                    var form = document.createElement('form');
-                    form.method = 'post';
-                    form.action = '/posthere'; // Set this to your desired action URL
-                    form.enctype = 'multipart/form-data'; // Set the encoding type for file upload
-                    form.target = '_self'; // Set target to the current window
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(e.target.result, 'text/html');
+                    const newContent = doc.querySelector('#digiteks_hocr_content');
+                    if (newContent) {
+                        var form = document.createElement('form');
+                        form.method = 'post';
+                        form.action = '/posthere'; // Set this to your desired action URL
+                        form.enctype = 'multipart/form-data'; // Set the encoding type for file upload
+                        form.target = '_self'; // Set target to the current window
 
-                    // Create a file input to hold the file
-                    var input = document.createElement('input');
-                    input.type = 'file';
-                    input.name = 'file';
-                    input.files = event.target.files; // Assign the uploaded file to the input
+                        // Create a file input to hold the file
+                        var input = document.createElement('input');
+                        input.type = 'file';
+                        input.name = 'file';
+                        input.files = event.target.files; // Assign the uploaded file to the input
 
-                    // Append the input to the form and submit the form
-                    form.appendChild(input);
-                    document.body.appendChild(form);
-                    form.submit();
-    
-                } else {
-                    console.error('Element with id #digiteks_hocr_content not found in the uploaded file.');
-                }
-            };
-            reader.readAsText(file);
+                        // Append the input to the form and submit the form
+                        form.appendChild(input);
+                        document.body.appendChild(form);
+                        form.submit();
+        
+                    } else {
+                        console.error('Element with id #digiteks_hocr_content not found in the uploaded file.');
+                    }
+                };
+                reader.readAsText(file);
+            }
         }
-    }
-</script>
+    </script>
 </head>
 <body>
     <div class="helphead">

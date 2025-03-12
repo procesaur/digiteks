@@ -42,7 +42,7 @@ def ini(lang):
         images = do(pdf_to_images, file_bytes)
     else:
         images = image_zip_to_images(file_bytes)
-    return render_template('gui_response.html', lang=lang, images=encode_images(images), filename=filename)
+    return render_template('digiteks.html', lang=lang, images=encode_images(images), filename=filename)
 
 @app.route('/imgdown', methods=['POST', 'GET'])
 def imgdown():
