@@ -349,6 +349,11 @@ def hocr_to_plain_html(hocr_content):
             words = paragraph.find_all(class_='ocrx_word')
             for word in words:
                 plain_html += word.text
+
+            imgs = paragraph.find_all('img')
+            for img in imgs:
+                plain_html += str(img)
+            
             plain_html += "</p>\n"
     return plain_html
 

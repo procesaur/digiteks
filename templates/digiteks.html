@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='main.css') }}">
-    <script src="{{url_for('static', filename='hocr.js')}}"></script>
 
     <script>
         const lc = '.ocr_line, .ocr_caption, .ocr_textfloat, .ocr_header, .ocr_image';
@@ -68,6 +67,62 @@
             }); 
         }
 
+        function hocrToPlainHtml(hocrElement) {
+            var plainHtml = '';
+            var pages = hocrElement.querySelectorAll('.ocr_page');
+            pages.forEach(function(hocrPage) {
+                var paragraphs = hocrPage.querySelectorAll('.ocr_par');
+                paragraphs.forEach(function(paragraph) {
+                    var align = paragraph.getAttribute('xalign');
+                    var alignmentClass = getAlignmentClass(align);
+                    plainHtml += `<p class="${alignmentClass}">`;
+
+                    var words = paragraph.querySelectorAll('.ocrx_word');
+                    words.forEach(function(word) {
+                        plainHtml += word.textContent;
+                    });
+                    
+                    var imgs = paragraph.querySelectorAll('img');
+                    imgs.forEach(function(img) {
+                        plainHtml += img.outerHTML;
+                    });
+                    plainHtml += '</p>\n';
+                });
+            });
+            return plainHtml;
+        }
+
+        function getAlignmentClass(align) {
+            switch (align) {
+                case 'left':
+                    return 'left-aligned';
+                case 'right':
+                    return 'right-aligned';
+                case 'center':
+                    return 'center-aligned';
+                default:
+                    return 'default-aligned';
+            }
+        }
+
+        function hocrToPlainText(hocrElement) {
+            var plainText = '';
+
+            var pages = hocrElement.querySelectorAll('.ocr_page');
+            pages.forEach(function(hocrPage) {
+                var paragraphs = hocrPage.querySelectorAll('.ocr_par');
+                paragraphs.forEach(function(paragraph) {
+                    var words = paragraph.querySelectorAll('.ocrx_word');
+                    words.forEach(function(word) {
+                        plainText += word.textContent;
+                    });
+                    plainText += '\n';
+                });
+            });
+
+            return plainText;
+        }
+
         function help(){
             document.getElementById('if').src = "/help";
         }
@@ -89,37 +144,13 @@
         }
 
         function getHtml(filename){
-            var hocrContent = document.getElementById("digiteks_hocr_content").innerHTML;
-            fetch('/hocr2html', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'text/html'
-                },
-                body: hocrContent
-            })
-            .then(response => response.text())
-            .then(plainHtml => {
-
-                dwn(`<!DOCTYPE html><html><body>${plainHtml}</body></html>`, "text/html", filename, ".html");
-            })
-            .catch(error => console.error('Error:', error));
+            var hocrContent = document.getElementById("digiteks_hocr_content");
+            dwn(`<!DOCTYPE html><html><body>${hocrToPlainHtml(hocrContent)}</body></html>`, "text/html", filename, ".html");
         }
 
         function getText(filename){
-            var hocrContent = document.getElementById("digiteks_hocr_content").innerHTML;
-            fetch('/hocr2text', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'text/html'
-                },
-                body: hocrContent
-            })
-            .then(response => response.text())
-            .then(plainText => {
-
-                dwn(plainText, "text/plain", filename, ".txt");
-            })
-            .catch(error => console.error('Error:', error));
+            var hocrContent = document.getElementById("digiteks_hocr_content");
+            dwn(hocrToPlainText(hocrContent), "text/plain", filename, ".txt");
         }
 
         function uploadHocr(event){
