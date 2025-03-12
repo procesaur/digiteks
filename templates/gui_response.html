@@ -91,10 +91,7 @@
             else{
                 event.target.style  = "--red:255; --conf:1; --blue: 0";
             }
-            const parentPage = event.target.closest('.ocr_page'); 
-            if (parentPage) {
-                saveCurrentState(parentPage);
-            }
+            saveCurrentState(event);
         }
 
         function openhocrsettings(event){
@@ -126,10 +123,15 @@
         function getSelected(){
             var lines = document.querySelectorAll(lc);
             var elements = [];
+            var parentPages = new Set();
             lines.forEach(function(line) {
                 var checkbox = line.querySelector('input[type="checkbox"]');
                 if (checkbox && checkbox.checked) {
                     elements.push(line);
+                    var parentPage = line.closest('.ocr_page');
+                    if (parentPage) {
+                        parentPages.add(parentPage);
+                    }
                 }
             });
 
@@ -143,20 +145,21 @@
                 areas.get(parentArea).push(element);
             }
             });
-            return [elements, areas];
+            return {elements: elements,
+                    areas: areas,
+                    pages:  Array.from(parentPages)
+            };
         }
 
         function checkall(event){
             const childCheckboxes = event.target.parentElement.querySelectorAll('.dynamic-checkbox');
-
             childCheckboxes.forEach(childCheckbox => { childCheckbox.checked = event.target.checked;});
         }
         
         function MoveUp() {
-
-            spans = getSelected();
-            elements = spans[0];
-            areas = spans[1];
+            const selected = getSelected();
+            const areas = selected.areas;
+            const pages = selected.pages;
 
             areas.forEach((selectedLines, area) => {
                 const allLines = Array.from(area.querySelectorAll(lc));
@@ -182,12 +185,13 @@
                 });
                 }
             });
+            saveCurrentStatePages(pages);
         }
 
         function MoveDown() {
-            spans = getSelected();
-            elements = spans[0];
-            areas = spans[1];
+            const selected = getSelected();
+            const areas = selected.areas;
+            const pages = selected.pages;
 
             areas.forEach((selectedLines, area) => {
                 const allLines = Array.from(area.querySelectorAll(lc));
@@ -214,7 +218,7 @@
                     });
                 }
             });
-
+            saveCurrentStatePages(pages);
         }
 
         function MaybeDelete(){
@@ -227,22 +231,25 @@
         const originalContents = new Map();
         const historyQueue = [];
         const redoQueue = [];
-        
         const pages = document.querySelectorAll('.ocr_page');
         pages.forEach(page => {
             originalContents.set(page.id, page.innerHTML);
         });
-
         pages.forEach(page => {
             historyMap.set(page.id, [page.innerHTML]);
             redoMap.set(page.id, []);
         });
 
 
+        function saveCurrentState(event) {
+            const parentPage = event.target.closest('.ocr_page');
+            if (parentPage) {
+                saveCurrentStatePage(parentPage)
+            }
+        }
 
-        // Function to save the current state
-        function saveCurrentState(page) {
-   
+
+        function saveCurrentStatePage(page) {
             historyQueue.push({
                 id: page.id,
                 newValue: [page.innerHTML]
@@ -250,8 +257,16 @@
             redoQueue.length = 0; 
             if (historyQueue.length > 10) {
                 historyQueue.shift(); 
-            }
+            }      
         }
+
+
+        function saveCurrentStatePages(pages) {
+            pages.forEach(function(page) {
+                saveCurrentStatePage(page)
+            });   
+        }
+
 
         function undo() {
             if (historyQueue.length > 0) {
@@ -286,9 +301,9 @@
 
 
         function Figurize() {
-            var spans = getSelected();
-            var elements = spans[0];
-            var areas = Array.from(spans[1].keys());
+            const selected = getSelected();
+            const pages = selected.pages;
+            const areas = Array.from(selected.areas.keys());
 
             var x1s = [];
             var x2s = [];
@@ -384,12 +399,13 @@
                     element.remove();
                 }
             });
+            saveCurrentStatePages(pages);
         }
 
         function deleteCheckedElements() {
-            spans = getSelected();
-            elements = spans[0];
-            areas = spans[1];
+            const selected = getSelected();
+            const areas = selected.areas;
+            const pages = selected.pages;
 
             areas.forEach((selectedLines, area) => {
                 const allLines = Array.from(area.querySelectorAll(lc));
@@ -401,12 +417,13 @@
                     });
                 }
             });
+            saveCurrentStatePages(pages);
         }
 
         function VerifyBulk() {
-            spans = getSelected();
-            elements = spans[0];
-            areas = spans[1];
+            const selected = getSelected();
+            const elements = selected.elements;
+            const pages = selected.pages;
 
             elements.forEach(line => {
                 const words = line.querySelectorAll('.ocrx_word');
@@ -414,6 +431,7 @@
                     word.style  = "--red:255; --conf:1";
                 });
             });
+            saveCurrentStatePages(pages);
         }
         
         function showPopup(image_id, x1, x2, y1, y2) {
