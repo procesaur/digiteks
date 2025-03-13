@@ -828,11 +828,15 @@
 
         .image-container{
             display: block;
+            position: relative;
+            left: 0px !important;
+            top: 0px !important;
         }
 
         #digiteks_hocr_content{
             width: calc(50vw - 50px);
-            overflow: auto;
+            overflow-x: visible;
+            overflow-y: auto;
             height: calc(100vh - 100px);
         }
 
@@ -844,12 +848,12 @@
             position: absolute;
             top: 0;
             left: 0;
-            pointer-events: none; 
+            pointer-events: none;
         }
+        
         .page_image {
-            position: relative;
-            top: 0;
-            left: 0;
+            width: 100%;
+            height: auto;
         }
 
     </style>
