@@ -535,7 +535,7 @@
             newImg.src = croppedImageSrc;
             
             // Create a new span element with class="ocr_par"
-            var newSpan = document.createElement('span');
+            var newSpan = document.createElement('p');
             var newLine = document.createElement('span');
             newSpan.className = 'ocr_par';
             newLine.className = 'ocr_image';
@@ -543,6 +543,7 @@
             newSpan.setAttribute('y1', min_y1);
             newSpan.setAttribute('x2', max_x2);
             newSpan.setAttribute('y2', max_y2);
+            newSpan.setAttribute('image_id', image_id);
 
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
@@ -553,7 +554,14 @@
             checkbox2.type = 'checkbox';
             checkbox2.className = 'dynamic-checkbox par-checkbox';
 
+            var button = document.createElement("button");
+            button.innerHTML = "🔍";  
+            button.setAttribute("onclick", "showPopupevent(event)");
+            button.setAttribute("style", "float:right");
+
+
             newLine.insertBefore(checkbox, newLine.firstChild);
+            newSpan.insertBefore(button, newSpan.firstChild);
             newSpan.insertBefore(checkbox2, newSpan.firstChild);
 
             newLine.appendChild(newImg);
@@ -622,44 +630,54 @@
             }
         }
 
-        function showPopup(image_id, x1, x2, y1, y2) {
+        function mark_text(canvas, x1, x2, y1, y2, padding, scaleX, scaleY){
+            var ctx = canvas.getContext('2d');
+            ctx.strokeStyle = 'red';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x1 * scaleX - padding, y1 * scaleY - padding, (x2 - x1) * scaleX + 2*padding, (y2 - y1) * scaleY + 2*padding);
+        }
+
+        function MarkAndZoom(image_id, x1, x2, y1, y2, zoom=1.5, padding = 4) {
             if (x1 && x2 && y1 && y2 && image_id) {
-
-                x1 = parseInt(x1);
-                x2 = parseInt(x2);
-                y1 = parseInt(y1);
-                y2 = parseInt(y2);
-
-                const zoom = 2
-
+                var cont = document.getElementById("SaveimagesData");
+                cont.style.width = '100%';
                 var img = document.getElementById(image_id);
                 var canvas = document.getElementById("c" + image_id);
-                var ctx = canvas.getContext('2d');
-                const cont = document.getElementById("SaveimagesData")
-                cont.style.transform = `scale(${zoom})`;
-    
-                const h = cont.offsetHeight*100/Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
 
                 canvas.width = img.clientWidth;
                 canvas.height = img.clientHeight;
-
                 var scaleX = canvas.width / img.naturalWidth;
                 var scaleY = canvas.height / img.naturalHeight;
 
-                ctx.strokeStyle = 'red';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(x1 * scaleX, y1 * scaleY, (x2 - x1) * scaleX, (y2 - y1) * scaleY);
+                contW = cont.parentElement.offsetWidth;
+                contH = cont.parentElement.offsetHeight;
+                rectW = x2 - x1
+                rectH = y2 - y1
+                if (contW<rectW*scaleX*zoom || contH<rectH*scaleY*zoom){
+                    zoom = 1;
+                }
+                cont.style.width = `${zoom*100}%`;
 
-                const rectCenterX = (x1 + (x2 - x1) / 2) * scaleX;
-                const rectCenterY = (y1 + (y2 - y1) / 2) * scaleY;
-                const containerCenterX = canvas.width / 2;
-                const containerCenterY = canvas.height / 2;
-                
-                const offsetX = (containerCenterX - rectCenterX)*zoom;
-                const offsetY = (containerCenterY - rectCenterY)*zoom+h;
-                
-                cont.style.left = `${offsetX}px`;
-                cont.style.top = `${offsetY}px`;
+                mark_text(canvas, x1, x2, y1, y2, padding, scaleX, scaleY)
+
+                const rectCenterX = (x1 + rectW / 2) * scaleX * zoom;
+                const rectCenterY = (y1 + rectH / 2) * scaleY * zoom;
+                const containerCenterX = contW / 2;
+                const containerCenterY = contH / 2;
+
+                // Calculate cumulative offset for y-axis
+                const images = Array.from(document.querySelectorAll('#SaveimagesData img'));
+                let cumulativeOffsetY = 0;
+                for (const imag of images) {
+                    if (imag.id === image_id) break;
+                    cumulativeOffsetY += imag.offsetHeight;
+                }
+        
+                const offsetX = rectCenterX - containerCenterX;
+                const offsetY = rectCenterY  + cumulativeOffsetY - containerCenterY;
+
+                cont.parentElement.scrollLeft = Math.max(0, offsetX);
+                cont.parentElement.scrollTop = Math.max(0, offsetY);
             }
         }
 
@@ -669,13 +687,13 @@
         }
 
         function showPopupevent(event) {
-                const parent = event.target.parentElement;
-                const image_id = parent.getAttribute('image_id');
-                const x1 = parent.getAttribute('x1');
-                const x2 = parent.getAttribute('x2');
-                const y1 = parent.getAttribute('y1');
-                const y2 = parent.getAttribute('y2');
-                showPopup(image_id, x1, x2, y1, y2);
+            const parent = event.target.parentElement;
+            const image_id = parent.getAttribute('image_id');
+            const x1 = parseInt(parent.getAttribute('x1'));
+            const x2 = parseInt(parent.getAttribute('x2'));
+            const y1 = parseInt(parent.getAttribute('y1'));
+            const y2 = parseInt(parent.getAttribute('y2'));
+            MarkAndZoom(image_id, x1, x2, y1, y2);
         }
 
         function setupZoomAndDrag(container) {
@@ -687,13 +705,12 @@
             function zoom(event) {
                 if (event.ctrlKey) { // Check if Ctrl key is pressed
                     event.preventDefault();
-                    const newScale = scale + event.deltaY * -0.01;
+                    const newScale = scale + event.deltaY * -0.001;
                     // Only allow zooming in, but allow zooming out to the original size
                     if (newScale >= 1 && newScale <= 3) {
                         scale = newScale;
-                        container.style.transform = `scale(${scale})`;
-                        if (scale == 1)
-                        {
+                        container.style.width = `${scale * 100}%`;
+                        if (scale == 1) {
                             container.style.left = '0px';
                             container.style.top = '0px';
                         }
@@ -709,20 +726,21 @@
             }
 
             function startDrag(event) {
-                if (scale > 1) { // Only allow dragging when zoomed in
-                    isDragging = true;
-                    startX = event.clientX - container.offsetLeft;
-                    startY = event.clientY - container.offsetTop;
-                    container.style.cursor = 'grabbing'; // Change cursor to grabbing
-                }
+                isDragging = true;
+                startX = event.clientX;
+                startY = event.clientY;
+                scrollLeft = container.parentElement.scrollLeft;
+                scrollTop = container.parentElement.scrollTop;
+                container.style.cursor = 'grabbing'; // Change cursor to grabbing
             }
 
             function drag(event) {
                 if (isDragging) {
+                    event.preventDefault();
                     const x = event.clientX - startX;
                     const y = event.clientY - startY;
-                    container.style.left = `${x}px`;
-                    container.style.top = `${y}px`;
+                    container.parentElement.scrollLeft = scrollLeft - x;
+                    container.parentElement.scrollTop = scrollTop - y;
                 }
             }
 
@@ -754,10 +772,10 @@
         }
 
         .ocr_image img{
-            max-width:45vw;
+            max-width:40vw;
         }
 
-        .ocr_line:after, .ocr_caption:after, .ocr_textfloat:after, .ocr_header:after {
+        .ocr_line:after, .ocr_caption:after, .ocr_textfloat:after, .ocr_header:after, .ocr_image:after {
             content: '\A';
             white-space: pre;
         }
@@ -774,6 +792,13 @@
             background-color: rgb(210, 102, 90);
         }
 
+        .process{
+            border: 3px solid #f8f4e1 !important;
+            font-size: 10pt;
+            margin-top: 2px;
+            margin-left: 5px;
+            float:right
+        }
 
         input[type="range"] {
             width: 80%;
@@ -784,10 +809,19 @@
             visibility: visible !important;
         }
 
+
+        .ocr_line:not(:first-of-type) .dynamic-checkbox,
+        .ocr_caption:not(:first-of-type) .dynamic-checkbox,
+        .ocr_textfloat:not(:first-of-type) .dynamic-checkbox,
+        .ocr_header:not(:first-of-type) .dynamic-checkbox,
+        .ocr_image:not(:first-of-type) .dynamic-checkbox {
+            margin-left:31px
+        }
+
+
         .par-checkbox{
             width: 12pt;
             height: 12pt;
-            margin-left: -23px;
         }
 
         .menubutton{
@@ -850,6 +884,7 @@
             top: 0;
             left: 0;
             pointer-events: none;
+            width: 100%;
         }
 
         .page_image {

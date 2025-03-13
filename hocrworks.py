@@ -53,7 +53,7 @@ def enrich_soup(soup, image=None):
             bbox = title_attr.split('bbox ')[1].split()
             x1, y1, x2, y2 = map(int, bbox)
             img_element['src'] = f'data:image/jpeg;base64,{crop_image(image, x1, y1, x2, y2)}'
-            img_element['style']= 'max-width:85vw'
+
 
         new_div = soup.new_tag('p', **{'class': 'ocr_par', 'title': hocr_element['title'] })
         new_div2 = soup.new_tag('span', **{'class': 'ocr_image' })

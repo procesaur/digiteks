@@ -241,9 +241,11 @@ font-weight: bold;
     margin-left: 5px
     }
 
-.helphead .process{
+.helphead {
     float: right;
+    margin-left: -10px;
 }
+
 
 #fileElem {
 display: none;
