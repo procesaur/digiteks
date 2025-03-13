@@ -4,10 +4,12 @@
     <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='main.css') }}">
     <script>
         function process(process=true){
-            var upbox = document.getElementById("fileElem")
+            var upbox = document.getElementById("fileElem");
+            var frejm = document.getElementById('preview');
             if (upbox.value!= ""){
                 if (process){
-                    document.getElementById('preview').src = "/load";
+                    frejm.style.marginTop = "10px"; 
+                    frejm.src = "/load";
                 }
                 setTimeout(function() {
                     if (process){
@@ -43,21 +45,17 @@
             <label class="button" >ОДАБЕРИ</label> са диска
             </span>
         </form>
-        <button type = "button" onclick="process(false)" class="button process" title="Преузми као слике">⭳ Слике</button>
-
-        <button type = "button" class="button process" onclick="process()" style="float: right;">ОБРАДИ</button>
-        <select id="lang" style="float: right;" class="button process" title="Одабир ОЦР модела">
+        <button type = "button" class="button process" onclick="process()">ОБРАДИ</button>
+        <select id="lang" class="button process" title="Одабир ОЦР модела">
             <option selected value="srp+srp_latn+eng">Ћирилица+</option>
             <option value="srp_latn+srp+eng">Латиница+</option>
             <option value="srp">Ћирилица</option>
             <option value="srp_latn">Латиница</option>
         </select>
+        <button type = "button" onclick="process(false)" class="button process" title="Преузми као слике">⭳ Слике</button>
     </div>
- 
-        <iframe id="preview" name="if" class="preview" src="/help"></iframe>
-   
+    <iframe id="preview" name="if" class="preview" src="/help"></iframe>
 </div>
-<!--iframe id="if" name="if" class="rightside" src="/help"></iframe-->
 
 <script>
     var dropzone = document.getElementById('dropzone');
@@ -79,7 +77,6 @@
         this.classList.remove('dropzone-dragging');
     }, false);
 
-
     dropzone.addEventListener('drop', function(e) {
         this.classList.remove('dropzone-dragging');
         var files = e.dataTransfer.files;
@@ -91,7 +88,6 @@
             dataTransfer.items.add(file);
             return false;
         });
-
         var filesToBeAdded = dataTransfer.files;
         var ifr = document.getElementById("preview");
         dropzone_input.files = filesToBeAdded;
@@ -104,10 +100,11 @@
     });
 
     document.getElementById('fileElem').onchange = function() {
+        var frejm = document.getElementById('preview');
         if (this.files[0].name.endsWith('.pdf')){
-            var url = URL.createObjectURL(this.files[0])+"#zoom=FitH";
-            document.getElementById('preview').removeAttribute('srcdoc');
-            document.getElementById('preview').src = url;
+            frejm.removeAttribute('srcdoc');
+            frejm.src = URL.createObjectURL(this.files[0])+"#zoom=100";
+            frejm.style.marginTop = "80px"; 
         }
         else{
             let formData = new FormData();
@@ -116,7 +113,7 @@
             xhr.open('POST', '/showzip', true);
             xhr.onload = function () {
                 if (xhr.status === 200) {
-                    document.getElementById('preview').srcdoc = xhr.responseText;
+                    frejm.srcdoc = xhr.responseText;
                 } else {
                     console.error('Error:', xhr.statusText);
                 }

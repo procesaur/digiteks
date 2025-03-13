@@ -181,7 +181,7 @@ div.main, iframe.main {
     border: 5px double #543310;
     border-radius: 20px;
     vertical-align: top;
-    padding: 18px;
+    padding: 10px;
     margin: 0px;
 
 }
@@ -238,13 +238,19 @@ font-weight: bold;
     border: 3px solid #f8f4e1 !important;
     font-size: 10pt;
     margin-top: 2px;
-    margin-left: 5px
+    margin-left: 5px;
+    float: right;
+    margin-right: 20px;
     }
 
+ 
 .helphead {
+    height: 60px;
+    width: 100%;
     float: right;
     margin-left: -10px;
 }
+
 
 
 #fileElem {
@@ -253,8 +259,8 @@ display: none;
 
 .preview{
     width: calc(100vw - 20px);
-    height: calc(100vh - 35px);
-    margin-top: 20px;
+    height: calc(100vh - 10px);
+    margin-top: 10px;
     border: 5px double #543310;
     border-radius: 15px;
     position: absolute;
@@ -267,6 +273,7 @@ display: none;
     float: left;
     z-index: 10;
     position: absolute;
+    margin-bottom: 20px;
 }
 
 .rightside {
@@ -282,11 +289,6 @@ display: none;
      width: calc(100vw - 50px) !important;
      height: calc(100vh - 116px) !important;
      overflow-y: scroll;
-}
-
-.helphead{
-    height: 71px;
-    width: 100%;
 }
 
 body *::selection {

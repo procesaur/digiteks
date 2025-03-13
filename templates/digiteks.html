@@ -637,8 +637,12 @@
             ctx.strokeRect(x1 * scaleX - padding, y1 * scaleY - padding, (x2 - x1) * scaleX + 2*padding, (y2 - y1) * scaleY + 2*padding);
         }
 
-        function MarkAndZoom(image_id, x1, x2, y1, y2, zoom=1.5, padding = 4) {
+        function MarkAndZoom(image_id, x1, x2, y1, y2, zoom=2, padding = 4) {
             if (x1 && x2 && y1 && y2 && image_id) {
+                const x1 = parseInt(parent.getAttribute('x1'));
+                const x2 = parseInt(parent.getAttribute('x2'));
+                const y1 = parseInt(parent.getAttribute('y1'));
+                const y2 = parseInt(parent.getAttribute('y2'));
                 var cont = document.getElementById("SaveimagesData");
                 cont.style.width = '100%';
                 var img = document.getElementById(image_id);
@@ -689,10 +693,6 @@
         function showPopupevent(event) {
             const parent = event.target.parentElement;
             const image_id = parent.getAttribute('image_id');
-            const x1 = parseInt(parent.getAttribute('x1'));
-            const x2 = parseInt(parent.getAttribute('x2'));
-            const y1 = parseInt(parent.getAttribute('y1'));
-            const y2 = parseInt(parent.getAttribute('y2'));
             MarkAndZoom(image_id, x1, x2, y1, y2);
         }
 
@@ -873,6 +873,7 @@
             overflow-x: visible;
             overflow-y: auto;
             height: calc(100vh - 100px);
+            padding-right: 20px;
         }
 
         #full_hocr{
