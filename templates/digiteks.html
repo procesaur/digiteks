@@ -624,41 +624,42 @@
 
         function showPopup(image_id, x1, x2, y1, y2) {
             if (x1 && x2 && y1 && y2 && image_id) {
+
+                x1 = parseInt(x1);
+                x2 = parseInt(x2);
+                y1 = parseInt(y1);
+                y2 = parseInt(y2);
+
+                const zoom = 2
+
                 var img = document.getElementById(image_id);
                 var canvas = document.getElementById("c" + image_id);
                 var ctx = canvas.getContext('2d');
+                const cont = document.getElementById("SaveimagesData")
+                cont.style.transform = `scale(${zoom})`;
+    
+                const h = cont.offsetHeight*100/Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
 
-            canvas.width = img.clientWidth;
-            canvas.height = img.clientHeight;
+                canvas.width = img.clientWidth;
+                canvas.height = img.clientHeight;
 
-            // Calculate the scaling factor
-            var scaleX = canvas.width / img.naturalWidth;
-            var scaleY = canvas.height / img.naturalHeight;
+                var scaleX = canvas.width / img.naturalWidth;
+                var scaleY = canvas.height / img.naturalHeight;
 
-            // Draw a rectangle around the specified coordinates, scaled to match the displayed image size
-            ctx.strokeStyle = 'red';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(x1 * scaleX, y1 * scaleY, (x2 - x1) * scaleX, (y2 - y1) * scaleY);
+                ctx.strokeStyle = 'red';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x1 * scaleX, y1 * scaleY, (x2 - x1) * scaleX, (y2 - y1) * scaleY);
 
-            // Calculate zoom level to fit the rectangle
-            const rectCenterX = (x1 + (x2 - x1) / 2) * scaleX;
-            const rectCenterY = (y1 + (y2 - y1) / 2) * scaleY;
-            const containerCenterX = canvas.width / 2;
-            const containerCenterY = canvas.height / 2;
-            
-            const offsetX = containerCenterX - rectCenterX;
-            const offsetY = containerCenterY - rectCenterY;
-            
-            //const rectWidth = (x2 - x1) * scaleX;
-            //const rectHeight = (y2 - y1) * scaleY;
-            //const zoomScale = Math.min(canvas.width / rectWidth, canvas.height / rectHeight);
-
-            const cont = document.getElementById("SaveimagesData")
-            //cont.style.transform = `scale(${zoomScale})`;
-            //cont.style.left = `${-x1 * zoomScale}px`;
-            //cont.style.top = `${-y1 * zoomScale}px`;
-            img.parentNode.style.left = `${offsetX}px`;
-            img.parentNode.style.top = `${offsetY}px`;
+                const rectCenterX = (x1 + (x2 - x1) / 2) * scaleX;
+                const rectCenterY = (y1 + (y2 - y1) / 2) * scaleY;
+                const containerCenterX = canvas.width / 2;
+                const containerCenterY = canvas.height / 2;
+                
+                const offsetX = (containerCenterX - rectCenterX)*zoom;
+                const offsetY = (containerCenterY - rectCenterY)*zoom+h;
+                
+                cont.style.left = `${offsetX}px`;
+                cont.style.top = `${offsetY}px`;
             }
         }
 
@@ -850,7 +851,7 @@
             left: 0;
             pointer-events: none;
         }
-        
+
         .page_image {
             width: 100%;
             height: auto;
