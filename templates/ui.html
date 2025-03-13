@@ -8,7 +8,8 @@
             var frejm = document.getElementById('preview');
             if (upbox.value!= ""){
                 if (process){
-                    frejm.style.marginTop = "10px"; 
+                    frejm.style.marginTop = "10px";
+                    frejm.style.height = "calc(100vh - 10px)";
                     frejm.src = "/load";
                 }
                 setTimeout(function() {
@@ -78,20 +79,23 @@
     }, false);
 
     dropzone.addEventListener('drop', function(e) {
+        var frejm = document.getElementById('preview');
+        frejm.style.marginTop = "80px";
+        frejm.style.height = "calc(100vh - 100px)";
         this.classList.remove('dropzone-dragging');
         var files = e.dataTransfer.files;
         var dataTransfer = new DataTransfer();
         
         var for_alert = "";
         Array.prototype.forEach.call(files, file => {    
-            for_alert = URL.createObjectURL(file) + "#zoom=FitH";
+            for_alert = URL.createObjectURL(file) + "#zoom=100";
             dataTransfer.items.add(file);
             return false;
         });
         var filesToBeAdded = dataTransfer.files;
-        var ifr = document.getElementById("preview");
+
         dropzone_input.files = filesToBeAdded;
-        ifr.src = for_alert;
+        frejm.src = for_alert;
     
     }, false);
 
@@ -104,7 +108,8 @@
         if (this.files[0].name.endsWith('.pdf')){
             frejm.removeAttribute('srcdoc');
             frejm.src = URL.createObjectURL(this.files[0])+"#zoom=100";
-            frejm.style.marginTop = "80px"; 
+            frejm.style.marginTop = "80px";
+            frejm.style.height = "calc(100vh - 100px)";
         }
         else{
             let formData = new FormData();

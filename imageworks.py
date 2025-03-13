@@ -97,7 +97,8 @@ def pdf_to_images(file_bytes, img_down=False):
 
 
 def image_zip_to_images(file):
-    images = read_zip(file)    
+    images = read_zip(file)
+    images = [bytes2img(img) for img in images]
     images_improved = pool.map(improve_image, images)
     return images, images_improved
 

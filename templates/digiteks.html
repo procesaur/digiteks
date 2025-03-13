@@ -639,10 +639,10 @@
 
         function MarkAndZoom(image_id, x1, x2, y1, y2, zoom=2, padding = 4) {
             if (x1 && x2 && y1 && y2 && image_id) {
-                const x1 = parseInt(parent.getAttribute('x1'));
-                const x2 = parseInt(parent.getAttribute('x2'));
-                const y1 = parseInt(parent.getAttribute('y1'));
-                const y2 = parseInt(parent.getAttribute('y2'));
+                x1 = parseInt(x1);
+                x2 = parseInt(x2);
+                y1 = parseInt(y1);
+                y2 = parseInt(y2);
                 var cont = document.getElementById("SaveimagesData");
                 cont.style.width = '100%';
                 var img = document.getElementById(image_id);
@@ -693,6 +693,10 @@
         function showPopupevent(event) {
             const parent = event.target.parentElement;
             const image_id = parent.getAttribute('image_id');
+            const x1 = parent.getAttribute('x1');
+            const x2 = parent.getAttribute('x2');
+            const y1 = parent.getAttribute('y1');
+            const y2 = parent.getAttribute('y2');
             MarkAndZoom(image_id, x1, x2, y1, y2);
         }
 

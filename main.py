@@ -62,7 +62,7 @@ def imgdown():
 def showzip():
     file = request.files['file']
     if file and file.filename.endswith('.zip'):
-        images = image_zip_to_images(file)
+        _, images = image_zip_to_images(file)
         images = encode_images(images)
         return render_template("images.html", images=images)
     return 'Invalid file'

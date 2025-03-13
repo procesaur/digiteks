@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='main.css') }}">
 </head>
-<body draggable="false">
-       <div>
-            {% for x in images %}
-            <img src="data:image/jpeg;base64,{{x}}" style="width: 100vw;"/><br>
-            {% endfor %}
+<body draggable="false" style="margin-top: 80px; height: calc(100vh - 100px); width: 50vw; text-align: center;">
+    <div>
+        {% for x in images %}
+        <img src="data:image/jpeg;base64,{{x}}" style="width: 50vw;"/><br>
+        {% endfor %}
     </div>
 </body>
 </html>

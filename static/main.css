@@ -182,8 +182,7 @@ div.main, iframe.main {
     border-radius: 20px;
     vertical-align: top;
     padding: 10px;
-    margin: 0px;
-
+    margin: 5px;
 }
 
 iframe.main {
@@ -237,10 +236,8 @@ font-weight: bold;
 .process {
     border: 3px solid #f8f4e1 !important;
     font-size: 10pt;
-    margin-top: 2px;
-    margin-left: 5px;
     float: right;
-    margin-right: 20px;
+    margin: 2px 0px 0px 10px;
     }
 
  
