@@ -6,6 +6,10 @@
 
     <script>
         const lc = '.ocr_line, .ocr_caption, .ocr_textfloat, .ocr_header, .ocr_image';
+        const originalContents = new Map();
+        const historyQueue = [];
+        const redoQueue = [];
+
         function prepare(element, top=0.94, saturation=0.5) {
             const ocrCareas = element.querySelectorAll('.ocr_carea');
             ocrCareas.forEach(carea => {
@@ -95,13 +99,13 @@
         function getAlignmentClass(align) {
             switch (align) {
                 case 'left':
-                    return 'left-aligned';
+                    return 'Basic-Paragraph';
                 case 'right':
-                    return 'right-aligned';
+                    return 'potpis';
                 case 'center':
-                    return 'center-aligned';
+                    return 'odluka-zakon';
                 default:
-                    return 'default-aligned';
+                    return 'Basic-Paragraph';
             }
         }
 
@@ -145,7 +149,7 @@
 
         function getHtml(filename){
             var hocrContent = document.getElementById("digiteks_hocr_content");
-            dwn(`<!DOCTYPE html><html><body>${hocrToPlainHtml(hocrContent)}</body></html>`, "text/html", filename, ".html");
+            dwn(`<!DOCTYPE html><html><head><style>img {max-width:90vw}</style><meta charset="UTF-8"><link rel="stylesheet" href=""><link href="https://slgl.pravno-informacioni-sistem.rs/api/prins/glasnik.css" type="text/css" rel="stylesheet"></head><body>${hocrToPlainHtml(hocrContent)}</body></html>`, "text/html", filename, ".html");
         }
 
         function getText(filename){
@@ -394,18 +398,6 @@
             event.target.innerHTML = "";
             }
         }
-
-        const originalContents = new Map();
-        const historyQueue = [];
-        const redoQueue = [];
-        const pages = document.querySelectorAll('.ocr_page');
-        pages.forEach(page => {
-            originalContents.set(page.id, page.innerHTML);
-        });
-        pages.forEach(page => {
-            historyMap.set(page.id, [page.innerHTML]);
-            redoMap.set(page.id, []);
-        });
 
 
         function saveCurrentState(event) {
@@ -956,10 +948,20 @@
         </div>
         <script>
             window.onload = function() {
+                const pages = document.querySelectorAll('.ocr_page');
+                pages.forEach(page => {
+                    originalContents.set(page.id, page.innerHTML);
+                });
+                pages.forEach(page => {
+                    historyMap.set(page.id, [page.innerHTML]);
+                    redoMap.set(page.id, []);
+                });
+                
                 const imagesDataElement = document.getElementById('imagesData');
                 const loadingGif = document.getElementById('loading');
                 document.querySelectorAll('#SaveimagesData').forEach(setupZoomAndDrag);
                 stream_ocr('{{lang}}', loadingGif, imagesDataElement);
+
                 
             }
         </script>
