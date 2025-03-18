@@ -1,5 +1,5 @@
 from torch import tensor, no_grad, softmax
-from helper import cfg, group_into_sentences
+from helper import cfg, group_into_sentences, usual_suspects
 from stringworks import textsplit, isnumber, map_visual_similarity, calculate_similarities, harmonize_array, roman
 from torch import cuda, stack, clamp, cat, long as tlong, nn
 from transformers import AutoTokenizer, RobertaForMaskedLM, ModernBertForMaskedLM
@@ -31,7 +31,12 @@ if cfg["model"]:
     for i in range(cfg["max_len_similarity"] + 1):
         t = abs(encodes_length-i)/clip(encodes_length, a_min=i, a_max=None)
         length_similarities.append(1-t)
-    roman_boost = nparray([1+cfg["roman_numerals_boost"] if e in roman else 1 for e in encodes])
+    
+    suspect_weights = {}
+    for x in usual_suspects["strong"]:
+        suspect_weights[x] = nparray([1+3*cfg["usual_suspects_boost"] if e.strip() in usual_suspects["strong"][x] else 1 for e in encodes])
+    for x in usual_suspects["normal"]:
+        suspect_weights[x] = nparray([1+cfg["usual_suspects_boost"] if e.strip() in usual_suspects["normal"][x] else 1 for e in encodes])
 
     if cuda:
         model = modellclass.from_pretrained(cfg["model"]).to(0)
@@ -141,6 +146,7 @@ def lm_fix_words(words, confs, ocr_confs):
     token_batches, token_word = prepare_batches(words)
     to_fix = [i for i, x in enumerate(confs) if x < cfg["min_conf_combined"] and not isnumber(words[i])]
     words_to_fix_orig = [words[x] for x in to_fix]
+
     words_to_fix = [x.lower() for x in words_to_fix_orig]
     mapped_to_fix = [map_visual_similarity(x) for x in words_to_fix]
     for_masking = [[i for i, y in enumerate(token_word) if y==x] for x in to_fix]
@@ -167,9 +173,13 @@ def lm_fix_words(words, confs, ocr_confs):
             probabilities = clamp(1/probabilities/cfg["max_perplexity"], min=0, max=1)
             all_probabilities.append(probabilities.cpu().numpy())
 
-    combined_similarities += nparray(all_probabilities)*(1-ocr_confs_to_fix)
+    combined_similarities += (1-nparray(all_probabilities)) * (1-ocr_confs_to_fix) * cfg["lm_influence"]
     combined_similarities[:, special_token_indices] = 0
-    combined_similarities *= roman_boost
+
+    for i, w in enumerate(words_to_fix_orig):
+        if w.strip() in suspect_weights:
+            combined_similarities[i] *= suspect_weights[w.strip()]
+
     guesses = combined_similarities.argmax(axis=1)
     guesses = harmonize_array([encodes[x] for x in guesses], words_to_fix_orig)
     inspection_prediction = {x : y for x, y in zip(to_fix, guesses)}

@@ -97,21 +97,20 @@
         }
 
         function getAlignmentClass(align) {
-            switch (align) {
-                case 'left':
-                    return 'Basic-Paragraph';
-                case 'right':
-                    return 'potpis';
-                case 'center':
-                    return 'odluka-zakon';
-                default:
-                    return 'Basic-Paragraph';
-            }
+            const cmap = new Map();
+            {% for x in html_conf%}
+            cmap.set('{{x}}', '{{html_conf[x]}}');
+            {%endfor%}
+            for (let [k, v] of cmap) {
+                if (k === align) { 
+                    return v; 
+                }
+            }  
+            return align;
         }
 
         function hocrToPlainText(hocrElement) {
             var plainText = '';
-
             var pages = hocrElement.querySelectorAll('.ocr_page');
             pages.forEach(function(hocrPage) {
                 var paragraphs = hocrPage.querySelectorAll('.ocr_par');
@@ -149,7 +148,7 @@
 
         function getHtml(filename){
             var hocrContent = document.getElementById("digiteks_hocr_content");
-            dwn(`<!DOCTYPE html><html><head><style>img {max-width:90vw}</style><meta charset="UTF-8"><link rel="stylesheet" href=""><link href="https://slgl.pravno-informacioni-sistem.rs/api/prins/glasnik.css" type="text/css" rel="stylesheet"></head><body>${hocrToPlainHtml(hocrContent)}</body></html>`, "text/html", filename, ".html");
+            dwn(`<!DOCTYPE html><html><head><style>img {max-width:90vw}</style><meta charset="UTF-8"><link href="{{html_conf['css']}}" type="text/css" rel="stylesheet"></head><body>${hocrToPlainHtml(hocrContent)}</body></html>`, "text/html", filename, ".html");
         }
 
         function getText(filename){

@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup as bs4, Tag
 from lmworks import lm_inspect, lm_fix_words, confidence_rework, should_merge
-from helper import do, make_id
+from helper import do, make_id, cfg
 from stringworks import strip_non_alphanumeric, xsplit
 from imageworks import crop_image
 
@@ -83,8 +83,9 @@ def enrich_soup(soup, image=None):
         paragraph["image_id"] = img_id
         column_class = paragraph.get('column-type')
         column_n = paragraph.get('layout-type')
-        if column_n != 2:
+        if column_n not in cfg["valid_columns"]:
             paragraph["del-candidate"] = "yes"
+        if column_n != 2:
             process_paragraph(paragraph, global_bounds, column_n)
             get_and_set_word_paddings(paragraph, global_bounds)
         else:

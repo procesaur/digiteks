@@ -11,8 +11,20 @@
     "prefix" : ["<s>"],
     "suffix" : ["</s>"],
     "len_sim_weight" : 0.3,
-    "sim_weight" : 0.1,
-    "mapped_sim_weight" : 0.6,
+    "sim_weight" : 0.4,
+    "mapped_sim_weight" : 0.3,
     "max_len_similarity": 20,
-    "roman_numerals_boost" : 0
+    "usual_suspects_boost" : 0.15,
+    "lm_influence" : 0.2,
+    "html_config" : {
+        "css" : "https://slgl.pravno-informacioni-sistem.rs/api/prins/glasnik.css",
+        "left" : "Basic-Paragraph",
+        "justify" : "Basic-Paragraph",
+        "right" : "potpis",
+        "center" : "odluka-zakon",
+        "default" : "Basic-Paragraph",
+        "index": "broj",
+        "multicenter" : "naslov"
+    },
+    "valid_columns": [2]
 }

@@ -6,7 +6,7 @@ from numpy import uint8
 
 
 split_pattern = compile(r'([ ]?[a-zđšćžčŠĐČĆŽA-Zа-џЂ-Я]+)?([ ]?\d+)?([^a-zđšćžčŠĐČĆŽA-Zа-џЂ-Я]+)?$')
-split_pattern2 = compile(r'([ ]?[a-zđšćžčŠĐČĆŽA-Zа-џЂ-Я]+)([^a-zđšćžčŠĐČĆŽA-Zа-џЂ-Я0-9])([a-zđšćžčŠĐČĆŽA-Zа-џЂ-Я]+)([^a-zđšćžčŠĐČĆŽA-Zа-џЂ-Я0-9])$')
+split_pattern2 = compile(r'([ ]?[a-zđšćžčŠĐČĆŽA-Zа-џЂ-Я]+)([^a-zđšćžčŠĐČĆŽA-Zа-џЂ-Я0-9])([a-zđšćžčŠĐČĆŽA-Zа-џЂ-Я]+)([^a-zđšćžčŠĐČĆŽA-Zа-џЂ-Я0-9])?$')
 split_pattern3 = compile(r'([ ]?[^a-zđšćžčŠĐČĆŽA-Zа-џЂ-Я\s]+)([a-zđšćžčŠĐČĆŽA-Zа-џЂ-Я]+)$')
 
 roman = {x.lower(): x for x in [
@@ -32,8 +32,9 @@ visual_similarity = {
     'о': ['с','е','р', '0', 'ф'],
     'ц': ['ч', 'џ', ],
     'у': ['м', 'v'],
-    'ш': ['iii'],
-
+    'ш': ['iii']
+}
+visual_similarity_latin = {
     'а': ['a'],
     'б': ['b'],
     'ђ': ['s', 'š'],
@@ -48,6 +49,7 @@ visual_similarity = {
     'г' : ['r']
 }
 
+visual_similarity = {key: visual_similarity.get(key, []) + visual_similarity_latin.get(key, []) for key in set(visual_similarity) | set(visual_similarity_latin)}
 
 def isnumber(x):
     return all(c in numbers for c in x.strip())
@@ -55,8 +57,6 @@ def isnumber(x):
 
 def xsplit(x):
     x = x.replace("_", "")
-    if x in [" н", " H", " Н", " м", " М", " M"]:
-        x = " и"
     match = split_pattern.match(x)
     if not match:
         mg = []

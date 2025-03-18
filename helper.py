@@ -18,13 +18,14 @@ def make_id():
    return str(uuid4()) 
 
 
-def load_conf(path=None):
+def load_conf(path=None, file="config.json"):
     if not path:
-        path = px.join(px.dirname(__file__), "config.json")
+        path = px.join(px.dirname(__file__), file)
     with open(path, "r", encoding="utf-8") as cf:
         return load(cf)
 
 cfg = load_conf()
+usual_suspects = load_conf(file="usual_suspects.json")
 
 def isWindows():
     return name == 'nt'
