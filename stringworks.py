@@ -20,7 +20,6 @@ roman = {x.lower(): x for x in [
 
 numbers = set(digits).union(set(punctuation))
 
-
 visual_similarity = {
     'а': ['д'],
     'б': ['6'],
@@ -50,6 +49,7 @@ visual_similarity_latin = {
 }
 
 visual_similarity = {key: visual_similarity.get(key, []) + visual_similarity_latin.get(key, []) for key in set(visual_similarity) | set(visual_similarity_latin)}
+
 
 def isnumber(x):
     return all(c in numbers for c in x.strip())
@@ -103,8 +103,9 @@ def map_visual_similarity(word):
 
 def calculate_similarities(a, b):
     scores = process.cdist(
-    a, b, scorer=fuzz.ratio,
-    dtype=uint8, score_cutoff=10, workers=cpus)
+        a, b, scorer=fuzz.ratio,
+        dtype=uint8, score_cutoff=10, workers=cpus
+    )
     return scores/100
 
 

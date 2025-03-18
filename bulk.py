@@ -1,7 +1,7 @@
 import argparse
 from os import walk, path as px, makedirs
 from sys import exit
-from helper import read_file_bytes
+from helper import read_file_bytes, cfg
 from imageworks import pdf_to_images
 from ocrworks import ocr_images
 from hocrworks import hocr_to_plain_html
@@ -37,7 +37,8 @@ def process_file(path, out_type, lang, pdf):
         return "<br/>".join(hocrs)
     elif out_type == "html":
         res = "<br/>".join([hocr_to_plain_html(x) for x in hocrs])
-        return f"<!DOCTYPE html><html><body>{res}</body></html>"
+        css = cfg["html_config"]["css"]
+        return f'<!DOCTYPE html><html><head><style>img {{max-width:90vw}}</style><meta charset="UTF-8"><link href="{css}" type="text/css" rel="stylesheet"></head><body>{res}</body></html>'
        
 
 def process_files(directory, pdfs, images, output, lang, name="procesirano"):

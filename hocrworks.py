@@ -15,7 +15,7 @@ def hocr_transform(hocr, image=None):
     processes = (arrange_fix, newline_fix, punct_separation)
     for p in processes:
         hocr = p(hocr)
-    processes = (lm_processing, lm_fix)
+    processes = (lm_processing, lm_fix, postprocess)
     for p in processes:
         hocr = do(p, hocr)
     return str(hocr)
@@ -368,16 +368,10 @@ def hocr_to_plain_html(hocr_content):
 
 
 def get_alignment_class(align):
-    if align == 'center':
-        return "odluka-zakon"
-    elif align == 'left':
-        return "Basic-Paragraph"
-    elif align == 'right':
-        return "potpis"
-    elif align == 'justify':
-        return "Basic-Paragraph"
+    if align in cfg["html_config"]:
+        return cfg["html_config"][align]
     else:
-        return "Basic-Paragraph"
+        return align
 
 
 def hocr_to_plain_text(hocr_content):
@@ -392,3 +386,7 @@ def hocr_to_plain_text(hocr_content):
                 plain_text += word.text
             plain_text += "\n"
     return plain_text
+
+
+def postprocess(soup):
+    return soup
