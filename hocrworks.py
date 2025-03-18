@@ -389,4 +389,25 @@ def hocr_to_plain_text(hocr_content):
 
 
 def postprocess(soup):
+    possible_indeces = {}
+    lines = soup.find_all("span", {"class": lineclass})
+    for i, line in enumerate(lines):
+        words = line.find_all("span", {"class": "ocrx_word"})
+        if len(words) == 1:
+            word = strip_non_alphanumeric(words[0].getText()).strip()
+            if word.isnumeric():
+                possible_indeces[i] = int(word)
+
+    values = list(possible_indeces.values())
+    expected_values = set(range(min(values), max(values) + 1))
+    non_outlier_indices = [i for i, val in enumerate(values) if values.count(val) > 1 or val in expected_values]
+    print(non_outlier_indices)
+    lines = [line for i, line in enumerate(lines) if i in non_outlier_indices]
+
+    for line in lines:
+        word = line.find_all("span", {"class": "ocrx_word"})[0]
+        print(word.getText())
+
+    # tabele ovde prave problem
+
     return soup
