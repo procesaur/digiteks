@@ -24,7 +24,8 @@
         "center" : "odluka-zakon",
         "default" : "Basic-Paragraph",
         "index": "broj",
-        "multicenter" : "naslov"
+        "multicenter" : "naslov",
+        "special" : "clan"
     },
     "valid_columns": [2]
 }

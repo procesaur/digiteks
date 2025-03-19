@@ -133,3 +133,7 @@ input[type="range"] {
     width: 100%;
     height: auto;
 }
+
+.break {
+    font-weight: bold;
+}

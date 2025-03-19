@@ -64,45 +64,56 @@ function prepare(element, top=0.94, saturation=0.5) {
     }); 
 }
 
-function hocrToPlainHtml(hocrElement) {
-    var plainHtml = '';
-    var pages = hocrElement.querySelectorAll('.ocr_page');
-    pages.forEach(function(hocrPage) {
-        var paragraphs = hocrPage.querySelectorAll('.ocr_par');
-        paragraphs.forEach(function(paragraph) {
-            var align = paragraph.getAttribute('xalign');
-            var alignmentClass = getAlignmentClass(align);
-            plainHtml += `<p class="${alignmentClass}">`;
+function hocrToPlainHtml(hocrString) {
+    const parser = new DOMParser();
+    const hocrElement = parser.parseFromString(hocrString, "text/html");
 
-            var words = paragraph.querySelectorAll('.ocrx_word');
-            words.forEach(function(word) {
+    let plainHtml = '';
+    const paragraphs = hocrElement.querySelectorAll('.ocr_par');
+    paragraphs.forEach(function (paragraph, paragraphIndex) {
+        // Get alignment class
+        const align = paragraph.getAttribute('xalign');
+        const alignmentClass = getAlignmentClass(align);
+
+        // Add a <p> tag with the alignment class, or "broj" for the first paragraph
+        const classToUse = paragraphIndex === 0 ? "broj" : alignmentClass;
+        plainHtml += `<p class="${classToUse}">`;
+
+        // Process lines within the paragraph
+        const lines = paragraph.querySelectorAll('.ocrx_line');
+        lines.forEach(function (line) {
+            const words = line.querySelectorAll('.ocrx_word');
+            words.forEach(function (word) {
                 plainHtml += word.textContent;
             });
-            
-            var imgs = paragraph.querySelectorAll('img');
-            imgs.forEach(function(img) {
-                plainHtml += img.outerHTML;
-            });
-            plainHtml += '</p>\n';
         });
+
+        // Append images within the paragraph
+        const imgs = paragraph.querySelectorAll('img');
+        imgs.forEach(function (img) {
+            plainHtml += img.outerHTML;
+        });
+
+        plainHtml += '</p>\n';
     });
-    
-    return postprocess(plainHtml);
+
+    return plainHtml;
 }
 
-function hocrToPlainText(hocrElement) {
+function hocrToPlainText(hocrString) {
+    const parser = new DOMParser();
+    const hocrElement = parser.parseFromString(hocrString, "text/html");
     var plainText = '';
-    var pages = hocrElement.querySelectorAll('.ocr_page');
-    pages.forEach(function(hocrPage) {
-        var paragraphs = hocrPage.querySelectorAll('.ocr_par');
-        paragraphs.forEach(function(paragraph) {
-            var words = paragraph.querySelectorAll('.ocrx_word');
-            words.forEach(function(word) {
-                plainText += word.textContent;
-            });
-            plainText += '\n';
+
+    var paragraphs = hocrElement.querySelectorAll('.ocr_par');
+    paragraphs.forEach(function(paragraph) {
+        var words = paragraph.querySelectorAll('.ocrx_word');
+        words.forEach(function(word) {
+            plainText += word.textContent;
         });
+        plainText += '\n';
     });
+
 
     return plainText;
 }
@@ -129,8 +140,8 @@ function getHocr(filename){
 
 function getHtml(filename){
     var hocrContent = document.getElementById("digiteks_hocr_content");
-    htmls = hocrToPlainHtml(hocrContent)
-    htmls.forEach((html) => dwn(`<!DOCTYPE html><html><head><style>img {max-width:90vw}</style><meta charset="UTF-8"><link href="${css_href}" type="text/css" rel="stylesheet"></head><body>${html}</body></html>`, "text/html", filename, ".html"));
+    htmls = split(hocrContent)
+    htmls.forEach((html) => dwn(`<!DOCTYPE html><html><head><style>img {max-width:90vw}</style><meta charset="UTF-8"><link href="${css_href}" type="text/css" rel="stylesheet"></head><body>${hocrToPlainHtml(html)}</body></html>`, "text/html", filename, ".html"));
 }
 
 function getText(filename){
@@ -185,6 +196,7 @@ function handleStreaming(sessionId, loadingGif, images, imagesDataElement) {
         // Remove the hidden div containing images data when all images are processed
         if (images.length === 0) {
             loadingGif.style.display = 'none';
+            insert_breaks(resultsDiv);
             eventSource.close();
             const imagesDataDiv = document.getElementById('imagesData');
             imagesDataDiv.remove();
@@ -196,7 +208,7 @@ function handleStreaming(sessionId, loadingGif, images, imagesDataElement) {
         // Hide the loading GIF when done or on error
         loadingGif.style.display = 'none';
         eventSource.close();
-
+        
         // Remove the hidden div containing images data
         const imagesDataDiv = document.getElementById('imagesData');
         imagesDataDiv.remove();
@@ -719,4 +731,26 @@ function setupZoomAndDrag(container) {
     document.addEventListener('mousemove', drag);
     document.addEventListener('mouseup', stopDrag);
     container.addEventListener('wheel', zoom, { passive: false });
+}
+
+function split(doc){
+    const brojElements = Array.from(doc.querySelectorAll(".break"));
+
+    if (brojElements.length === 0) {
+        return [doc];
+    }
+    const splitDocs = [];
+
+    brojElements.forEach((broj, index) => {
+        const newDoc = document.implementation.createHTMLDocument("Split Doc");
+        //newDoc.body.appendChild(broj.cloneNode(true));
+        let currentNode = broj.nextSibling;
+        while (currentNode && !currentNode.matches?.(".break")) {
+            const nextNode = currentNode.nextSibling; // Save reference to the next node
+            newDoc.body.appendChild(currentNode.cloneNode(true)); // Clone and append to the new document
+            currentNode = nextNode;
+        }
+        splitDocs.push(newDoc.documentElement.outerHTML);
+    });
+    return splitDocs;
 }
