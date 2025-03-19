@@ -86,12 +86,8 @@ function hocrToPlainHtml(hocrElement) {
             plainHtml += '</p>\n';
         });
     });
-    if (typeof window[postprocess] === 'function'){
-        return postprocess(plainHtml);
-    }
-    else{
-        return [plainHtml];
-    }
+    
+    return postprocess(plainHtml);
 }
 
 function hocrToPlainText(hocrElement) {
