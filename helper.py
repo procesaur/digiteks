@@ -24,8 +24,22 @@ def load_conf(path=None, file="config.json"):
     with open(path, "r", encoding="utf-8") as cf:
         return load(cf)
 
+        
+def get_digiteks_external(path=None):
+    if not path:
+        path = px.join(px.dirname(__file__), "static/")
+    
+    path_js = px.join(path, "digiteks.js")
+    path_css = px.join(path, "digiteks.css")
+    with open(path_js, "r", encoding="utf-8") as js, open(path_css, "r", encoding="utf-8") as css:
+        return js.read(), css.read()
+
+
 cfg = load_conf()
 usual_suspects = load_conf(file="usual_suspects.json")
+
+js, css = get_digiteks_external()
+
 
 def isWindows():
     return name == 'nt'

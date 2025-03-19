@@ -1,0 +1,135 @@
+:root {
+    --topconf: 0.94;
+    --saturation: 0.5;
+    --blue : 0;
+}
+.ocr_separator {
+    border: 2px solid black;
+}
+
+.ocr_par {
+    border: 1px solid gray;
+    margin-top: 2px;
+}
+
+.ocr_image img{
+    max-width:40vw;
+}
+
+.ocr_line:after, .ocr_caption:after, .ocr_textfloat:after, .ocr_header:after, .ocr_image:after {
+    content: '\A';
+    white-space: pre;
+}
+
+.ocrx_word {
+    background-color: rgba(var(--red), 255, var(--blue), calc((1 - (var(--conf) / var(--topconf))) * 5 / var(--saturation)));
+    caret-color: black; /* Set caret color */
+    color: black; /* Ensure text color is black */
+    position: relative;
+    display:inline-block
+}
+
+*[del-candidate="yes"] {
+    background-color: rgb(210, 102, 90);
+}
+
+.process{
+    border: 3px solid #f8f4e1 !important;
+    font-size: 10pt;
+    margin-top: 2px;
+    margin-left: 5px;
+    float:right
+}
+
+input[type="range"] {
+    width: 80%;
+}
+
+.dynamic-checkbox{
+    display: inline-block !important;
+    visibility: visible !important;
+}
+
+
+.ocr_line:not(:first-of-type) .dynamic-checkbox,
+.ocr_caption:not(:first-of-type) .dynamic-checkbox,
+.ocr_textfloat:not(:first-of-type) .dynamic-checkbox,
+.ocr_header:not(:first-of-type) .dynamic-checkbox,
+.ocr_image:not(:first-of-type) .dynamic-checkbox {
+    margin-left:31px
+}
+
+
+.par-checkbox{
+    width: 12pt;
+    height: 12pt;
+}
+
+.menubutton{
+    width: 20pt;
+    height: 20pt;
+}
+
+.meni
+    {margin-bottom: 10pt;
+    position: sticky;
+    top: 0;
+    padding: 5pt;
+    background-color: beige;
+    z-index: 100;
+}
+.ocrx_word::focus {
+    background-color:white
+}
+
+#loading {
+    
+    filter: invert(100%); /* Invert colors for the loading GIF */
+}
+
+#ImgCont{
+    width: calc(50vw - 50px);
+    margin-right: 30px;
+    overflow: auto;
+    height: calc(100vh - 100px);
+}
+
+#SaveimagesData{
+    position: relative;
+    display: inline-block;
+
+    cursor: grab; /* Change cursor to indicate draggable element */
+    transition: transform 0.3s; /* Smooth zoom transition */
+}
+
+.image-container{
+    display: block;
+    position: relative;
+    left: 0px !important;
+    top: 0px !important;
+}
+
+#digiteks_hocr_content{
+    width: calc(50vw - 50px);
+    overflow-x: visible;
+    overflow-y: auto;
+    height: calc(100vh - 100px);
+    padding-right: 20px;
+}
+
+#full_hocr{
+    overflow: clip;
+}
+
+.overlay-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    width: 100%;
+}
+
+.page_image {
+    width: 100%;
+    height: auto;
+}
