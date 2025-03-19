@@ -15,7 +15,7 @@ def hocr_transform(hocr, image=None):
     processes = (arrange_fix, newline_fix, punct_separation)
     for p in processes:
         hocr = p(hocr)
-    processes = (lm_processing, lm_fix, postprocess)
+    processes = (lm_processing, lm_fix)
     for p in processes:
         hocr = do(p, hocr)
     return str(hocr)
@@ -161,6 +161,11 @@ def punct_separation(soup):
     spans = soup.find_all("span", {"class": "ocrx_word"})
     for span in spans:
         mg = xsplit(span.text)
+        if mg == [" 1"]:
+            next_sibling = span.find_next_sibling("span", {"class": "ocrx_word"})
+            prev_sibling = span.find_previous_sibling("span", {"class": "ocrx_word"})
+            if not next_sibling and not prev_sibling:
+                mg = [" I"]
         new_spans = []
         for x in mg:
             new_word_span = Tag(name="span", attrs=span.attrs)
@@ -386,28 +391,3 @@ def hocr_to_plain_text(hocr_content):
                 plain_text += word.text
             plain_text += "\n"
     return plain_text
-
-
-def postprocess(soup):
-    possible_indeces = {}
-    lines = soup.find_all("span", {"class": lineclass})
-    for i, line in enumerate(lines):
-        words = line.find_all("span", {"class": "ocrx_word"})
-        if len(words) == 1:
-            word = strip_non_alphanumeric(words[0].getText()).strip()
-            if word.isnumeric():
-                possible_indeces[i] = int(word)
-
-    values = list(possible_indeces.values())
-    expected_values = set(range(min(values), max(values) + 1))
-    non_outlier_indices = [i for i, val in enumerate(values) if values.count(val) > 1 or val in expected_values]
-    print(non_outlier_indices)
-    lines = [line for i, line in enumerate(lines) if i in non_outlier_indices]
-
-    for line in lines:
-        word = line.find_all("span", {"class": "ocrx_word"})[0]
-        print(word.getText())
-
-    # tabele ovde prave problem
-
-    return soup

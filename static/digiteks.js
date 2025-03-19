@@ -86,7 +86,12 @@ function hocrToPlainHtml(hocrElement) {
             plainHtml += '</p>\n';
         });
     });
-    return plainHtml;
+    if (typeof window[postprocess] === 'function'){
+        return postprocess(plainHtml);
+    }
+    else{
+        return [plainHtml];
+    }
 }
 
 function hocrToPlainText(hocrElement) {
@@ -128,7 +133,8 @@ function getHocr(filename){
 
 function getHtml(filename){
     var hocrContent = document.getElementById("digiteks_hocr_content");
-    dwn(`<!DOCTYPE html><html><head><style>img {max-width:90vw}</style><meta charset="UTF-8"><link href="{{html_conf['css']}}" type="text/css" rel="stylesheet"></head><body>${hocrToPlainHtml(hocrContent)}</body></html>`, "text/html", filename, ".html");
+    htmls = hocrToPlainHtml(hocrContent)
+    htmls.forEach((html) => dwn(`<!DOCTYPE html><html><head><style>img {max-width:90vw}</style><meta charset="UTF-8"><link href="${css_href}" type="text/css" rel="stylesheet"></head><body>${html}</body></html>`, "text/html", filename, ".html"));
 }
 
 function getText(filename){
@@ -656,6 +662,7 @@ function MarkAndZoom(image_id, x1, x2, y1, y2, zoom=2, padding = 4) {
     }
 }
 
+
 function hidePopup() {
     document.getElementById('overlay').style.display = 'none';
     document.getElementById('popup').style.display = 'none';
@@ -675,29 +682,17 @@ function setupZoomAndDrag(container) {
     let scale = 1;
     let isDragging = false;
     let startX, startY;
-    let wasDragging = false; // Flag to track if dragging occurred
 
     function zoom(event) {
+        
         if (event.ctrlKey) { // Check if Ctrl key is pressed
             event.preventDefault();
             const newScale = scale + event.deltaY * -0.001;
-            // Only allow zooming in, but allow zooming out to the original size
             if (newScale >= 1 && newScale <= 3) {
                 scale = newScale;
                 container.style.width = `${scale * 100}%`;
-                if (scale == 1) {
-                    container.style.left = '0px';
-                    container.style.top = '0px';
-                }
             }
         }
-    }
-
-    function handleZoom(event) {
-        if (!wasDragging) {
-            zoom(event);
-        }
-        wasDragging = false; // Reset the flag
     }
 
     function startDrag(event) {
@@ -706,7 +701,7 @@ function setupZoomAndDrag(container) {
         startY = event.clientY;
         scrollLeft = container.parentElement.scrollLeft;
         scrollTop = container.parentElement.scrollTop;
-        container.style.cursor = 'grabbing'; // Change cursor to grabbing
+        container.style.cursor = 'grabbing'; 
     }
 
     function drag(event) {
@@ -721,11 +716,11 @@ function setupZoomAndDrag(container) {
 
     function stopDrag() {
         isDragging = false;
-        container.style.cursor = 'grab'; // Change cursor back to grab
+        container.style.cursor = 'grab';
     }
 
-    container.addEventListener('wheel', handleZoom);
     container.addEventListener('mousedown', startDrag);
     document.addEventListener('mousemove', drag);
     document.addEventListener('mouseup', stopDrag);
+    container.addEventListener('wheel', zoom, { passive: false });
 }

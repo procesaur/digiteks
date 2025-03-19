@@ -30,15 +30,16 @@ def get_digiteks_external(path=None):
         path = px.join(px.dirname(__file__), "static/")
     
     path_js = px.join(path, "digiteks.js")
+    path_pjs = px.join(path, "postprocess.js")
     path_css = px.join(path, "digiteks.css")
-    with open(path_js, "r", encoding="utf-8") as js, open(path_css, "r", encoding="utf-8") as css:
-        return js.read(), css.read()
+    with open(path_js, "r", encoding="utf-8") as js, open(path_pjs, "r", encoding="utf-8") as postjs, open(path_css, "r", encoding="utf-8") as css:
+        return js.read(), postjs.read(), css.read()
 
 
 cfg = load_conf()
 usual_suspects = load_conf(file="usual_suspects.json")
 
-js, css = get_digiteks_external()
+js, postjs, css = get_digiteks_external()
 
 
 def isWindows():

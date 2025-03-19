@@ -6,7 +6,7 @@ from imageworks import pdf_to_images, image_zip_to_images
 from hocrworks import hocr_to_plain_html, hocr_to_plain_text
 from webbrowser import open_new
 from threading import Timer
-from helper import zip_bytes_string, do, encode_images, decode_images, make_id, cfg, css, js
+from helper import zip_bytes_string, do, encode_images, decode_images, make_id, cfg, css, js, postjs
 
 
 app = Flask(__name__)
@@ -43,7 +43,7 @@ def ini(lang):
     else:
         images = image_zip_to_images(file_bytes)
 
-    return render_template('digiteks.html', lang=lang, html_conf=cfg["html_config"], images=encode_images(images), js=js, css=css, filename=filename)
+    return render_template('digiteks.html', lang=lang, html_conf=cfg["html_config"], images=encode_images(images), js=js, postjs=postjs, css=css, filename=filename)
 
 @app.route('/imgdown', methods=['POST', 'GET'])
 def imgdown():
