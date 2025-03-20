@@ -131,7 +131,7 @@ def newline_fix(soup):
         
         if last and next:
             try:
-                if last["maybe_broken"] == "yes" and  next["maybe_broken"] == "yes":
+                if last["maybe_broken"] == "yes" and  next["maybe_broken"] == "yes" and not next.getText().strip()[0].isnumeric():
                     if last.getText()[-1] in dahses:
                         last.string = strip_non_alphanumeric(last.getText()) + next.getText().lstrip()
                         next.decompose()

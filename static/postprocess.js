@@ -1,47 +1,42 @@
 // Helper function: Find the best consecutive keys
-function findBestConsecutiveKeys(data, distance = 4) {
-    // Convert data (object) to an array of key-value pairs and sort by value
-    const sortedItems = Object.entries(data).sort((a, b) => a[1] - b[1]);
+function findBestConsecutiveKeys(data, distance = 4, allowGap = true) {
+    const keys = Object.keys(data).map(Number); // Extract keys as numbers
+    const values = Object.values(data); // Extract values
     let result = [];
-    let currentSequence = [parseInt(sortedItems[0][0])]; // Start with the key of the first item
 
-    for (let i = 1; i < sortedItems.length; i++) {
-        const currentKey = parseInt(sortedItems[i][0]);
-        const currentValue = sortedItems[i][1];
-        const prevValue = sortedItems[i - 1][1];
+    // Iterate through the values
+    values.forEach((value, index) => {
+        let currentSequence = [{ key: keys[index], value }]; // Start a new sequence with the current item
 
-        // Check if the values are consecutive or allow for one gap
-        if (currentValue === prevValue + 1 || currentValue === prevValue + 2) {
-            currentSequence.push(currentKey);
-        } else {
-            // If the sequence is broken, save it and start a new one
-            if (currentSequence.length > 1) {
-                result.push(currentSequence);
+        for (let i = 0; i < values.length; i++) {
+            if (i === index) continue; // Skip the current value itself
+
+            const nextKey = keys[i];
+            const nextValue = values[i];
+            const keyDifference = nextKey - currentSequence[currentSequence.length - 1].key;
+            const valueDifference = nextValue - currentSequence[currentSequence.length - 1].value;
+
+            // Check if conditions for consecutiveness (and key distance) are met
+            if (
+                keyDifference >= distance &&
+                (valueDifference === 1 || (allowGap && valueDifference === 2))
+            ) {
+                currentSequence.push({ key: nextKey, value: nextValue });
             }
-            currentSequence = [currentKey];
         }
-    }
+        // Add the found sequence to the result
+        if (currentSequence.length > 1) {
+            result.push(currentSequence);
+        }
+    });
 
-    // Add the last sequence
-    if (currentSequence.length > 1) {
-        result.push(currentSequence);
-    }
+    // Find the longest sequence
+    let longestSequence = result.reduce((longest, current) => 
+        current.length > longest.length ? current : longest, []);
 
-    // Eliminate sequences where distances between consecutive keys are less than 'distance'
-    const filteredResult = result.filter(sequence =>
-        sequence.every((key, index) =>
-            index === 0 || Math.abs(key - sequence[index - 1]) >= distance
-        )
-    );
-
-    // Select the sequence with the largest sum of values
-    const bestSequence = filteredResult.reduce((best, sequence) => {
-        const sumValues = sequence.reduce((sum, key) => sum + data[key], 0);
-        const bestSum = best.reduce((sum, key) => sum + data[key], 0);
-        return sumValues > bestSum ? sequence : best;
-    }, []);
-
-    return bestSequence;
+    // Extract and return the keys of the longest sequence
+    const longestKeys = longestSequence.map(item => item.key);
+    return longestKeys;
 }
 
 function insert_breaks(doc) {
@@ -60,22 +55,20 @@ function insert_breaks(doc) {
     });
 
     const bestIndexes = findBestConsecutiveKeys(possibleIndexes);
-    console.log(bestIndexes);
-
     const filteredLines = Array.from(lines).filter((_, i) => bestIndexes.includes(i));
 
     filteredLines.forEach(line => {
         // Step 1: Check if the line has previous and next siblings
         const prevSiblings = [];
         let prev = line.previousElementSibling; // Only consider element siblings
-        while (prev && prev.classList.contains("ocrx_line")) {
+        while (prev && prev.classList.contains(lc)) {
             prevSiblings.unshift(prev); // Collect previous siblings
             prev = prev.previousElementSibling;
         }
 
         const nextSiblings = [];
         let next = line.nextElementSibling; // Only consider element siblings
-        while (next && next.classList.contains("ocrx_line")) {
+        while (next && next.classList.contains(lc)) {
             nextSiblings.push(next); // Collect next siblings
             next = next.nextElementSibling;
         }
@@ -115,7 +108,7 @@ function insert_breaks(doc) {
         parentPar.parentNode.insertBefore(breakElement, parentPar);
     });
 
-    alert("ХТМЛ је у потпуности обрађен и распарчан на акта.");
+    alert("Документ је у потпуности обрађен и распарчан на акта.");
 }
 
 

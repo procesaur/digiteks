@@ -73,14 +73,10 @@ function hocrToPlainHtml(hocrString) {
     paragraphs.forEach(function (paragraph, paragraphIndex) {
         // Get alignment class
         const align = paragraph.getAttribute('xalign');
-        const alignmentClass = getAlignmentClass(align);
-
-        // Add a <p> tag with the alignment class, or "broj" for the first paragraph
-        const classToUse = paragraphIndex === 0 ? "broj" : alignmentClass;
-        plainHtml += `<p class="${classToUse}">`;
+        plainHtml += `<p class="${getAlignmentClass(align)}">`;
 
         // Process lines within the paragraph
-        const lines = paragraph.querySelectorAll('.ocrx_line');
+        const lines = paragraph.querySelectorAll(lc);
         lines.forEach(function (line) {
             const words = line.querySelectorAll('.ocrx_word');
             words.forEach(function (word) {
@@ -204,14 +200,6 @@ function handleStreaming(sessionId, loadingGif, images, imagesDataElement) {
     };
 
     eventSource.onerror = function(event) {
-        console.error('EventSource error:', event); // Debugging: Print error event
-        // Hide the loading GIF when done or on error
-        loadingGif.style.display = 'none';
-        eventSource.close();
-        
-        // Remove the hidden div containing images data
-        const imagesDataDiv = document.getElementById('imagesData');
-        imagesDataDiv.remove();
     };
 }
 
