@@ -6,8 +6,11 @@
 
     <script>
         const css_href="{{html_conf['css']}}";
+        const break_regex_str = "{{html_conf['insert_break_regex']}}";
+        const break_regex = break_regex_str !== "" ? new RegExp(break_regex_str) : "";
+        const break_message = "{{html_conf['break_message']}}";
         {{js|safe}}
-        {{postjs|safe}}      
+        {{postjs|safe}}
     </script>
     <style>
         {{css|safe}}      

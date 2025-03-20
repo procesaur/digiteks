@@ -16,6 +16,7 @@
     "max_len_similarity": 20,
     "usual_suspects_boost" : 0.15,
     "lm_influence" : 0.2,
+    "valid_columns": [2],
     "html_config" : {
         "css" : "https://slgl.pravno-informacioni-sistem.rs/api/prins/glasnik.css",
         "left" : "Basic-Paragraph",
@@ -23,9 +24,11 @@
         "right" : "potpis",
         "center" : "odluka-zakon",
         "default" : "Basic-Paragraph",
+        "insert_break_regex" : "^[0-9]+$",
+        "break_message" : "Документ је у потпуности обрађен и распарчан.",
+
         "index": "broj",
         "multicenter" : "naslov",
         "special" : "clan"
-    },
-    "valid_columns": [2]
+    } 
 }
