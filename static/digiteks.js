@@ -1,4 +1,4 @@
-const lc = '.ocr_line, .ocr_caption, .ocr_textfloat, .ocr_header, .ocr_image';
+const lc = '.ocr_line, .ocr_caption, .ocr_textfloat, .ocr_header, .ocr_image, .break';
 const originalContents = new Map();
 const historyQueue = [];
 const redoQueue = [];
@@ -179,12 +179,13 @@ function handleStreaming(sessionId, loadingGif, images, imagesDataElement) {
         prepare(resultElement)
         resultsDiv.appendChild(resultElement);
 
-        const pages = resultElement.querySelectorAll('.ocr_page');
+        if (images.length != 0) {
+            const pages = resultElement.querySelectorAll('.ocr_page');
 
-        pages.forEach(page => {
-            originalContents.set(page.id, page.innerHTML);
-        });
-
+            pages.forEach(page => {
+                originalContents.set(page.id, page.innerHTML);
+            });
+        }
         // Remove the processed image from the images data
         images.shift();
         imagesDataElement.dataset.images = JSON.stringify(images);
@@ -193,7 +194,10 @@ function handleStreaming(sessionId, loadingGif, images, imagesDataElement) {
         if (images.length === 0) {
             loadingGif.style.display = 'none';
             insert_breaks(resultsDiv, break_regex, break_message);
-   
+            const pages2 = resultsDiv.querySelectorAll('.ocr_page');
+            pages2.forEach(page => {
+                originalContents.set(page.id, page.innerHTML);
+            });
             eventSource.close();
             const imagesDataDiv = document.getElementById('imagesData');
             if (imagesDataDiv != null){
@@ -301,13 +305,19 @@ function getSelected(){
 
     const areas = new Map();
     elements.forEach(element => {
-    const parentArea = element.closest('.ocr_par');
-    if (parentArea) {
-        if (!areas.has(parentArea)) {
-            areas.set(parentArea, []);
+        if (element.classList.contains("break")){
+            areas.set(element, []);
+            areas.get(element).push(element);
         }
-        areas.get(parentArea).push(element);
-    }
+        else{
+            const parentArea = element.closest('.ocr_par');
+            if (parentArea) {
+                if (!areas.has(parentArea)) {
+                    areas.set(parentArea, []);
+                }
+                areas.get(parentArea).push(element);
+            }
+        }
     });
     return {elements: elements,
             areas: areas,
@@ -328,7 +338,7 @@ function MoveUp() {
     areas.forEach((selectedLines, area) => {
         const allLines = Array.from(area.querySelectorAll(lc));
         var parcheckbox = area.querySelector('.par-checkbox');
-        if (selectedLines.length === allLines.length && parcheckbox && parcheckbox.checked) {
+        if (selectedLines.length >= allLines.length && parcheckbox && parcheckbox.checked) {
             // If all lines are selected, move the entire '.ocr_par'
             const prevArea = area.previousElementSibling;
             if (prevArea && prevArea.classList.contains('ocr_par')) {
@@ -360,7 +370,7 @@ function MoveDown() {
     areas.forEach((selectedLines, area) => {
         const allLines = Array.from(area.querySelectorAll(lc));
         var parcheckbox = area.querySelector('.par-checkbox');
-        if (selectedLines.length === allLines.length && parcheckbox && parcheckbox.checked) {
+        if (selectedLines.length >= allLines.length && parcheckbox && parcheckbox.checked) {
             // If all lines are selected, move the entire '.ocr_par'
             const nextArea = area.nextElementSibling;
             if (nextArea && nextArea.classList.contains('ocr_par')) {
@@ -543,8 +553,7 @@ function Figurize() {
     button.innerHTML = "🔍";  
     button.setAttribute("onclick", "showPopupevent(event)");
     button.setAttribute("style", "float:right");
-
-
+s
     newLine.insertBefore(checkbox, newLine.firstChild);
     newSpan.insertBefore(button, newSpan.firstChild);
     newSpan.insertBefore(checkbox2, newSpan.firstChild);
@@ -593,6 +602,17 @@ function VerifyBulk() {
     });
     saveCurrentStatePages(pages);
 }
+
+function add_break() {
+    const selected = getSelected();
+    const areas = selected.areas;
+    const pages = selected.pages;
+    areas.forEach((selectedLines, area) => {
+        insert_break_before(area);
+    });
+    saveCurrentStatePages(pages);
+}
+
 
 function showPopup_old(image_id, x1, x2, y1, y2) {
     if (x1 && x2 && y1 && y2 && image_id){
@@ -755,8 +775,6 @@ function split(doc){
     return splitDocs;
 }
 
-
-// Helper function: Find the best consecutive keys
 function findBestConsecutiveKeys(data, distance = 4, allowGap = true) {
     const keys = Object.keys(data).map(Number); // Extract keys as numbers
     const values = Object.values(data); // Extract values
@@ -795,6 +813,21 @@ function findBestConsecutiveKeys(data, distance = 4, allowGap = true) {
     // Extract and return the keys of the longest sequence
     const longestKeys = longestSequence.map(item => item.key);
     return longestKeys;
+}
+
+function insert_break_before(x){
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'dynamic-checkbox par-checkbox';
+
+    const breakElement = document.createElement("p");
+    breakElement.classList.add("break");
+    breakElement.innerHTML = "BREAK"
+
+    breakElement.style.position = 'relative'; 
+    breakElement.insertBefore(checkbox, breakElement.firstChild);
+
+    x.parentNode.insertBefore(breakElement, x);
 }
 
 function insert_breaks(doc, break_regex="", message="") {
@@ -858,12 +891,9 @@ function insert_breaks(doc, break_regex="", message="") {
                 nextSiblings.forEach((sibling) => newNextPar.appendChild(sibling));
                 parentPar.parentNode.insertBefore(newNextPar, parentPar.nextSibling);
             }
-    
-            // Step 3: In the par that contains the line of interest, append the "break" element before the line
-            const breakElement = document.createElement("div");
-            breakElement.classList.add("break");
-            breakElement.innerHTML = "BREAK"
-            parentPar.parentNode.insertBefore(breakElement, parentPar);
+
+            insert_break_before(parentPar);
+
         });
         if (message != ""){
             alert(message);
