@@ -7,7 +7,7 @@ from numpy import uint8
 
 split_pattern = compile(r'([ ]?[a-zđšćžčŠĐČĆŽA-Zа-џЂ-Я]+)?([ ]?\d+)?([^a-zđšćžčŠĐČĆŽA-Zа-џЂ-Я]+)?$')
 split_pattern2 = compile(r'([ ]?[a-zđšćžčŠĐČĆŽA-Zа-џЂ-Я]+)([^a-zđšćžčŠĐČĆŽA-Zа-џЂ-Я0-9])([a-zđšćžčŠĐČĆŽA-Zа-џЂ-Я]+)([^a-zđšćžčŠĐČĆŽA-Zа-џЂ-Я0-9])?$')
-split_pattern3 = compile(r'([ ]?[^a-zđšćžčŠĐČĆŽA-Zа-џЂ-Я\s]+)([a-zđšćžčŠĐČĆŽA-Zа-џЂ-Я]+)$')
+split_pattern3 = compile(r'([ ]?[^a-zđšćžčŠĐČĆŽA-Zа-џЂ-Я0-9\s]+)([a-zđšćžčŠĐČĆŽA-Zа-џЂ-Я0-9]+)([^a-zđšćžčŠĐČĆŽA-Zа-џЂ-Я0-9\s]+)$')
 
 roman = {x.lower(): x for x in [
         "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",

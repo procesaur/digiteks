@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
     <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='main.css') }}">
@@ -70,6 +70,7 @@
                     <button class="menubutton" title="Корак уназад" onclick="undo()">↩</button>
                     <button class="menubutton" title="Корак унапред" onclick="redo()">↪</button>
                 </div>
+                {{hocr|safe}}
             </div>
         </div>
         <script>
@@ -78,10 +79,10 @@
                 pages.forEach(page => {
                     originalContents.set(page.id, page.innerHTML);
                 });
-                pages.forEach(page => {
-                    historyMap.set(page.id, [page.innerHTML]);
-                    redoMap.set(page.id, []);
-                });
+                //pages.forEach(page => {
+                //    historyMap.set(page.id, [page.innerHTML]);
+                //    redoMap.set(page.id, []);
+                //});
                 
                 const imagesDataElement = document.getElementById('imagesData');
                 const loadingGif = document.getElementById('loading');
@@ -99,9 +100,7 @@
                         return v; 
                     }
                 }  
-            return align;
-
-            
+            return align; 
         }
         </script>
     </div>

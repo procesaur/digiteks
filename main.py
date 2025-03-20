@@ -42,7 +42,7 @@ def ini(lang):
     else:
         images = image_zip_to_images(file_bytes)
 
-    return render_template('digiteks.html', lang=lang, html_conf=cfg["html_config"], images=encode_images(images), js=js, postjs=postjs, css=css, filename=filename)
+    return render_template('digiteks.html', lang=lang, html_conf=cfg["html_config"], images=encode_images(images), js=js, postjs=postjs, css=css, filename=filename, hocr="")
 
 @app.route('/imgdown', methods=['POST', 'GET'])
 def imgdown():

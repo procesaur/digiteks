@@ -1,17 +1,19 @@
 import argparse
 from os import walk, path as px, makedirs
 from sys import exit
-from helper import read_file_bytes, cfg, js, postjs
+from helper import read_file_bytes, cfg, js, postjs, css
 from imageworks import pdf_to_images
 from ocrworks import ocr_images
+from flask import render_template, Flask
 
 
-output_types = ["html", "hocr"]
+app = Flask(__name__)
+app.config['SERVER_NAME'] = 'localhost:5000' 
+app.config['APPLICATION_ROOT'] = '/'         
+app.config['PREFERRED_URL_SCHEME'] = 'http'
+output_types = ["hocr"] # ["html", "hocr"]
 langs = ["srp+srp_latn+eng", "srp_latn+srp+eng", "srp", "srp_latn", "eng", "equ"]
 image_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff']
-
-
-
 
 
 def list_files(directory):
@@ -35,13 +37,10 @@ def process_file(path, out_type, lang, pdf):
         images_in_bytes = [file_bytes]
     
     hocrs = ocr_images(images_in_bytes, lang, just_result=True)
-    if out_type == "hocr":
-        return "<br/>".join(hocrs)
-    elif out_type == "html":
-        res = "<br/>"#.join([hocr_to_plain_html(x) for x in hocrs])
-        css = cfg["html_config"]["css"]
-        return f'<!DOCTYPE html><html><head><style>img {{max-width:90vw}}</style><meta charset="UTF-8"><link href="{css}" type="text/css" rel="stylesheet"></head><body>{res}</body></html>'
-       
+    with app.app_context():
+        result = render_template('digiteks.html', lang=lang, html_conf=cfg["html_config"], images=[], js=js, postjs=postjs, css=css, filename=px.basename(path), hocr = "<br/>".join(hocrs))
+    return result
+
 
 def process_files(directory, pdfs, images, output, lang, name="procesirano"):
     procesirano_path = px.join(directory, name)
@@ -54,12 +53,12 @@ def process_files(directory, pdfs, images, output, lang, name="procesirano"):
         base_name = px.splitext(px.basename(file_path))[0]
         html_file_path = px.join(new_dir, base_name + ".html")
 
-        try:
+        if True:
             result = process_file(file_path, output, lang, pdf)
             if result:
                 with open(html_file_path, 'w', encoding="utf-8") as f:
                     f.write(result)
-        except:
+        else:
            print(f"Neuspešno za {file_path}")
 
     for path in pdfs:

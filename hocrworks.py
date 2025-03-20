@@ -18,6 +18,7 @@ def hocr_transform(hocr, image=None):
     processes = (lm_processing, lm_fix)
     for p in processes:
         hocr = do(p, hocr)
+    hocr = prepare_hocr(hocr)
     return str(hocr)
 
 
@@ -104,7 +105,7 @@ def enrich_soup(soup, image=None):
 def newline_fix(soup):
     lines = soup.find_all("span", {"class": lineclass})
     dahses = ["-", "«", "－", "-", "﹣", "֊", "᠆", "‐", "-", "–", "—", "﹘", "―", "⁓", "⹝", "〜", "𐺭", "⸚", "־", "−", "⁻", "₋", "~", "="]
-    not_dashes = [",", ".", "\"", ":"]
+    not_dashes = [",", ".", "\"", ":", ";"]
     for i, line in enumerate(lines):
         if lines[i].find_all("span", {"class": "ocrx_word"}):
             last = lines[i].find_all("span", {"class": "ocrx_word"})[-1]
@@ -131,7 +132,7 @@ def newline_fix(soup):
         
         if last and next:
             try:
-                if last["maybe_broken"] == "yes" and  next["maybe_broken"] == "yes" and not next.getText().strip()[0].isnumeric():
+                if last["maybe_broken"] == "yes" and  next["maybe_broken"] == "yes" and not next.getText().strip().isnumeric():
                     if last.getText()[-1] in dahses:
                         last.string = strip_non_alphanumeric(last.getText()) + next.getText().lstrip()
                         next.decompose()
@@ -346,3 +347,52 @@ def get_and_set_word_paddings(paragraph, global_bounds, tolerance=100):
                 word["maybe_broken"] = "yes"
             else:
                 word["maybe_broken"] = "no"
+
+
+def prepare_hocr(element, top=0.94, saturation=0.5):
+     # Move '.ocr_par' elements from '.ocr_carea' to their parent and remove '.ocr_carea'
+    ocr_careas = element.select('.ocr_carea')
+    for carea in ocr_careas:
+        ocr_pars = carea.select('.ocr_par')
+        for par in ocr_pars:
+            carea.parent.append(par)  # Move '.ocr_par' to parent
+        carea.decompose()  # Remove '.ocr_carea'
+
+    # Process '.ocrx_word' elements
+    words = element.select('.ocrx_word')
+    for word in words:
+        conf = word.get('new_conf')  # Assuming new_conf is an attribute
+        old_value = word.get('data-original')
+        new_value = word.text.strip()  # Extract current text
+
+        if old_value != new_value and new_value == word.get('lm_guess'):
+            word['style'] = f"--red:0; --blue:255; --conf:{conf};"
+        else:
+            word['style'] = f"--red:255; --blue:0; --conf:{conf};"
+
+        word['contenteditable'] = 'true'
+        word['onblur'] = 'handleTextChange(event)'
+        word['onkeydown'] = 'MaybeDelete(event)'
+
+    # Process lines (example using a variable `lc` for selectors)
+    lc = ".ocr_line, .ocr_caption, .ocr_textfloat, .ocr_header, .ocr_image, .break"
+    lines = element.select(lc)
+    for line in lines:
+        checkbox = element.new_tag('input', attrs={'type':'checkbox', 'class':'dynamic-checkbox'})
+        line['style'] = 'position: relative;'
+        line.insert(0, checkbox)  # Insert the checkbox at the beginning
+
+    # Process '.ocr_par' elements
+    ocr_pars = element.select('.ocr_par')
+    for par in ocr_pars:
+        checkbox = element.new_tag('input', attrs={'type':'checkbox', 'class':'dynamic-checkbox par-checkbox'})
+        button = element.new_tag('button', onclick='showPopupevent(event)')
+        button.string = '🔍'
+        button['style'] = 'float: right;'
+
+        par['style'] = 'position: relative;'
+        par.insert(0, button)  # Insert button at the beginning
+        par.insert(0, checkbox)  # Insert checkbox at the beginning
+        par['onclick'] = 'checkall(event)'
+
+    return element

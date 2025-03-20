@@ -3,66 +3,7 @@ const originalContents = new Map();
 const historyQueue = [];
 const redoQueue = [];
 
-function prepare(element, top=0.94, saturation=0.5) {
-    const ocrCareas = element.querySelectorAll('.ocr_carea');
-    ocrCareas.forEach(carea => {
-        const ocrPars = carea.querySelectorAll('.ocr_par');
-        ocrPars.forEach(par => {
-            carea.parentNode.appendChild(par);
-        });
-        carea.remove();
-    });
 
-    const words = element.querySelectorAll('.ocrx_word');
-
-    Array.from(words).forEach(function (word) {
-        var conf = parseInt(word.title.substring(word.title.lastIndexOf(' ')))/100;
-        var conf = word.getAttribute("new_conf");
-
-        const oldValue = word.dataset.original;
-        const newValue = word.innerText;
-
-        if (oldValue != newValue && newValue==word.getAttribute("lm_guess")){
-            word.style  = "--red:0; --blue:255; --conf:"+conf;
-        }
-        else{
-            word.style  = "--red:255; --blue:0; --conf:"+conf;
-        }
-    
-        //word.dataset.original = word.innerText;
-        word.contentEditable = 'true';
-        word.setAttribute("onblur", "handleTextChange(event)");
-        word.setAttribute("onkeydown", "MaybeDelete(event)");
-    });
-
-    const lines = element.querySelectorAll(lc);
-
-    Array.from(lines).forEach(function (line) {
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.name = line.id;
-        checkbox.className = 'dynamic-checkbox';
-        line.style.position = 'relative'; 
-        line.insertBefore(checkbox, line.firstChild);
-    }); 
-
-    const pars = element.querySelectorAll('.ocr_par');
-
-    Array.from(pars).forEach(function (par) {
-
-        const checkbox = document.createElement('input');
-        const button = document.createElement('button');
-        button.textContent = '🔍';
-        button.setAttribute('onclick', 'showPopupevent(event)');    
-        button.style.float = "right";  
-        checkbox.type = 'checkbox';
-        checkbox.className = 'dynamic-checkbox par-checkbox';
-        par.style.position = 'relative'; 
-        par.insertBefore(button, par.firstChild);
-        par.insertBefore(checkbox, par.firstChild);
-        par.setAttribute("onclick", "checkall(event)");
-    }); 
-}
 
 function hocrToPlainHtml(hocrString) {
     const parser = new DOMParser();
@@ -176,7 +117,6 @@ function handleStreaming(sessionId, loadingGif, images, imagesDataElement) {
 
         // Append the result to the digiteks_hocr_content element
         const resultsDiv = document.getElementById('digiteks_hocr_content');
-        prepare(resultElement)
         resultsDiv.appendChild(resultElement);
 
         if (images.length != 0) {
@@ -242,6 +182,7 @@ function stream_ocr(lang, loadingGif, imagesDataElement ) {
         .catch(error => {
             console.error('Fetch error:', error); // Debugging: Print fetch error
             loadingGif.style.display = 'none';
+            insert_breaks(document.getElementById('digiteks_hocr_content'), break_regex, break_message);
         });
     }
     else{
@@ -500,7 +441,7 @@ function Figurize() {
     const allSameImageId = image_ids.every((val, i, arr) => val === arr[0]);
 
     if (!allSameImageId) {
-        alert('Сви параграфи морају бити са исте стране.');
+        console.log('Сви параграфи морају бити са исте стране.');
         return;
     }
     
@@ -553,7 +494,7 @@ function Figurize() {
     button.innerHTML = "🔍";  
     button.setAttribute("onclick", "showPopupevent(event)");
     button.setAttribute("style", "float:right");
-s
+
     newLine.insertBefore(checkbox, newLine.firstChild);
     newSpan.insertBefore(button, newSpan.firstChild);
     newSpan.insertBefore(checkbox2, newSpan.firstChild);
@@ -847,19 +788,20 @@ function insert_breaks(doc, break_regex="", message="") {
     
         const bestIndexes = findBestConsecutiveKeys(possibleIndexes);
         const filteredLines = Array.from(lines).filter((_, i) => bestIndexes.includes(i));
-    
+        const classList = lc.replace(/\./g, '').split(', '); // Remove dots and split into an array
+
         filteredLines.forEach(line => {
             // Step 1: Check if the line has previous and next siblings
             const prevSiblings = [];
             let prev = line.previousElementSibling; // Only consider element siblings
-            while (prev && prev.classList.contains(lc)) {
+            while (prev && classList.some(cls => prev.classList.contains(cls))) {
                 prevSiblings.unshift(prev); // Collect previous siblings
                 prev = prev.previousElementSibling;
             }
     
             const nextSiblings = [];
             let next = line.nextElementSibling; // Only consider element siblings
-            while (next && next.classList.contains(lc)) {
+            while (next && classList.some(cls => next.classList.contains(cls))) {
                 nextSiblings.push(next); // Collect next siblings
                 next = next.nextElementSibling;
             }
@@ -873,30 +815,39 @@ function insert_breaks(doc, break_regex="", message="") {
     
             // Step 2: Split the parent ".ocrx_par" into groups
             const parentAttributes = Array.from(parentPar.attributes); // Copy original attributes
-    
+            const buttonsAndInputs = parentPar.querySelectorAll(":scope > button, :scope > input"); // Select all buttons and inputs
+
             // Create new parent for previous siblings (if exist)
             if (prevSiblings.length > 0) {
-                const newPrevPar = document.createElement("div");
+                const newPrevPar = document.createElement("p");
                 newPrevPar.classList.add("ocr_par");
                 parentAttributes.forEach((attr) => newPrevPar.setAttribute(attr.name, attr.value));
                 prevSiblings.forEach((sibling) => newPrevPar.appendChild(sibling));
                 parentPar.parentNode.insertBefore(newPrevPar, parentPar);
+                buttonsAndInputs.forEach((element) => {
+                    const clonedElement = element.cloneNode(true); // Clone the element (true for deep cloning)
+                    newPrevPar.insertBefore(clonedElement, newPrevPar.firstChild); // Prepend cloned element to newPrevPar // Append cloned element to newPrevPar
+                });
             }
     
             // Create new parent for next siblings (if exist)
             if (nextSiblings.length > 0) {
-                const newNextPar = document.createElement("div");
+                const newNextPar = document.createElement("p");
                 newNextPar.classList.add("ocr_par");
                 parentAttributes.forEach((attr) => newNextPar.setAttribute(attr.name, attr.value));
                 nextSiblings.forEach((sibling) => newNextPar.appendChild(sibling));
                 parentPar.parentNode.insertBefore(newNextPar, parentPar.nextSibling);
+                buttonsAndInputs.forEach((element) => {
+                    const clonedElement = element.cloneNode(true); // Clone the element (true for deep cloning)
+                    newNextPar.insertBefore(clonedElement, newNextPar.firstChild); // Prepend cloned element to newPrevPar // Append cloned element to newPrevPar
+                });
             }
 
             insert_break_before(parentPar);
 
         });
         if (message != ""){
-            alert(message);
+            console.log(message);
         }
         
     }
