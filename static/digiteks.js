@@ -8,13 +8,12 @@ const redoQueue = [];
 function hocrToPlainHtml(hocrString) {
     const parser = new DOMParser();
     const hocrElement = parser.parseFromString(hocrString, "text/html");
-
     let plainHtml = '';
     const paragraphs = hocrElement.querySelectorAll('.ocr_par');
     paragraphs.forEach(function (paragraph, paragraphIndex) {
         // Get alignment class
         const align = paragraph.getAttribute('xalign');
-        plainHtml += `<p class="${getAlignmentClass(align)}">`;
+        plainHtml += `<p xalign="${align}">`;
 
         // Process lines within the paragraph
         const lines = paragraph.querySelectorAll(lc);
@@ -34,15 +33,12 @@ function hocrToPlainHtml(hocrString) {
         plainHtml += '</p>\n';
     });
 
-    return postprocess_html(plainHtml);
+    return tag_classes(plainHtml);
 }
 
-function hocrToPlainText(hocrString) {
-    const parser = new DOMParser();
-    const hocrElement = parser.parseFromString(hocrString, "text/html");
+function hocrToPlainText(hocrElement) {
     var plainText = '';
-
-    var paragraphs = hocrElement.querySelectorAll('.ocr_par');
+    const paragraphs = hocrElement.querySelectorAll('.ocr_par');
     paragraphs.forEach(function(paragraph) {
         var words = paragraph.querySelectorAll('.ocrx_word');
         words.forEach(function(word) {
@@ -50,7 +46,6 @@ function hocrToPlainText(hocrString) {
         });
         plainText += '\n';
     });
-
 
     return plainText;
 }
@@ -698,7 +693,7 @@ function split(doc){
     const brojElements = Array.from(doc.querySelectorAll(".break"));
 
     if (brojElements.length === 0) {
-        return [doc];
+        return [doc.outerHTML];
     }
     const splitDocs = [];
 
@@ -851,4 +846,38 @@ function insert_breaks(doc, break_regex="", message="") {
         }
         
     }
+}
+
+function tag_classes(data) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(data, "text/html");
+    Object.entries(specialClasses).forEach(([className, conditions]) => {
+        const { qs, regex } = conditions;
+
+        if (qs && regex) {
+            const elements = doc.querySelectorAll(qs);
+            const regexPattern = new RegExp(regex);
+            elements.forEach(element => {
+                if (regexPattern.test(element.textContent.trim())) {
+                    element.className = className; // Rewrite class
+                }
+            });
+        } else if (qs) {
+            const elements = doc.querySelectorAll(qs);
+            elements.forEach(element => {
+                element.className = className; // Rewrite class
+            });
+        } else if (regex) {
+            const elements = doc.querySelectorAll("*"); // Search all elements
+            const regexPattern = new RegExp(regex);
+
+            elements.forEach(element => {
+                if (regexPattern.test(element.textContent.trim())) {
+                    element.className = className; // Rewrite class
+                }
+            });
+        }
+    });
+
+    return doc.documentElement.outerHTML;
 }

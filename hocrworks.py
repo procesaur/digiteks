@@ -105,7 +105,7 @@ def enrich_soup(soup, image=None):
 def newline_fix(soup):
     lines = soup.find_all("span", {"class": lineclass})
     dahses = ["-", "«", "－", "-", "﹣", "֊", "᠆", "‐", "-", "–", "—", "﹘", "―", "⁓", "⹝", "〜", "𐺭", "⸚", "־", "−", "⁻", "₋", "~", "="]
-    not_dashes = [",", ".", "\"", ":", ";"]
+    not_dashes = [",", ".", "\"", ":", ";", ")", "!", "?",]
     for i, line in enumerate(lines):
         if lines[i].find_all("span", {"class": "ocrx_word"}):
             last = lines[i].find_all("span", {"class": "ocrx_word"})[-1]
@@ -123,7 +123,7 @@ def newline_fix(soup):
                 next = lines[i+1].find_all("span", {"class": "ocrx_word"})[0]
                 try:
                     second_next = lines[i+1].find_all("span", {"class": "ocrx_word"})[1]
-                    while len(strip_non_alphanumeric(next.getText())) < 1 and second_next["maybe_broken"] == "yes":
+                    while len(strip_non_alphanumeric(next.getText())) < 1 and strip_non_alphanumeric(next.getText()) not in dahses and second_next["maybe_broken"] == "yes":
                         next.decompose()
                         next = lines[i+1].find_all("span", {"class": "ocrx_word"})[0]
                         second_next = lines[i+1].find_all("span", {"class": "ocrx_word"})[1]
@@ -363,7 +363,7 @@ def prepare_hocr(element, top=0.94, saturation=0.5):
     for word in words:
         conf = word.get('new_conf')  # Assuming new_conf is an attribute
         old_value = word.get('data-original')
-        new_value = word.text.strip()  # Extract current text
+        new_value = word.text
 
         if old_value != new_value and new_value == word.get('lm_guess'):
             word['style'] = f"--red:0; --blue:255; --conf:{conf};"

@@ -9,6 +9,16 @@
         const break_regex_str = "{{html_conf['insert_break_regex']}}";
         const break_regex = break_regex_str !== "" ? new RegExp(break_regex_str) : "";
         const break_message = "{{html_conf['break_message']}}";
+
+        const specialClasses = {
+            {% for key, value in html_conf['special_classes'].items() %}
+            "{{ key }}": {
+                {% for subkey, subvalue in value.items() %}
+                "{{ subkey }}": {{ subvalue | tojson }},
+                {% endfor %}
+            },
+            {% endfor %}
+        }
         {{js|safe}}
         {{postjs|safe}}
     </script>
@@ -66,7 +76,7 @@
                     <button class="menubutton" title="Замени текст сликом" onclick="Figurize()">🖻</button>
                     <button class="menubutton" title="Обриши" onclick="deleteCheckedElements()">␡</button>
                     <button class="menubutton" title="Обележи као добро" onclick="VerifyBulk()">✓</button>
-                    <button class="menubutton" title="Додај прелом иза" onclick="add_break()">↸</button>
+                    <button class="menubutton" title="Додај прелом изнад" onclick="add_break()">↸</button>
                     <button class="menubutton" title="Корак уназад" onclick="undo()">↩</button>
                     <button class="menubutton" title="Корак унапред" onclick="redo()">↪</button>
                 </div>
@@ -90,18 +100,6 @@
                 stream_ocr('{{lang}}', loadingGif, imagesDataElement);       
             }
 
-            function getAlignmentClass(align) {
-                const cmap = new Map();
-                {% for x in html_conf%}
-                cmap.set('{{x}}', '{{html_conf[x]}}');
-                {%endfor%}
-                for (let [k, v] of cmap) {
-                    if (k === align) { 
-                        return v; 
-                    }
-                }  
-            return align; 
-        }
         </script>
     </div>
 </body>

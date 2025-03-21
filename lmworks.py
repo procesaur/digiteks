@@ -3,7 +3,7 @@ from helper import cfg, group_into_sentences, usual_suspects
 from stringworks import textsplit, isnumber, map_visual_similarity, calculate_similarities, harmonize_array, roman
 from torch import cuda, stack, clamp, cat, long as tlong, nn
 from transformers import AutoTokenizer, RobertaForMaskedLM, ModernBertForMaskedLM
-from numpy import array as nparray, clip, newaxis
+from numpy import array as nparray, clip, newaxis, arange
 
 
 class RobertaForMaskedLM2(RobertaForMaskedLM):
@@ -145,6 +145,8 @@ def lm_fix_words(words, confs, ocr_confs):
         return []
     token_batches, token_word = prepare_batches(words)
     to_fix = [i for i, x in enumerate(confs) if x < cfg["min_conf_combined"] and not isnumber(words[i])]
+    if not to_fix:
+        return words
     words_to_fix_orig = [words[x] for x in to_fix]
 
     words_to_fix = [x.lower() for x in words_to_fix_orig]
@@ -181,9 +183,10 @@ def lm_fix_words(words, confs, ocr_confs):
             combined_similarities[i] *= suspect_weights[w.strip()]
 
     guesses = combined_similarities.argmax(axis=1)
+    sims = combined_similarities[arange(combined_similarities.shape[0]), guesses]
     guesses = harmonize_array([encodes[x] for x in guesses], words_to_fix_orig)
-    inspection_prediction = {x : y for x, y in zip(to_fix, guesses)}
-    results = [inspection_prediction[i] if i in inspection_prediction.keys() else word for i, word in enumerate(words)]
+    inspection_prediction = {x : (y, z) for x, y, z in zip(to_fix, guesses, sims)}
+    results = [inspection_prediction[i][0] if i in inspection_prediction.keys() and inspection_prediction[i][1] > 0.8 else word for i, word in enumerate(words)]
     return results
 
 

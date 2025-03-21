@@ -19,16 +19,15 @@
     "valid_columns": [2],
     "html_config" : {
         "css" : "https://slgl.pravno-informacioni-sistem.rs/api/prins/glasnik.css",
-        "left" : "Basic-Paragraph",
-        "justify" : "Basic-Paragraph",
-        "right" : "potpis",
-        "center" : "odluka-zakon",
-        "default" : "Basic-Paragraph",
         "insert_break_regex" : "^[0-9]+$",
-        "break_message" : "Документ је у потпуности обрађен и распарчан.",
-
-        "index": "broj",
-        "multicenter" : "naslov",
-        "special" : "clan"
+        "break_message" : "Документ је у потпуности обрађен и распарчан на акта.",
+        "special_classes" : {
+            "Basic-Paragraph" : {"qs": "[xalign='left'], [xalign='default'], [xalign='justify']"},
+            "potpis" : {"qs": "[xalign='right']"},
+            "odluka-zakon" : {"qs": "[xalign='center']"}, 
+            "clan" : {"regex" : "^( )?[чЧ][лЛ][аА][нН]( )?[0-9]+(\\.)?$"},
+            "broj": {"qs": "p:first-of-type", "regex" : "^( )?[0-9]+$"},
+            "naslov" : {"qs": "p.odluka-zakon + [xalign='justify'], p.odluka-zakon + [xalign='center']", "regex" : "(.*?[ŠĐČĆŽA-ZЂ-Я]){3,}" }
+        }
     } 
 }
