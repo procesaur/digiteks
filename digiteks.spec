@@ -9,7 +9,8 @@ a = Analysis(
         ('static', 'static'), 
         ('templates', 'templates'),  
         ('bin', 'bin'),
-        ('config.json', '.')
+        ('config.json', '.'),
+        ('usual_suspects.json', '.')
     ],
     hiddenimports=[],
     hookspath=[],
