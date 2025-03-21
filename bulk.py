@@ -1,7 +1,7 @@
 import argparse
 from os import walk, path as px, makedirs
 from sys import exit
-from helper import read_file_bytes, cfg, js, postjs, css
+from helper import read_file_bytes, cfg, js, css
 from imageworks import pdf_to_images
 from ocrworks import ocr_images
 from flask import render_template, Flask
@@ -38,7 +38,7 @@ def process_file(path, out_type, lang, pdf):
     
     hocrs = ocr_images(images_in_bytes, lang, just_result=True)
     with app.app_context():
-        result = render_template('digiteks.html', lang=lang, html_conf=cfg["html_config"], images=[], js=js, postjs=postjs, css=css, filename=px.basename(path), hocr = "<br/>".join(hocrs))
+        result = render_template('digiteks.html', lang=lang, html_conf=cfg["html_config"], images=[], js=js, css=css, filename=px.basename(path), hocr = "<br/>".join(hocrs))
     return result
 
 

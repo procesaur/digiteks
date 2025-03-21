@@ -186,7 +186,7 @@ def lm_fix_words(words, confs, ocr_confs):
     sims = combined_similarities[arange(combined_similarities.shape[0]), guesses]
     guesses = harmonize_array([encodes[x] for x in guesses], words_to_fix_orig)
     inspection_prediction = {x : (y, z) for x, y, z in zip(to_fix, guesses, sims)}
-    results = [inspection_prediction[i][0] if i in inspection_prediction.keys() and inspection_prediction[i][1] > 0.8 else word for i, word in enumerate(words)]
+    results = [inspection_prediction[i][0] if i in inspection_prediction.keys() and inspection_prediction[i][1] > cfg["lm_fix_over"] else word for i, word in enumerate(words)]
     return results
 
 

@@ -1,5 +1,5 @@
 {
-    "model" : "procesaur/test",
+    "model" : "procesaur/pripravnik157",
     "modern" : true,
     "cuda" : true,
     "context_size" : 512,
@@ -16,6 +16,7 @@
     "max_len_similarity": 20,
     "usual_suspects_boost" : 0.15,
     "lm_influence" : 0.2,
+    "lm_fix_over" : 0.8,
     "valid_columns": [2],
     "html_config" : {
         "css" : "https://slgl.pravno-informacioni-sistem.rs/api/prins/glasnik.css",
