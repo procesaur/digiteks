@@ -125,7 +125,10 @@ def lm_inspect(words, pre_confs=None, conf_threshold=cfg["min_conf_ocr"], max_pe
     for i in range(len(words)):
         token_idxs = [j for j, x in enumerate(token_word) if x==i]
         wv = [inspection_perplexities[x] if x in inspection_perplexities else pre_confs[i] for x in token_idxs]
-        words_conf.append(sum(wv)/len(wv))
+        if len(wv) != 0:
+            words_conf.append(sum(wv)/len(wv))
+        else:
+            words_conf.append(0)
 
     words_conf = [1-x/max_perplexity if x<max_perplexity else 0 for x in words_conf]
     return words_conf, words
