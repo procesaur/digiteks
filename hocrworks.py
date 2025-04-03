@@ -53,7 +53,8 @@ def enrich_soup(soup, image=None):
         if title_attr:
             bbox = title_attr.split('bbox ')[1].split()
             x1, y1, x2, y2 = map(int, bbox)
-            img_element['src'] = f'data:image/jpeg;base64,{crop_image(image, x1, y1, x2, y2)}'
+            if x2 > x1 and y2 > y1 and image:
+                img_element['src'] = f'data:image/jpeg;base64,{crop_image(image, x1, y1, x2, y2)}'
 
 
         new_div = soup.new_tag('p', **{'class': 'ocr_par', 'title': hocr_element['title'] })
