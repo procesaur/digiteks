@@ -27,7 +27,7 @@
             "potpis" : {"qs": "[xalign='right']"},
             "odluka-zakon" : {"qs": "[xalign='center']"}, 
             "clan" : {"regex" : "^( )?[чЧ][лЛ][аА][нН]( )?[0-9]+(\\.)?$"},
-            "broj": {"qs": "p:first-of-type", "regex" : "^( )?[0-9]+$"},
+            "broj": {"qs": "p:first-of-type", "regex" : "^( )?[0-9]+(\\.)?$"},
             "naslov" : {"qs": "p.odluka-zakon + [xalign='justify'], p.odluka-zakon + [xalign='center']", "regex" : "(.*?[ŠĐČĆŽA-ZЂ-Я]){3,}" }
         }
     } 

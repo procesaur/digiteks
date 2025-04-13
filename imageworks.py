@@ -12,8 +12,8 @@ def improve_image(img):
         convert_from_image_to_cv2,
         img_color_convert,
         #resize_img,
-        blur_img,
-        erode_img,
+        #blur_img,
+        #erode_img,
         #resize_img,
         correct_skew,
         convert_from_cv2_to_image

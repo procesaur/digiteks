@@ -37,7 +37,7 @@ def load():
 @app.route('/process/<lang>', methods=['POST', 'GET'])
 def ini(lang):
     file_bytes, filename = process_req(request)
-    if filename.endswith(".pdf"):
+    if filename.lower().endswith(".pdf"):
         images = do(pdf_to_images, file_bytes)
     else:
         images = image_zip_to_images(file_bytes)
